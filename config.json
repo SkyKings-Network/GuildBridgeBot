@@ -1,0 +1,19 @@
+{
+    "server": {
+      "host": "serverIP",
+      "port": 25565
+    },
+    "minecraft": {
+      "username": "email@gmail.com",
+      "password": "accountPassword",
+      "accountType": "mojang"
+    },
+    "discord": {
+      "token": "discordToken",
+      "channel": "channelID",
+      "officerChannel": "officerID",
+      "commandRole": "roleID",
+      "ownerId": "ownerID",
+      "prefix": "!"
+    }
+  }
