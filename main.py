@@ -213,6 +213,10 @@ def chat(this, message, messagePosition, jsonMsg):
             messages = message
             send_discord_message(messages)
 
+        if message.startswith("Officer >"):
+            messages = message
+            send_discord_message(messages)
+
         #For online command
         if " -- Guild Master --" in message:
             messages = ""
@@ -252,7 +256,6 @@ def send_minecraft_command(message):
     bot.chat(message)
 
 def send_discord_message(messages):
-    channel = 929443410241290321
 
     if messages.startswith("Guild >"):
 
@@ -261,10 +264,21 @@ def send_discord_message(messages):
         embedVar = Embed(description=messages)
 
         requests.post(
-        f"https://discord.com/api/v9/channels/{channel}/messages",
+        f"https://discord.com/api/v9/channels/{channelid}/messages",
         headers={"Authorization": f"Bot {client.http.token}"},
         json={"embed": embedVar.to_dict() }
         )
+    elif messages.startswith("Officer >"):
+        #messages = messages.replace("Officer >", "")
+
+        embedVar = Embed(description=messages)
+
+        requests.post(
+        f"https://discord.com/api/v9/channels/{officerchannelid}/messages",
+        headers={"Authorization": f"Bot {client.http.token}"},
+        json={"embed": embedVar.to_dict() }
+        )
+
     else:
         if "Offline Members:" in messages:
             messages = re.split("--", messages)
@@ -281,7 +295,7 @@ def send_discord_message(messages):
             embedVar = Embed(description=embed)
             print(embed)
             requests.post(
-            f"https://discord.com/api/v9/channels/{channel}/messages",
+            f"https://discord.com/api/v9/channels/{channelid}/messages",
             headers={"Authorization": f"Bot {client.http.token}"},
             json={"embed": embedVar.to_dict() }
             )
@@ -291,7 +305,7 @@ def send_discord_message(messages):
             embedVar = Embed(description=messages)
 
             requests.post(
-            f"https://discord.com/api/v9/channels/{channel}/messages",
+            f"https://discord.com/api/v9/channels/{channelid}/messages",
             headers={"Authorization": f"Bot {client.http.token}"},
             json={"embed": embedVar.to_dict() }
             )
