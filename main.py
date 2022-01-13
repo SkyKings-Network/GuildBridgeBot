@@ -92,12 +92,20 @@ async def on_command(ctx):
 @client.event
 async def on_message(message):
     if not message.author.bot:
-        if message.channel.id == 929443410241290321:
+        if message.channel.id == int(channelid):
             if str(message.content).startswith(prefix):
                 pass
             else:
                 discord = message.author.name
-                send_minecraft_message(discord, message.content)
+                type = "General"
+                send_minecraft_message(discord, message.content, type)
+        if message.channel.id == int(officerchannelid):
+            if str(message.content).startswith(prefix):
+                pass
+            else:
+                discord = message.author.name
+                type = "Officer"
+                send_minecraft_message(discord, message.content, type)
     await client.process_commands(message)
 
 @client.command()
@@ -206,7 +214,9 @@ def chat(this, message, messagePosition, jsonMsg):
     global wait_response
     global messages
     print(message)
-    if message.startswith("Guild > AirtightTooth43"):
+    if message.startswith("Guild > " + bot.username):
+        pass
+    if message.startswith("Officer > " + bot.username):
         pass
     else:
         if message.startswith("Guild >"):
@@ -243,12 +253,19 @@ def chat(this, message, messagePosition, jsonMsg):
         if "Enabled guild join/leave notifications!" in message:
             messages = message
             send_discord_message(messages)
+        if "You cannot say the same message twice!" in message:
+            messages = message
+            send_discord_message(messages)
 
 
 
-def send_minecraft_message(discord, message):
-   print(message)
-   bot.chat("/gchat " + str(discord) + ": " + str(message))
+def send_minecraft_message(discord, message, type):
+    print(message)
+    if type == "General":
+        bot.chat("/gchat " + str(discord) + ": " + str(message))
+    if type == "Officer":
+        bot.chat("/ochat " + str(discord) + ": " + str(message))
+
 
 def send_minecraft_command(message):
     print(message)
