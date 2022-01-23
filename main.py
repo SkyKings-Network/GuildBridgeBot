@@ -74,8 +74,9 @@ async def online(ctx):
     bot.chat("/g online")
 
 @client.command(aliases=['o', 'over'])
+@has_permissions(manage_guild=True)  
 async def override(ctx, *, command):
-    role = ctx.guild.get_role(int(ownerID))
+    role = ctx.guild.get_role(int(commandRole))
     if role in ctx.author.roles:
         bot.chat("/" + command)
         embedVar = discord.Embed(description = "Command sent!")
@@ -83,6 +84,25 @@ async def override(ctx, *, command):
     else:
         embedVar = discord.Embed(description = "<:x:930865879351189524> You do not have permission to use this command!")
         await ctx.send(embed=embedVar)
+
+@client.command(aliases=['r'])
+@has_permissions(manage_guild=True)  
+async def relog(ctx, *, delay):
+    try:
+        delay = int(delay)
+        role = ctx.guild.get_role(int(commandRole))
+        if role in ctx.author.roles:
+            embedVar = discord.Embed(description = "Relogging in " + str(delay) + " seconds")
+            await ctx.send(embed=embedVar)
+            await asyncio.sleep(delay)
+            os.system("python main.py")
+        else:
+            embedVar = discord.Embed(description = "<:x:930865879351189524> You do not have permission to use this command!")
+            await ctx.send(embed=embedVar)
+    except KeyError:
+        print("YO SOME SHIT HAS GONE HORRIBLY WRONG")
+
+        
 
 @client.check
 async def on_command(ctx):
@@ -195,6 +215,7 @@ async def notifications(ctx):
 @On(bot, "login")
 def login(this):
    print("Bot is logged in.")
+   print(bot.username)
 
    bot.chat("/§")
 
@@ -214,48 +235,52 @@ def chat(this, message, messagePosition, jsonMsg):
     global wait_response
     global messages
     print(message)
-    if message.startswith("Guild > " + bot.username):
-        pass
-    if message.startswith("Officer > " + bot.username):
+    if bot.username == None:
         pass
     else:
-        if message.startswith("Guild >"):
-            messages = message
-            send_discord_message(messages)
+        if message.startswith("Guild > " + bot.username) or message.startswith("Officer > " + bot.username):
+            pass
+        else:
+            if message.startswith("Guild >"):
+                messages = message
+                send_discord_message(messages)
 
-        if message.startswith("Officer >"):
-            messages = message
-            send_discord_message(messages)
+            if message.startswith("Officer >"):
+                messages = message
+                send_discord_message(messages)
 
-        #For online command
-        if " -- Guild Master --" in message:
-            messages = ""
-            wait_response = True
-        if wait_response is True:
-                messages += "\n" + message
-        if "Offline Members:" in message and wait_response:
-            wait_response = False
-            send_discord_message(messages)
-            messages = ""
+            #For online command
+            if "Guild Name: " in message:
+                messages = ""
+                wait_response = True
+            if wait_response is True:
+                    messages += "\n" + message
+            if "Offline Members:" in message and wait_response:
+                wait_response = False
+                send_discord_message(messages)
+                messages = ""
 
-        if " was promoted from " in message:
-            messages = message
-            send_discord_message(messages)
-        if " was demoted from " in message:
-            messages = message
-            send_discord_message(messages)
-        if " was kicked from the guild by " in message:
-            messages = message
-            send_discord_message(messages)
-        if "Disabled guild join/leave notifications!" in message:
-            messages = message
-            send_discord_message(messages)
-        if "Enabled guild join/leave notifications!" in message:
-            messages = message
-            send_discord_message(messages)
-        if "You cannot say the same message twice!" in message:
-            messages = message
-            send_discord_message(messages)
+            if " was promoted from " in message:
+                messages = message
+                send_discord_message(messages)
+            if " was demoted from " in message:
+                messages = message
+                send_discord_message(messages)
+            if " was kicked from the guild by " in message:
+                messages = message
+                send_discord_message(messages)
+            if "Disabled guild join/leave notifications!" in message:
+                messages = message
+                send_discord_message(messages)
+            if "Enabled guild join/leave notifications!" in message:
+                messages = message
+                send_discord_message(messages)
+            if "You cannot say the same message twice!" in message:
+                messages = message
+                send_discord_message(messages)
+            if "You don't have access to the officer chat!" in message:
+                messages = message
+                send_discord_message(messages)
 
 
 
@@ -277,8 +302,13 @@ def send_discord_message(messages):
     if messages.startswith("Guild >"):
 
         messages = messages.replace("Guild >", "")
+        if "[VIP]" in messages or "[VIP+]" in messages or "[MVP]" in messages or "[MVP+]" in messages or "[MVP++]" in messages:
+            memberusername = messages.split()[1]
+        else:
+            memberusername = messages.split()[0]
 
-        embedVar = Embed(description=messages)
+        embedVar = Embed(description=messages) 
+        embedVar.set_author(name=memberusername, icon_url="https://www.mc-heads.net/avatar/" + memberusername)
 
         requests.post(
         f"https://discord.com/api/v9/channels/{channelid}/messages",
