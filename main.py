@@ -66,7 +66,7 @@ async def help(ctx):
 @client.event
 async def on_ready():
     await client.wait_until_ready()
-    await client.change_presence(activity=discord.Game(name="Maxs Bridge bot"))
+    await client.change_presence(activity=discord.Game(name="Guild Bridge Bot"))
     print(f"Bot Running as {client.user}")
     messages = "Bot Online"
     send_discord_message(messages)
