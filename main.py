@@ -57,6 +57,8 @@ async def help(ctx):
     embedVar.add_field(name="!setrank [username] [rank]", value="Sets the rank of the user to the selected rank.", inline=False)
     embedVar.add_field(name="!notifications", value="Enable/Disable join/leave notifications.", inline=False)
     embedVar.add_field(name="!online", value="Shows a list of online guild members.", inline=False)
+    embedVar.add_field(name="!over", value="Does command inside of mc.", inline=False)
+    embedVar.add_field(name="!r", value="Join and leaves for ammount time you put in", inline=False)
     embedVar.set_thumbnail(url=ctx.author.avatar_url)       
     await ctx.send(embed=embedVar)
 
@@ -64,7 +66,7 @@ async def help(ctx):
 @client.event
 async def on_ready():
     await client.wait_until_ready()
-    await client.change_presence(activity=discord.Game(name="Guild Bridge Bot"))
+    await client.change_presence(activity=discord.Game(name="Maxs Bridge bot"))
     print(f"Bot Running as {client.user}")
     messages = "Bot Online"
     send_discord_message(messages)
