@@ -1,3 +1,4 @@
+from datetime import datetime
 import requests
 from discord.client import Client
 from discord.ext import commands, tasks
@@ -47,17 +48,19 @@ bot = mineflayer.createBot({
 wait_response = False
 messages = ""
 
+async def main():
+    async with client:
+        await client.start(token)
+
 @client.command()
 async def help(ctx):
-    embedVar = discord.Embed(title="Bridge Bot | Help Commands", description="For any extra support, DM JackTheGuy#0001", color=0xfbff00, timestamp=ctx.message.created_at)
-    embedVar.add_field(name="!invite [username]", value="Invites a user to the guild.", inline=False)
-    embedVar.add_field(name="!kick [username] [reason]", value="Kicks a user from the guild.", inline=False)
-    embedVar.add_field(name="!promote [username]", value="Promotes the user in the guild.", inline=False)
-    embedVar.add_field(name="!demote [username]", value="Demotes the user in the guild.", inline=False)
-    embedVar.add_field(name="!setrank [username] [rank]", value="Sets the rank of the user to the selected rank.", inline=False)
-    embedVar.add_field(name="!notifications", value="Enable/Disable join/leave notifications.", inline=False)
-    embedVar.add_field(name="!online", value="Shows a list of online guild members.", inline=False)
-    embedVar.set_thumbnail(url=ctx.author.avatar_url)       
+    embedVar = discord.Embed(title="Bridge Bot | Help Commands", description="``< >`` = Required arguments\n``[ ]`` = Optional arguments", colour=0x1ABC9C, timestamp=ctx.message.created_at)
+    embedVar.add_field(name="Discord Commands", value=f"``{prefix}invite [username]``: Invites the user to the guild\n``{prefix}promote [username]``: Promotes the given user\n" +
+    f"``{prefix}demote [username]``: Demotes the given user\n``{prefix}setrank [username] [rank]``: Sets the given user to a specific rank\n" +
+    f"``{prefix}kick [username] <reason>``: Kicks the given user\n``{prefix}notifications``: Toggles join / leave notifications\n``{prefix}online``: Shows the online members\n" + 
+    f"``{prefix}override <command>``: Forces the bot to use a given command", inline=False)
+    embedVar.add_field(name="Info", value=f"Prefix: ``{prefix}``\nGuild Channel: <#{channelid}>\nCommand Role: <@&{commandRole}>\nVersion: ``0.1``", inline=False)
+    embedVar.set_footer(text=f"Made by SkyKings")
     await ctx.send(embed=embedVar)
 
 
@@ -73,13 +76,12 @@ async def on_ready():
 async def online(ctx):
     bot.chat("/g online")
 
-@client.command(aliases=['o', 'over'])
-@has_permissions(manage_guild=True)  
+@client.command(aliases=['o', 'over'])  
 async def override(ctx, *, command):
     role = ctx.guild.get_role(int(commandRole))
     if role in ctx.author.roles:
         bot.chat("/" + command)
-        embedVar = discord.Embed(description = "Command sent!")
+        embedVar = discord.Embed(description = f"``/{command}`` has been sent!", colour=0x1ABC9C)
         await ctx.send(embed=embedVar)
     else:
         embedVar = discord.Embed(description = "<:x:930865879351189524> You do not have permission to use this command!")
@@ -240,6 +242,10 @@ def chat(this, message, messagePosition, jsonMsg):
     else:
         if message.startswith("Guild > " + bot.username) or message.startswith("Officer > " + bot.username):
             pass
+        elif bot.username in message and "Guild > " in message:
+            pass
+        elif bot.username in message and "Officer > " in message:
+            pass
         else:
             if message.startswith("Guild >"):
                 messages = message
@@ -307,7 +313,7 @@ def send_discord_message(messages):
         else:
             memberusername = messages.split()[0]
 
-        embedVar = Embed(description=messages) 
+        embedVar = Embed(description=messages, timestamp=discord.utils.utcnow(), colour=0x1ABC9C) 
         embedVar.set_author(name=memberusername, icon_url="https://www.mc-heads.net/avatar/" + memberusername)
 
         requests.post(
@@ -318,7 +324,7 @@ def send_discord_message(messages):
     elif messages.startswith("Officer >"):
         #messages = messages.replace("Officer >", "")
 
-        embedVar = Embed(description=messages)
+        embedVar = Embed(description=messages, timestamp=discord.utils.utcnow())
 
         requests.post(
         f"https://discord.com/api/v9/channels/{officerchannelid}/messages",
@@ -337,9 +343,9 @@ def send_discord_message(messages):
                 elif i % 2 == 0:
                     ii = i - 1
                     print(messages[ii] + messages[i])
-                    embed += "\n**" + messages[ii] + "** " + messages[i] 
+                    embed += "**" + messages[ii] + "** " + messages[i] 
 
-            embedVar = Embed(description=embed)
+            embedVar = Embed(description=embed, colour=0x1ABC9C)
             print(embed)
             requests.post(
             f"https://discord.com/api/v9/channels/{channelid}/messages",
@@ -349,7 +355,7 @@ def send_discord_message(messages):
             messages = ""
 
         else:
-            embedVar = Embed(description=messages)
+            embedVar = Embed(description=messages, colour=0x1ABC9C)
 
             requests.post(
             f"https://discord.com/api/v9/channels/{channelid}/messages",
@@ -357,7 +363,4 @@ def send_discord_message(messages):
             json={"embed": embedVar.to_dict() }
             )
 
-loop = asyncio.get_event_loop()
-loop.set_debug(True)
-loop.create_task(client.start(token))
-loop.run_forever()
+asyncio.run(main())
