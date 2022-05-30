@@ -15,5 +15,8 @@
       "commandRole": "roleID",
       "ownerId": "ownerID",
       "prefix": "!"
+    },
+    "settings": {
+      "autoaccept": false
     }
   }
