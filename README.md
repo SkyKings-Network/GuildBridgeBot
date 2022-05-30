@@ -1,14 +1,8 @@
 # GuildBridgeBot
 
 # To Do
-
-[-] Add auto accept invitations
     
-    [-] Add requirements to invitations
-    
-[-] Remove the name in the chat messages
-
-[-] Make join / leave notifications show better
+[-] Add requirements to autoaccept
 
 [-] Make logs easier to read (less print statements)
 
