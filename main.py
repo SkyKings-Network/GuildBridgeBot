@@ -34,6 +34,8 @@ commandRole = data["discord"]["commandRole"]
 ownerID = data["discord"]["ownerId"]
 prefix = data["discord"]["prefix"]
 
+autoaccept = data["settings"]["autoaccept"]
+
 client = commands.Bot(command_prefix=commands.when_mentioned_or(prefix), case_insensitive=True,
                   allowed_mentions=discord.AllowedMentions(everyone=False), intents=discord.Intents.all(),
                   help_command=None)
@@ -216,6 +218,29 @@ async def notifications(ctx):
         embedVar = discord.Embed(description = "<:x:930865879351189524> You do not have permission to use this command!")
         await ctx.send(embed=embedVar)
 
+@client.command()
+async def toggleaccept(ctx):
+    role = ctx.guild.get_role(int(commandRole))
+    if role in ctx.author.roles:
+        autoaccept = data["settings"]["autoaccept"]
+        if autoaccept == True:
+            embedVar = discord.Embed(description = ":white_check_mark: Auto accepting guild invites is now ``off``!")
+            await ctx.send(embed=embedVar)
+            data["settings"]["autoaccept"] = False
+            
+        else:
+            embedVar = discord.Embed(description = ":white_check_mark: Auto accepting guild invites is now ``on``!")
+            await ctx.send(embed=embedVar)
+            data["settings"]["autoaccept"] = True
+
+        with open(filename, "w") as file:
+            json.dump(data,file, indent=2)
+        autoaccept = data["settings"]["autoaccept"]
+
+    else:
+        embedVar = discord.Embed(description = "<:x:930865879351189524> You do not have permission to use this command!")
+        await ctx.send(embed=embedVar)
+
 @On(bot, "login")
 def login(this):
    print("Bot is logged in.")
@@ -268,6 +293,20 @@ def chat(this, message, messagePosition, jsonMsg):
                 send_discord_message(messages)
                 messages = ""
 
+            if "Click here to accept or type /guild accept " in message:
+                messages = message
+                send_discord_message(messages)
+                send_minecraft_message(None, messages, "invite")
+
+
+            if " joined the guild!" in message:
+                messages = message
+                send_discord_message(messages)
+            
+            if " left the guild!" in message:
+                messages = message
+                send_discord_message(messages)
+
             if " was promoted from " in message:
                 messages = message
                 send_discord_message(messages)
@@ -293,11 +332,17 @@ def chat(this, message, messagePosition, jsonMsg):
 
 
 def send_minecraft_message(discord, message, type):
-    print(message)
     if type == "General":
         bot.chat("/gchat " + str(discord) + ": " + str(message))
     if type == "Officer":
         bot.chat("/ochat " + str(discord) + ": " + str(message))
+    if type == "invite":
+        autoaccept = data["settings"]["autoaccept"]
+        if autoaccept == True:
+            message = message.split()
+            username = message[17][:-1]
+            print(username)
+            bot.chat(f"/guild accept {username}")
 
 
 def send_minecraft_command(message):
@@ -308,21 +353,33 @@ def send_minecraft_command(message):
 def send_discord_message(messages):
 
     if messages.startswith("Guild >"):
-
         messages = messages.replace("Guild >", "")
         if "[VIP]" in messages or "[VIP+]" in messages or "[MVP]" in messages or "[MVP+]" in messages or "[MVP++]" in messages:
             memberusername = messages.split()[1]
         else:
             memberusername = messages.split()[0]
 
-        embedVar = Embed(description=messages, timestamp=discord.utils.utcnow(), colour=0x1ABC9C) 
-        embedVar.set_author(name=memberusername, icon_url="https://www.mc-heads.net/avatar/" + memberusername)
+
+        if " joined." in messages:
+            embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x56F98A) 
+            embedVar.set_author(name=messages, icon_url="https://www.mc-heads.net/avatar/" + memberusername)
+        elif " left." in messages:
+            embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0xFF6347) 
+            embedVar.set_author(name=messages, icon_url="https://www.mc-heads.net/avatar/" + memberusername)
+
+        else:
+            messages = messages.split(":", maxsplit=1)
+            messages = messages[1]
+
+            embedVar = Embed(description=messages, timestamp=discord.utils.utcnow(), colour=0x1ABC9C) 
+            embedVar.set_author(name=memberusername, icon_url="https://www.mc-heads.net/avatar/" + memberusername)
 
         requests.post(
         f"https://discord.com/api/v9/channels/{channelid}/messages",
         headers={"Authorization": f"Bot {client.http.token}"},
         json={"embed": embedVar.to_dict() }
         )
+
     elif messages.startswith("Officer >"):
         #messages = messages.replace("Officer >", "")
 
@@ -330,6 +387,49 @@ def send_discord_message(messages):
 
         requests.post(
         f"https://discord.com/api/v9/channels/{officerchannelid}/messages",
+        headers={"Authorization": f"Bot {client.http.token}"},
+        json={"embed": embedVar.to_dict() }
+        )
+
+
+    elif "Click here to accept or type /guild accept " in messages:
+        
+        messages = messages.split()
+        username = messages[2]
+        print(username)
+
+        embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C) 
+        embedVar.set_author(name=f"{username} has requested to join the guild.", icon_url="https://www.mc-heads.net/avatar/" + username)
+
+        requests.post(
+        f"https://discord.com/api/v9/channels/{channelid}/messages",
+        headers={"Authorization": f"Bot {client.http.token}"},
+        json={"embed": embedVar.to_dict() }
+        )
+
+    elif " joined the guild!" in messages:
+        messages = messages.split()
+        username = messages[1]
+        print(username)
+
+        embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C) 
+        embedVar.set_author(name=f"{username} has joined the guild!", icon_url="https://www.mc-heads.net/avatar/" + username)
+
+        requests.post(
+        f"https://discord.com/api/v9/channels/{channelid}/messages",
+        headers={"Authorization": f"Bot {client.http.token}"},
+        json={"embed": embedVar.to_dict() }
+        )
+    elif " left the guild!" in messages:
+        messages = messages.split()
+        username = messages[1]
+        print(username)
+
+        embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C) 
+        embedVar.set_author(name=f"{username} has left the guild!", icon_url="https://www.mc-heads.net/avatar/" + username)
+
+        requests.post(
+        f"https://discord.com/api/v9/channels/{channelid}/messages",
         headers={"Authorization": f"Bot {client.http.token}"},
         json={"embed": embedVar.to_dict() }
         )
