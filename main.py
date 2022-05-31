@@ -62,7 +62,7 @@ async def help(ctx):
     embedVar.add_field(name="Discord Commands", value=f"``{prefix}invite [username]``: Invites the user to the guild\n``{prefix}promote [username]``: Promotes the given user\n" +
     f"``{prefix}demote [username]``: Demotes the given user\n``{prefix}setrank [username] [rank]``: Sets the given user to a specific rank\n" +
     f"``{prefix}kick [username] <reason>``: Kicks the given user\n``{prefix}notifications``: Toggles join / leave notifications\n``{prefix}online``: Shows the online members\n" + 
-    f"``{prefix}override <command>``: Forces the bot to use a given command", inline=False)
+    f"``{prefix}override <command>``: Forces the bot to use a given command\n``{prefix}toggleaccept``: Toggles auto accepting members joining the guild", inline=False)
     embedVar.add_field(name="Info", value=f"Prefix: ``{prefix}``\nGuild Channel: <#{channelid}>\nCommand Role: <@&{commandRole}>\nVersion: ``0.1``", inline=False)
     embedVar.set_footer(text=f"Made by SkyKings")
     await ctx.send(embed=embedVar)
@@ -340,7 +340,11 @@ def send_minecraft_message(discord, message, type):
         autoaccept = data["settings"]["autoaccept"]
         if autoaccept == True:
             message = message.split()
-            username = message[17][:-1]
+            if "[VIP]" in messages or "[VIP+]" in messages or "[MVP]" in messages or "[MVP+]" in messages or "[MVP++]" in messages:
+                username = messages.split()[2]
+            else:
+                username = messages.split()[1]
+            print(messages)
             print(username)
             bot.chat(f"/guild accept {username}")
 
@@ -355,9 +359,9 @@ def send_discord_message(messages):
     if messages.startswith("Guild >"):
         messages = messages.replace("Guild >", "")
         if "[VIP]" in messages or "[VIP+]" in messages or "[MVP]" in messages or "[MVP+]" in messages or "[MVP++]" in messages:
-            memberusername = messages.split()[1]
+            memberusername = messages.split()[1][:-1]
         else:
-            memberusername = messages.split()[0]
+            memberusername = messages.split()[0][:-1]
 
 
         if " joined." in messages:
@@ -393,10 +397,12 @@ def send_discord_message(messages):
 
 
     elif "Click here to accept or type /guild accept " in messages:
+        if "[VIP]" in messages or "[VIP+]" in messages or "[MVP]" in messages or "[MVP+]" in messages or "[MVP++]" in messages:
+            username = messages.split()[2]
+        else:
+            username = messages.split()[1]
+        print(messages.split())
         
-        messages = messages.split()
-        username = messages[2]
-        print(username)
 
         embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C) 
         embedVar.set_author(name=f"{username} has requested to join the guild.", icon_url="https://www.mc-heads.net/avatar/" + username)
@@ -409,7 +415,11 @@ def send_discord_message(messages):
 
     elif " joined the guild!" in messages:
         messages = messages.split()
-        username = messages[1]
+        print(messages)
+        if "[VIP]" in messages or "[VIP+]" in messages or "[MVP]" in messages or "[MVP+]" in messages or "[MVP++]" in messages:
+            username = messages[1]
+        else:
+            username = messages[0]
         print(username)
 
         embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C) 
@@ -422,7 +432,11 @@ def send_discord_message(messages):
         )
     elif " left the guild!" in messages:
         messages = messages.split()
-        username = messages[1]
+        print(messages)
+        if "[VIP]" in messages or "[VIP+]" in messages or "[MVP]" in messages or "[MVP+]" in messages or "[MVP++]" in messages:
+            username = messages[1]
+        else:
+            username = messages[0]
         print(username)
 
         embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C) 
