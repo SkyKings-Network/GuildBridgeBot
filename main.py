@@ -245,6 +245,8 @@ async def toggleaccept(ctx):
 def login(this):
    print("Bot is logged in.")
    print(bot.username)
+   global botusername
+   botusername = bot.username
 
    bot.chat("/§")
 
@@ -261,17 +263,19 @@ def kicked(this, reason):
 
 @On(bot, "messagestr")
 def chat(this, message, messagePosition, jsonMsg):
+    print(message)
     global wait_response
     global messages
-    print(message)
-    if bot.username == None:
+    
+    if botusername == None:
         pass
     else:
-        if message.startswith("Guild > " + bot.username) or message.startswith("Officer > " + bot.username):
+
+        if message.startswith("Guild > " + botusername) or message.startswith("Officer > " + botusername):
             pass
-        elif bot.username in message and "Guild > " in message:
+        elif botusername in message and "Guild > " in message:
             pass
-        elif bot.username in message and "Officer > " in message:
+        elif botusername in message and "Officer > " in message:
             pass
         else:
             if message.startswith("Guild >"):
@@ -282,12 +286,12 @@ def chat(this, message, messagePosition, jsonMsg):
                 messages = message
                 send_discord_message(messages)
 
-            #For online command
+            # Online Command
             if "Guild Name: " in message:
                 messages = ""
                 wait_response = True
             if wait_response is True:
-                    messages += "\n" + message
+                messages += "\n" + message
             if "Offline Members:" in message and wait_response:
                 wait_response = False
                 send_discord_message(messages)
@@ -450,6 +454,7 @@ def send_discord_message(messages):
 
     else:
         if "Offline Members:" in messages:
+            print("YOOOOO")
             messages = re.split("--", messages)
             embed = ""
             length = len(messages)
