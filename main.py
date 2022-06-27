@@ -241,6 +241,7 @@ async def toggleaccept(ctx):
         embedVar = discord.Embed(description = "<:x:930865879351189524> You do not have permission to use this command!")
         await ctx.send(embed=embedVar)
 
+
 @On(bot, "login")
 def login(this):
    print("Bot is logged in.")
@@ -348,13 +349,10 @@ def send_minecraft_message(discord, message, type):
                 username = messages.split()[2]
             else:
                 username = messages.split()[1]
-            print(messages)
-            print(username)
             bot.chat(f"/guild accept {username}")
 
 
 def send_minecraft_command(message):
-    print(message)
     message = message.replace("!o ", "/")
     bot.chat(message)
 
@@ -363,9 +361,17 @@ def send_discord_message(messages):
     if messages.startswith("Guild >"):
         messages = messages.replace("Guild >", "")
         if "[VIP]" in messages or "[VIP+]" in messages or "[MVP]" in messages or "[MVP+]" in messages or "[MVP++]" in messages:
-            memberusername = messages.split()[1][:-1]
+            if "]:" in messages:
+                memberusername = messages.split()[1]
+            else:
+                memberusername = messages.split()[1][:-1]
+            
         else:
-            memberusername = messages.split()[0][:-1]
+            if "]:" in messages:
+                memberusername = messages.split()[0]
+            else:
+                memberusername = messages.split()[0][:-1]
+            
 
 
         if " joined." in messages:
@@ -389,9 +395,25 @@ def send_discord_message(messages):
         )
 
     elif messages.startswith("Officer >"):
-        #messages = messages.replace("Officer >", "")
+        messages = messages.replace("Officer >", "")
+        if "[VIP]" in messages or "[VIP+]" in messages or "[MVP]" in messages or "[MVP+]" in messages or "[MVP++]" in messages:
+            if "]:" in messages:
+                memberusername = messages.split()[1]
+            else:
+                memberusername = messages.split()[1][:-1]
+            
+        else:
+            if "]:" in messages:
+                memberusername = messages.split()[0]
+            else:
+                memberusername = messages.split()[0][:-1]
+        
+        messages = messages.split(":", maxsplit=1)
+        messages = messages[1]
 
-        embedVar = Embed(description=messages, timestamp=discord.utils.utcnow())
+        embedVar = Embed(description=messages, timestamp=discord.utils.utcnow(), colour=0x1ABC9C) 
+        embedVar.set_author(name=memberusername, icon_url="https://www.mc-heads.net/avatar/" + memberusername)
+
 
         requests.post(
         f"https://discord.com/api/v9/channels/{officerchannelid}/messages",
@@ -405,7 +427,6 @@ def send_discord_message(messages):
             username = messages.split()[2]
         else:
             username = messages.split()[1]
-        print(messages.split())
         
 
         embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C) 
@@ -419,12 +440,10 @@ def send_discord_message(messages):
 
     elif " joined the guild!" in messages:
         messages = messages.split()
-        print(messages)
         if "[VIP]" in messages or "[VIP+]" in messages or "[MVP]" in messages or "[MVP+]" in messages or "[MVP++]" in messages:
             username = messages[1]
         else:
             username = messages[0]
-        print(username)
 
         embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C) 
         embedVar.set_author(name=f"{username} has joined the guild!", icon_url="https://www.mc-heads.net/avatar/" + username)
@@ -436,12 +455,10 @@ def send_discord_message(messages):
         )
     elif " left the guild!" in messages:
         messages = messages.split()
-        print(messages)
         if "[VIP]" in messages or "[VIP+]" in messages or "[MVP]" in messages or "[MVP+]" in messages or "[MVP++]" in messages:
             username = messages[1]
         else:
             username = messages[0]
-        print(username)
 
         embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C) 
         embedVar.set_author(name=f"{username} has left the guild!", icon_url="https://www.mc-heads.net/avatar/" + username)
@@ -454,7 +471,6 @@ def send_discord_message(messages):
 
     else:
         if "Offline Members:" in messages:
-            print("YOOOOO")
             messages = re.split("--", messages)
             embed = ""
             length = len(messages)
@@ -463,11 +479,9 @@ def send_discord_message(messages):
                     pass
                 elif i % 2 == 0:
                     ii = i - 1
-                    print(messages[ii] + messages[i])
                     embed += "**" + messages[ii] + "** " + messages[i] 
 
             embedVar = Embed(description=embed, colour=0x1ABC9C)
-            print(embed)
             requests.post(
             f"https://discord.com/api/v9/channels/{channelid}/messages",
             headers={"Authorization": f"Bot {client.http.token}"},
