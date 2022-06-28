@@ -1,6 +1,7 @@
 import re
 import json
 import discord
+import time
 import os
 import requests
 import asyncio
@@ -41,15 +42,6 @@ client = commands.Bot(command_prefix=commands.when_mentioned_or(prefix), case_in
                   allowed_mentions=discord.AllowedMentions(everyone=False), intents=discord.Intents.all(),
                   help_command=None)
 
-bot = mineflayer.createBot({
-    "host": host,
-    "port": port,
-    "username": username,
-    "password": password,
-    "version": "1.8.9",
-    "auth": accountType
-})
-
 wait_response = False
 messages = ""
 
@@ -74,8 +66,6 @@ async def on_ready():
     await client.wait_until_ready()
     await client.change_presence(activity=discord.Game(name="Guild Bridge Bot"))
     print(f"Bot Running as {client.user}")
-    messages = "Bot Online"
-    send_discord_message(messages)
 
 @client.command()
 async def online(ctx):
@@ -94,7 +84,6 @@ async def override(ctx, *, command):
         await ctx.send(embed=embedVar)
 
 @client.command(aliases=['r'])
-@has_permissions(manage_guild=True)  
 async def relog(ctx, *, delay):
     try:
         delay = int(delay)
@@ -103,7 +92,7 @@ async def relog(ctx, *, delay):
             embedVar = discord.Embed(description = "Relogging in " + str(delay) + " seconds")
             await ctx.send(embed=embedVar)
             await asyncio.sleep(delay)
-            os.system("python main.py")
+            bot.end()
         else:
             embedVar = discord.Embed(description = "<:x:930865879351189524> You do not have permission to use this command!")
             await ctx.send(embed=embedVar)
@@ -243,98 +232,102 @@ async def toggleaccept(ctx):
         embedVar = discord.Embed(description = "<:x:930865879351189524> You do not have permission to use this command!")
         await ctx.send(embed=embedVar)
 
+def oncommands():
+    @On(bot, "login")
+    def login(this):
+        print("Bot is logged in.")
+        print(bot.username)
+        global botusername
+        botusername = bot.username
 
-@On(bot, "login")
-def login(this):
-   print("Bot is logged in.")
-   print(bot.username)
-   global botusername
-   botusername = bot.username
+        bot.chat("/§")
+        send_discord_message("Bot Online")
 
-   bot.chat("/§")
+    @On(bot, "end")
+    def kicked(this, reason):
+        messages = "Bot Offline"
+        send_discord_message(messages)
+        print("Bot offline!")
+        print(str(reason))
+        print("Restarting...")
 
-@On(bot, "end")
-def kicked(this, reason):
-    messages = "Bot Offline"
-    send_discord_message(messages)
-    print("Bot offline!")
-    print(str(reason))
-    print("Restarting...")
-    os.system("python main.py")
-    
+        createbot()
 
-
-@On(bot, "messagestr")
-def chat(this, message, messagePosition, jsonMsg):
-    print(message)
-    global wait_response
-    global messages
-    
-    if botusername == None:
-        pass
-    else:
-
-        if message.startswith("Guild > " + botusername) or message.startswith("Officer > " + botusername):
-            pass
-        elif botusername in message and "Guild > " in message:
-            pass
-        elif botusername in message and "Officer > " in message:
+    @On(bot, "error")
+    def error(this, reason):
+        print(reason)
+        
+    @On(bot, "messagestr")
+    def chat(this, message, messagePosition, jsonMsg):
+        print(message)
+        global wait_response
+        global messages
+        
+        if botusername == None:
             pass
         else:
-            if message.startswith("Guild >"):
-                messages = message
-                send_discord_message(messages)
 
-            if message.startswith("Officer >"):
-                messages = message
-                send_discord_message(messages)
+            if message.startswith("Guild > " + botusername) or message.startswith("Officer > " + botusername):
+                pass
+            elif botusername in message and "Guild > " in message:
+                pass
+            elif botusername in message and "Officer > " in message:
+                pass
+            else:
+                if message.startswith("Guild >"):
+                    messages = message
+                    send_discord_message(messages)
 
-            # Online Command
-            if "Guild Name: " in message:
-                messages = ""
-                wait_response = True
-            if wait_response is True:
-                messages += "\n" + message
-            if "Offline Members:" in message and wait_response:
-                wait_response = False
-                send_discord_message(messages)
-                messages = ""
+                if message.startswith("Officer >"):
+                    messages = message
+                    send_discord_message(messages)
 
-            if "Click here to accept or type /guild accept " in message:
-                messages = message
-                send_discord_message(messages)
-                send_minecraft_message(None, messages, "invite")
+                # Online Command
+                if "Guild Name: " in message:
+                    messages = ""
+                    wait_response = True
+                if wait_response is True:
+                    messages += "\n" + message
+                if "Offline Members:" in message and wait_response:
+                    wait_response = False
+                    send_discord_message(messages)
+                    messages = ""
+
+                if "Click here to accept or type /guild accept " in message:
+                    messages = message
+                    send_discord_message(messages)
+                    send_minecraft_message(None, messages, "invite")
 
 
-            if " joined the guild!" in message:
-                messages = message
-                send_discord_message(messages)
-            
-            if " left the guild!" in message:
-                messages = message
-                send_discord_message(messages)
+                if " joined the guild!" in message:
+                    messages = message
+                    send_discord_message(messages)
+                
+                if " left the guild!" in message:
+                    messages = message
+                    send_discord_message(messages)
 
-            if " was promoted from " in message:
-                messages = message
-                send_discord_message(messages)
-            if " was demoted from " in message:
-                messages = message
-                send_discord_message(messages)
-            if " was kicked from the guild by " in message:
-                messages = message
-                send_discord_message(messages)
-            if "Disabled guild join/leave notifications!" in message:
-                messages = message
-                send_discord_message(messages)
-            if "Enabled guild join/leave notifications!" in message:
-                messages = message
-                send_discord_message(messages)
-            if "You cannot say the same message twice!" in message:
-                messages = message
-                send_discord_message(messages)
-            if "You don't have access to the officer chat!" in message:
-                messages = message
-                send_discord_message(messages)
+                if " was promoted from " in message:
+                    messages = message
+                    send_discord_message(messages)
+                if " was demoted from " in message:
+                    messages = message
+                    send_discord_message(messages)
+                if " was kicked from the guild by " in message:
+                    messages = message
+                    send_discord_message(messages)
+                if "Disabled guild join/leave notifications!" in message:
+                    messages = message
+                    send_discord_message(messages)
+                if "Enabled guild join/leave notifications!" in message:
+                    messages = message
+                    send_discord_message(messages)
+                if "You cannot say the same message twice!" in message:
+                    messages = message
+                    send_discord_message(messages)
+                if "You don't have access to the officer chat!" in message:
+                    messages = message
+                    send_discord_message(messages)
 
 
 
@@ -500,4 +493,17 @@ def send_discord_message(messages):
             json={"embed": embedVar.to_dict() }
             )
 
+def createbot():
+    global bot
+    bot = mineflayer.createBot({
+        "host": host,
+        "port": port,
+        "username": username,
+        "password": password,
+        "version": "1.8.9",
+        "auth": accountType
+    })
+    oncommands()
+
+createbot()
 asyncio.run(main())
