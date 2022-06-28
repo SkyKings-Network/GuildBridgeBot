@@ -31,6 +31,7 @@ token = data["discord"]["token"]
 channelid = data["discord"]["channel"]
 officerchannelid = data["discord"]["officerChannel"]
 commandRole = data["discord"]["commandRole"]
+overrideRole = data["discord"]["overrideRole"]
 ownerID = data["discord"]["ownerId"]
 prefix = data["discord"]["prefix"]
 
@@ -63,7 +64,7 @@ async def help(ctx):
     f"``{prefix}demote [username]``: Demotes the given user\n``{prefix}setrank [username] [rank]``: Sets the given user to a specific rank\n" +
     f"``{prefix}kick [username] <reason>``: Kicks the given user\n``{prefix}notifications``: Toggles join / leave notifications\n``{prefix}online``: Shows the online members\n" + 
     f"``{prefix}override <command>``: Forces the bot to use a given command\n``{prefix}toggleaccept``: Toggles auto accepting members joining the guild", inline=False)
-    embedVar.add_field(name="Info", value=f"Prefix: ``{prefix}``\nGuild Channel: <#{channelid}>\nCommand Role: <@&{commandRole}>\nVersion: ``0.1``", inline=False)
+    embedVar.add_field(name="Info", value=f"Prefix: ``{prefix}``\nGuild Channel: <#{channelid}>\nCommand Role: <@&{commandRole}>\nOverride Role: <@&{overrideRole}>\nVersion: ``0.2``", inline=False)
     embedVar.set_footer(text=f"Made by SkyKings")
     await ctx.send(embed=embedVar)
 
@@ -83,7 +84,8 @@ async def online(ctx):
 @client.command(aliases=['o', 'over'])  
 async def override(ctx, *, command):
     role = ctx.guild.get_role(int(commandRole))
-    if role in ctx.author.roles:
+    role2 = ctx.guild.get_role(int(overrideRole))
+    if role in ctx.author.roles and role2 in ctx.author.roles:
         bot.chat("/" + command)
         embedVar = discord.Embed(description = f"``/{command}`` has been sent!", colour=0x1ABC9C)
         await ctx.send(embed=embedVar)
