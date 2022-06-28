@@ -13,6 +13,7 @@
       "channel": "channelID",
       "officerChannel": "officerID",
       "commandRole": "roleID",
+      "overrideRole": "overrideRole",
       "ownerId": "ownerID",
       "prefix": "!"
     },
