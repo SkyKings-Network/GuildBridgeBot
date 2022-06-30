@@ -55,7 +55,8 @@ async def help(ctx):
     embedVar.add_field(name="Discord Commands", value=f"``{prefix}invite [username]``: Invites the user to the guild\n``{prefix}promote [username]``: Promotes the given user\n" +
     f"``{prefix}demote [username]``: Demotes the given user\n``{prefix}setrank [username] [rank]``: Sets the given user to a specific rank\n" +
     f"``{prefix}kick [username] <reason>``: Kicks the given user\n``{prefix}notifications``: Toggles join / leave notifications\n``{prefix}online``: Shows the online members\n" + 
-    f"``{prefix}override <command>``: Forces the bot to use a given command\n``{prefix}toggleaccept``: Toggles auto accepting members joining the guild", inline=False)
+    f"``{prefix}override <command>``: Forces the bot to use a given command\n``{prefix}toggleaccept``: Toggles auto accepting members joining the guild\n" +
+    f"``{prefix}mute (username) (time)`` - Mutes the user for a specific time\n``{prefix}unmute (username)`` - Unmutes the user", inline=False)
     embedVar.add_field(name="Info", value=f"Prefix: ``{prefix}``\nGuild Channel: <#{channelid}>\nCommand Role: <@&{commandRole}>\nOverride Role: <@&{overrideRole}>\nVersion: ``0.2``", inline=False)
     embedVar.set_footer(text=f"Made by SkyKings")
     await ctx.send(embed=embedVar)
@@ -172,6 +173,36 @@ async def promote(ctx, username):
         await ctx.send(embed=embedVar)
 
 @client.command()
+async def mute(ctx, username, time):
+    role = ctx.guild.get_role(int(commandRole))
+    if role in ctx.author.roles:
+        if username == None or time == None:
+            embedVar = discord.Embed(description = "Please enter a username and time! ``!mute (username) (time)")
+            await ctx.send(embed=embedVar)
+        else:
+            bot.chat("/g mute " + username + " " + time)
+            embedVar = discord.Embed(description = username + " has been muted for " + time)
+            await ctx.send(embed=embedVar)
+    else:
+        embedVar = discord.Embed(description = "<:x:930865879351189524> You do not have permission to use this command!")
+        await ctx.send(embed=embedVar)
+
+@client.command()
+async def unmute(ctx, username):
+    role = ctx.guild.get_role(int(commandRole))
+    if role in ctx.author.roles:
+        if username == None or time == None:
+            embedVar = discord.Embed(description = "Please enter a username! ``!unmute (username)")
+            await ctx.send(embed=embedVar)
+        else:
+            bot.chat("/g unmute " + username)
+            embedVar = discord.Embed(description = username + " has been unmuted")
+            await ctx.send(embed=embedVar)
+    else:
+        embedVar = discord.Embed(description = "<:x:930865879351189524> You do not have permission to use this command!")
+        await ctx.send(embed=embedVar)
+
+@client.command()
 async def setrank(ctx, username, rank):
     role = ctx.guild.get_role(int(commandRole))
     if role in ctx.author.roles:
@@ -241,7 +272,6 @@ def oncommands():
         botusername = bot.username
 
         bot.chat("/§")
-        send_discord_message("Bot Online")
 
     @On(bot, "end")
     def kicked(this, reason):
@@ -292,6 +322,7 @@ def oncommands():
                     wait_response = False
                     send_discord_message(messages)
                     messages = ""
+                    
 
                 if "Click here to accept or type /guild accept " in message:
                     messages = message
@@ -504,6 +535,9 @@ def createbot():
         "auth": accountType
     })
     oncommands()
+    bot.removeChatPattern("chat");
+    bot.removeChatPattern("whisper");
+    send_discord_message("Bot Online")
 
 createbot()
 asyncio.run(main())
