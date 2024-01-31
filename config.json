@@ -1,23 +1,22 @@
 {
-    "server": {
-      "host": "serverIP",
-      "port": 25565
-    },
-    "minecraft": {
-      "username": "email@gmail.com",
-      "password": "accountPassword",
-      "accountType": "mojang"
-    },
-    "discord": {
-      "token": "discordToken",
-      "channel": "channelID",
-      "officerChannel": "officerID",
-      "commandRole": "roleID",
-      "overrideRole": "overrideRole",
-      "ownerId": "ownerID",
-      "prefix": "!"
-    },
-    "settings": {
-      "autoaccept": false
-    }
+  "server": {
+    "host": "mc.hypixel.net",
+    "port": 25565
+  },
+  "minecraft": {
+    "username": "example@gmail.com",
+    "accountType": "microsoft"
+  },
+  "discord": {
+    "token": "",
+    "channel": "",
+    "officerChannel": "",
+    "commandRole": "",
+    "overrideRole": "",
+    "ownerId": "",
+    "prefix": "!"
+  },
+  "settings": {
+    "autoaccept": false
   }
+}

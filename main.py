@@ -11,8 +11,6 @@ from discord.ext import commands, tasks
 from discord.ext.commands import has_permissions, MissingPermissions
 from discord import Client, Intents, Embed
 
-
-
 from javascript import require, On
 mineflayer = require('mineflayer')
 
@@ -25,7 +23,6 @@ host = data["server"]["host"]
 port = data["server"]["port"]
 
 username = data["minecraft"]["username"]
-password = data["minecraft"]["password"]
 accountType = data["minecraft"]["accountType"]
 
 token = data["discord"]["token"]
@@ -98,7 +95,7 @@ async def relog(ctx, *, delay):
             embedVar = discord.Embed(description = "<:x:930865879351189524> You do not have permission to use this command!")
             await ctx.send(embed=embedVar)
     except KeyError:
-        print("YO SOME SHIT HAS GONE HORRIBLY WRONG")
+        print("Error")
 
         
 
@@ -270,6 +267,7 @@ def oncommands():
         print(bot.username)
         global botusername
         botusername = bot.username
+        print(bot.chatPatterns)
 
         bot.chat("/§")
 
@@ -288,7 +286,7 @@ def oncommands():
         print(reason)
         
     @On(bot, "messagestr")
-    def chat(this, message, messagePosition, jsonMsg):
+    def chat(this, message, messagePosition, jsonMsg, sender, verified):
         print(message)
         global wait_response
         global messages
@@ -530,13 +528,12 @@ def createbot():
         "host": host,
         "port": port,
         "username": username,
-        "password": password,
         "version": "1.8.9",
-        "auth": accountType
+        "auth": accountType,
+        "viewDistance": 1
     })
     oncommands()
-    bot.removeChatPattern("chat");
-    bot.removeChatPattern("whisper");
+
     send_discord_message("Bot Online")
 
 createbot()
