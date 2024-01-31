@@ -69,6 +69,10 @@ async def on_ready():
 async def online(ctx):
     bot.chat("/g online")
 
+@client.command()
+async def list(ctx):
+    bot.chat("/g list")
+
 @client.command(aliases=['o', 'over'])  
 async def override(ctx, *, command):
     role = ctx.guild.get_role(int(commandRole))
@@ -98,7 +102,6 @@ async def relog(ctx, *, delay):
         print("Error")
 
         
-
 @client.check
 async def on_command(ctx):
     print(ctx.command.qualified_name)
@@ -246,7 +249,7 @@ async def toggleaccept(ctx):
             embedVar = discord.Embed(description = ":white_check_mark: Auto accepting guild invites is now ``off``!")
             await ctx.send(embed=embedVar)
             data["settings"]["autoaccept"] = False
-            
+
         else:
             embedVar = discord.Embed(description = ":white_check_mark: Auto accepting guild invites is now ``on``!")
             await ctx.send(embed=embedVar)
@@ -260,9 +263,22 @@ async def toggleaccept(ctx):
         embedVar = discord.Embed(description = "<:x:930865879351189524> You do not have permission to use this command!")
         await ctx.send(embed=embedVar)
 
+@client.command()
+async def update(ctx):
+    role = ctx.guild.get_role(int(commandRole))
+    if role in ctx.author.roles:
+        os.system("git pull")
+        embedVar = discord.Embed(description = "Bot has been updated! Use ``pm2 restart (name)`` to update the bot.")
+        await ctx.send(embed=embedVar)
+    else:
+        embedVar = discord.Embed(description = "<:x:930865879351189524> You do not have permission to use this command!")
+        await ctx.send(embed=embedVar)
+    
+
 def oncommands():
     @On(bot, "login")
     def login(this):
+        send_discord_message("Bot Online")
         print("Bot is logged in.")
         print(bot.username)
         global botusername
@@ -278,6 +294,7 @@ def oncommands():
         print("Bot offline!")
         print(str(reason))
         print("Restarting...")
+        time.sleep(5.2)
 
         createbot()
 
@@ -287,7 +304,13 @@ def oncommands():
         
     @On(bot, "messagestr")
     def chat(this, message, messagePosition, jsonMsg, sender, verified):
-        print(message)
+        def print_message(message):
+            max_length = 100  # Maximum length of each chunk
+            chunks = [message[i:i+max_length] for i in range(0, len(message), max_length)]
+            for chunk in chunks:
+                print(chunk)
+
+        print_message(message)
         global wait_response
         global messages
         
@@ -316,7 +339,7 @@ def oncommands():
                     wait_response = True
                 if wait_response is True:
                     messages += "\n" + message
-                if "Offline Members:" in message and wait_response:
+                if "Online Members:" in message and wait_response:
                     wait_response = False
                     send_discord_message(messages)
                     messages = ""
@@ -533,8 +556,6 @@ def createbot():
         "viewDistance": 1
     })
     oncommands()
-
-    send_discord_message("Bot Online")
 
 createbot()
 asyncio.run(main())
