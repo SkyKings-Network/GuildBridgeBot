@@ -517,9 +517,9 @@ async def on_send_discord_message(message):
         message = message.split()
         if "You sent an offline invite to" in message:
             if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
-                playername = message[7]
+                playername = message[8]
             else:
-                playername = message[6]
+                playername = message[7]
         else:
             if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
                 playername = message[4]
