@@ -166,8 +166,8 @@ async def update(ctx):
         embedVar = discord.Embed(description=":white_check_mark: Rebooting Bot...")
         await ctx.send(embed=embedVar)
         os.system("git pull")
-        asyncio.sleep(10)
-        print("rebooting bot")
+        await asyncio.sleep(10)
+        print("Rebooting Bot (/update)")
         sys.exit()
 
     else:
