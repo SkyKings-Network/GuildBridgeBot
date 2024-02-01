@@ -639,7 +639,7 @@ def oncommands():
                     wait_response = False
                     client.dispatch("send_discord_message", "\n".join(message_buffer))
                     message_buffer.clear()
-                if "Unknown Command" in message:
+                if "Unknown command" in message:
                     client.dispatch("minecraft_pong", message)
                 if "Click here to accept or type /guild accept " in message:
                     client.dispatch("send_discord_message", message)
