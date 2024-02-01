@@ -11,7 +11,6 @@ from discord.ext import commands, tasks
 from discord.ext.commands import has_permissions, MissingPermissions
 from discord import Client, Intents, Embed
 from redis_handler import RedisManager
-import cProfile
 
 import sys
 from javascript import require, On
@@ -160,6 +159,20 @@ async def on_message(message):
                 send_minecraft_message(discord, message.content, "Officer")
     await client.process_commands(message)
 
+@client.command()
+async def update(ctx):
+    role = ctx.guild.get_role(int(overrideRole))
+    if role in ctx.author.roles:
+        embedVar = discord.Embed(description=":white_check_mark: Rebooting Bot...")
+        await ctx.send(embed=embedVar)
+        os.system("git pull")
+        asyncio.sleep(10)
+        print("rebooting bot")
+        sys.exit()
+
+    else:
+        embedVar = discord.Embed(description="<:x:930865879351189524> You do not have permission to use this command!")
+        await ctx.send(embed=embedVar)
 
 @client.command()
 async def invite(ctx, username):
@@ -712,4 +725,3 @@ def createbot():
     oncommands()
     
 asyncio.run(main())
-cProfile.run("main()", sort="cumulative")
