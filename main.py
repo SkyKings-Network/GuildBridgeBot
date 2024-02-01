@@ -551,7 +551,7 @@ async def on_send_discord_message(message):
 
         await channel.send(embed=embedVar)
 
-        client.dispatch("hypixel_guild_member_invite_failed", playername, "already in a guild")
+        client.dispatch("hypixel_guild_member_invite_failed", playername)
 
     elif "You cannot invite this player to your guild!" in message:
         embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
@@ -561,7 +561,7 @@ async def on_send_discord_message(message):
 
         await channel.send(embed=embedVar)
 
-        client.dispatch("hypixel_guild_member_invite_failed", None, "invites disabled")
+        client.dispatch("hypixel_guild_member_invite_failed", None)
 
     else:
         if "Offline Members:" in message:

@@ -99,28 +99,28 @@ class RedisManager:
             return {"success": True}
         elif message_data["endpoint"] == "invite":
             self.mineflayer_bot.chat("/g invite " + message_data["data"]["username"])
-            try:
-                # wait for hypixel_guild_member_invite_failed or hypixel_guild_member_invite
-                # return on first completed event
-                chk = lambda x: x.lower() == message_data["data"]["username"].lower()
-                returned = await asyncio.wait(
-                    [
-                        self.bot.wait_for(
-                            "hypixel_guild_member_invite_failed", timeout=10,
-                            check=chk,
-                        ),
-                        self.bot.wait_for(
-                            "hypixel_guild_member_invite", timeout=10,
-                            check=chk,
-                        )
-                    ],
-                    return_when=asyncio.FIRST_COMPLETED,
-                    timeout=10,
-                )
-
-            except asyncio.TimeoutError:
+            # wait for hypixel_guild_member_invite_failed or hypixel_guild_member_invite
+            # return on first completed event
+            chk = lambda x: x.lower() == message_data["data"]["username"].lower()
+            returned = await asyncio.wait(
+                [
+                    asyncio.Task(self.bot.wait_for(
+                        "hypixel_guild_member_invite_failed", timeout=10,
+                        check=chk,
+                    ), name="invite_failed"),
+                    asyncio.Task(self.bot.wait_for(
+                        "hypixel_guild_member_invite", timeout=10,
+                        check=chk,
+                    ), name="invite_success")
+                ],
+                return_when=asyncio.FIRST_COMPLETED,
+                timeout=10,
+            )
+            if len(returned[0]) == 0:
                 return {"success": False, "error": "timeout"}
-            return {"success": True}
+            if returned[0].pop().get_name() == "invite_success":
+                return {"success": True}
+            return {"success": False, "error": "invite failed"}
 
         return {"success": False, "error": "invalid endpoint"}
 
