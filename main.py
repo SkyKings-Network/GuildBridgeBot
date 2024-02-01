@@ -651,7 +651,6 @@ def createbot():
     oncommands()
     bot.removeChatPattern("chat")
     bot.removeChatPattern("whisper")
-    client.dispatch("send_discord_message", "Bot Online")
     
     
 asyncio.run(main())
