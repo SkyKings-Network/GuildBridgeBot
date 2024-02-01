@@ -701,6 +701,7 @@ def createbot():
             "version": "1.8.9",
             "auth": accountType,
             "viewDistance": "tiny",
+            "version": False
         }
     )
     client.redis_manager.mineflayer_bot = bot
