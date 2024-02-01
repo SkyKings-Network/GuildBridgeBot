@@ -546,9 +546,9 @@ async def on_send_discord_message(message):
                 playername = message[7]
         else:
             if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
-                playername = message[4]
-            else:
                 playername = message[3]
+            else:
+                playername = message[2]
 
         embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
         embedVar.set_author(
