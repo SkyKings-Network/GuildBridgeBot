@@ -532,7 +532,7 @@ async def on_send_discord_message(message):
     elif " is already in another guild!" in message:
         message = message.split()
         if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
-            playername = message[0]
+            playername = message[1]
         else:
             playername = message[0]
 
