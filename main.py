@@ -10,6 +10,7 @@ from discord.client import Client
 from discord.ext import commands, tasks
 from discord.ext.commands import has_permissions, MissingPermissions
 from discord import Client, Intents, Embed
+import subprocess
 from redis_handler import RedisManager
 
 import sys
@@ -168,7 +169,8 @@ async def update(ctx):
         os.system("git pull")
         await asyncio.sleep(10)
         print("Rebooting Bot (/update)")
-        sys.exit()
+        # sys.exit()
+        # sys exit doesnt shut down bot
 
     else:
         embedVar = discord.Embed(description="<:x:930865879351189524> You do not have permission to use this command!")
@@ -176,6 +178,24 @@ async def update(ctx):
 
 @client.command()
 async def invite(ctx, username):
+    def get_pm2_process_name():
+        try:
+            result = subprocess.run(['pm2', 'j', 'list'], capture_output=True, text=True)
+            process_list = json.loads(result.stdout)
+            
+            # Assuming there is only one process managed by PM2
+            if process_list and 'name' in process_list[0]:
+                return process_list[0]['name']
+
+        except Exception as e:
+            print(f"Error getting PM2 process name: {e}")
+
+        return None
+
+    # Example usage:
+    pm2_process_name = get_pm2_process_name()
+    print(f"PM2 Process Name: {pm2_process_name}")
+
     role = ctx.guild.get_role(int(commandRole))
     if role in ctx.author.roles:
         if username is None:
