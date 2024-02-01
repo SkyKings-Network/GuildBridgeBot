@@ -152,8 +152,10 @@ async def on_message(message):
         print("2")
         if message.channel.id == int(channelid):
             if str(message.content).startswith(prefix):
+                print("4")
                 pass
             else:
+                print("5")
                 discord = message.author.name
                 send_minecraft_message(discord, message.content, "General")
         if message.channel.id == int(officerchannelid):
