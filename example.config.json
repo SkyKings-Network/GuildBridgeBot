@@ -16,6 +16,14 @@
       "ownerId": "",
       "prefix": "!"
     },
+    "redis": {
+      "host": "redisIP",
+      "port": 6379,
+      "password": "redisPassword",
+      "clientName": "clientName",
+      "recieveChannel": "bridge-bot",
+      "sendChannel": "bridge-bot-control"
+    },
     "settings": {
       "autoaccept": false
     }
