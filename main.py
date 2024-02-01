@@ -695,9 +695,14 @@ def oncommands():
 
 def send_minecraft_message(discord, message, type):
     if type == "General":
-        bot.chat("/gchat " + str(discord) + ": " + str(message))
+        message_text = f"/gchat {discord}: {message}"
+        message_text = message_text[:256]
+        bot.chat(message_text)
     if type == "Officer":
-        bot.chat("/ochat " + str(discord) + ": " + str(message))
+        message_text = f"/ochat {discord}: {message}"
+        message_text = message_text[:256]
+        bot.chat(message_text)
+
     if type == "invite":
         if autoaccept:
             message = message.split()
