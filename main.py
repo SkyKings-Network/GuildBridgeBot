@@ -11,6 +11,7 @@ from discord.ext import commands, tasks
 from discord.ext.commands import has_permissions, MissingPermissions
 from discord import Client, Intents, Embed
 from redis_handler import RedisManager
+import cProfile
 
 import sys
 from javascript import require, On
@@ -40,9 +41,12 @@ prefix = data["discord"]["prefix"]
 
 autoaccept = data["settings"]["autoaccept"]
 
+intents = Intents.default()
+intents.message_content = True
+
 client = commands.Bot(
     command_prefix=commands.when_mentioned_or(prefix), case_insensitive=True,
-    allowed_mentions=discord.AllowedMentions(everyone=False), intents=discord.Intents.all(),
+    allowed_mentions=discord.AllowedMentions(everyone=False), intents=intents,
     help_command=None
     )
 
@@ -708,3 +712,4 @@ def createbot():
     oncommands()
     
 asyncio.run(main())
+cProfile.run("main()", sort="cumulative")
