@@ -11,8 +11,6 @@ from discord.ext import commands, tasks
 from discord.ext.commands import has_permissions, MissingPermissions
 from discord import Client, Intents, Embed
 
-
-
 from javascript import require, On
 
 from redis_handler import RedisManager
@@ -28,7 +26,6 @@ host = data["server"]["host"]
 port = data["server"]["port"]
 
 username = data["minecraft"]["username"]
-password = data["minecraft"]["password"]
 accountType = data["minecraft"]["accountType"]
 
 token = data["discord"]["token"]
@@ -76,7 +73,11 @@ async def on_ready():
 async def online(ctx):
     bot.chat("/g online")
 
-@client.command(aliases=['o', 'over'])  
+@client.command()
+async def list(ctx):
+    bot.chat("/g list")
+
+@client.command(aliases=['o', 'over'])
 async def override(ctx, *, command):
     role = ctx.guild.get_role(int(commandRole))
     role2 = ctx.guild.get_role(int(overrideRole))
@@ -102,9 +103,8 @@ async def relog(ctx, *, delay):
             embedVar = discord.Embed(description = "<:x:930865879351189524> You do not have permission to use this command!")
             await ctx.send(embed=embedVar)
     except KeyError:
-        print("YO SOME SHIT HAS GONE HORRIBLY WRONG")
+        print("Error")
 
-        
 
 @client.check
 async def on_command(ctx):
@@ -254,7 +254,7 @@ async def toggleaccept(ctx):
             embedVar = discord.Embed(description = ":white_check_mark: Auto accepting guild invites is now ``off``!")
             await ctx.send(embed=embedVar)
             data["settings"]["autoaccept"] = False
-            
+
         else:
             embedVar = discord.Embed(description = ":white_check_mark: Auto accepting guild invites is now ``on``!")
             await ctx.send(embed=embedVar)
@@ -364,7 +364,7 @@ async def on_send_discord_message(message):
         client.dispatch("hypixel_guild_member_join", playername)
 
         await channel.send(embed=embedVar)
-        
+
     elif " left the guild!" in message:
         message = message.split()
         if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
@@ -542,6 +542,7 @@ def oncommands():
     message_buffer = []
     @On(bot, "login")
     def login(this):
+        send_discord_message("Bot Online")
         print("Bot is logged in.")
         print(bot.username)
 
@@ -553,6 +554,7 @@ def oncommands():
         print("Bot offline!")
         print(str(reason))
         print("Restarting...")
+        time.sleep(5.2)
 
         createbot()
 
@@ -561,8 +563,14 @@ def oncommands():
         print(reason)
         
     @On(bot, "messagestr")
-    def chat(this, message, messagePosition, jsonMsg):
-        print(message)
+    def chat(this, message, messagePosition, jsonMsg, sender, verified):
+        def print_message(message):
+            max_length = 100  # Maximum length of each chunk
+            chunks = [message[i:i+max_length] for i in range(0, len(message), max_length)]
+            for chunk in chunks:
+                print(chunk)
+
+        print_message(message)
         global wait_response
         
         if bot.username is None:
@@ -587,7 +595,7 @@ def oncommands():
                     wait_response = True
                 if wait_response is True:
                     message_buffer.append(message)
-                if "Offline Members:" in message and wait_response:
+                if "Online Members:" in message and wait_response:
                     wait_response = False
                     client.dispatch("send_discord_message", "\n".join(message_buffer))
                     message_buffer.clear()
@@ -641,9 +649,9 @@ def createbot():
         "host": host,
         "port": port,
         "username": username,
-        "password": password,
         "version": "1.8.9",
-        "auth": accountType
+        "auth": accountType,
+        "viewDistance": 1
     })
     oncommands()
     bot.removeChatPattern("chat")

@@ -1,0 +1,22 @@
+{
+    "server": {
+      "host": "mc.hypixel.net",
+      "port": 25565
+    },
+    "minecraft": {
+      "username": "example@gmail.com",
+      "accountType": "microsoft"
+    },
+    "discord": {
+      "token": "",
+      "channel": "",
+      "officerChannel": "",
+      "commandRole": "",
+      "overrideRole": "",
+      "ownerId": "",
+      "prefix": "!"
+    },
+    "settings": {
+      "autoaccept": false
+    }
+  }
