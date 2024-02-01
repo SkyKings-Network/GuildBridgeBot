@@ -512,12 +512,19 @@ async def on_send_discord_message(message):
 
         client.dispatch("hypixel_guild_message_send_failed", message)
 
-    elif "You invited" in message and "to your guild. They have 5 minutes to accept." in message:
+    elif "You invited" in message and "to your guild. They have 5 minutes to accept." in message or \
+            "You sent an offline invite to" in message:
         message = message.split()
-        if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
-            playername = message[4]
+        if "You sent an offline invite to" in message:
+            if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
+                playername = message[7]
+            else:
+                playername = message[6]
         else:
-            playername = message[3]
+            if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
+                playername = message[4]
+            else:
+                playername = message[3]
 
         embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
         embedVar.set_author(
@@ -544,7 +551,7 @@ async def on_send_discord_message(message):
 
         await channel.send(embed=embedVar)
 
-        client.dispatch("hypixel_guild_member_invite_failed", playername)
+        client.dispatch("hypixel_guild_member_invite_failed", playername, "already in a guild")
 
     elif "You cannot invite this player to your guild!" in message:
         embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
@@ -554,7 +561,7 @@ async def on_send_discord_message(message):
 
         await channel.send(embed=embedVar)
 
-        client.dispatch("hypixel_guild_member_invite_failed", None)
+        client.dispatch("hypixel_guild_member_invite_failed", None, "invites disabled")
 
     else:
         if "Offline Members:" in message:
