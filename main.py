@@ -31,11 +31,11 @@ accountusername = data["minecraft"]["username"]
 accountType = data["minecraft"]["accountType"]
 
 token = data["discord"]["token"]
-channelid = data["discord"]["channel"]
-officerchannelid = data["discord"]["officerChannel"]
-commandRole = data["discord"]["commandRole"]
-overrideRole = data["discord"]["overrideRole"]
-ownerID = data["discord"]["ownerId"]
+channelid = int(data["discord"]["channel"])
+officerchannelid = int(data["discord"]["officerChannel"])
+commandRole = int(data["discord"]["commandRole"])
+overrideRole = int(data["discord"]["overrideRole"])
+ownerID = int(data["discord"]["ownerId"])
 prefix = data["discord"]["prefix"]
 
 autoaccept = data["settings"]["autoaccept"]
