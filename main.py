@@ -537,6 +537,7 @@ async def on_send_discord_message(message):
         client.dispatch("hypixel_guild_message_send_failed", message)
 
     elif ("You invited" in message and "to your guild. They have 5 minutes to accept." in message) or "You sent an offline invite to" in message:
+        print("yes!")
         message = message.split()
         if "You sent an offline invite to" in message:
             if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
