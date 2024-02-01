@@ -106,7 +106,7 @@ class RedisManager:
         return {"success": False, "error": "invalid endpoint"}
 
     async def reader(self):
-        self.redis = redis.Redis(host=self.config["host"], password=self.config["port"])
+        self.redis = redis.Redis(host=self.config["host"], password=self.config["password"], port=self.config["port"])
         async with self.redis.pubsub() as pubsub:
             channel = self.recieve_channel + ":" + self.client_name
             await pubsub.subscribe(channel)
