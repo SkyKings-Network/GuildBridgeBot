@@ -3,6 +3,7 @@ import json
 import uuid
 import redis.asyncio as redis
 
+
 class RedisManager:
     def __init__(self, bot, mineflayer_bot, config):
         self.read_task: asyncio.Task = None  # type: ignore
@@ -47,7 +48,9 @@ class RedisManager:
             # TODO: write a success check for this
             return {"success": True}
         elif message_data["endpoint"] == "setrank":
-            self.mineflayer_bot.chat("/g setrank " + message_data["data"]["username"] + " " + message_data["data"]["rank"])
+            self.mineflayer_bot.chat(
+                "/g setrank " + message_data["data"]["username"] + " " + message_data["data"]["rank"]
+                )
             # wait for either hypixel_guild_member_promote or hypixel_guild_member_demote
             # return on first completed event
             chk = lambda x, f, t: (x.lower() == message_data["data"]["username"].lower() and
@@ -97,9 +100,22 @@ class RedisManager:
         elif message_data["endpoint"] == "invite":
             self.mineflayer_bot.chat("/g invite " + message_data["data"]["username"])
             try:
-                await self.bot.wait_for(
-                    "hypixel_guild_member_invite", timeout=10,
-                    check=lambda x: x.lower() == message_data["data"]["username"].lower(),
+                # wait for hypixel_guild_member_invite_failed or hypixel_guild_member_invite
+                # return on first completed event
+                chk = lambda x: x.lower() == message_data["data"]["username"].lower()
+                await asyncio.wait(
+                    [
+                        self.bot.wait_for(
+                            "hypixel_guild_member_invite_failed", timeout=10,
+                            check=chk,
+                        ),
+                        self.bot.wait_for(
+                            "hypixel_guild_member_invite", timeout=10,
+                            check=chk,
+                        )
+                    ],
+                    return_when=asyncio.FIRST_COMPLETED,
+                    timeout=10,
                 )
             except asyncio.TimeoutError:
                 return {"success": False, "error": "timeout"}
