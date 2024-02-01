@@ -169,7 +169,7 @@ async def update(ctx):
         os.system("git pull")
         await asyncio.sleep(10)
         print("Rebooting Bot (/update)")
-        # sys.exit()
+        sys.exit()
         # sys exit doesnt shut down bot
 
     else:
@@ -178,28 +178,6 @@ async def update(ctx):
 
 @client.command()
 async def invite(ctx, username):
-    def get_pm2_process_name():
-        try:
-            result = subprocess.run(['pm2', 'j', 'list'], capture_output=True, text=True)
-            
-            # Print the raw output from the command
-            print(f"Raw PM2 List Output: {result.stdout}")
-            
-            process_list = json.loads(result.stdout)
-            
-            # Assuming there is only one process managed by PM2
-            if process_list and 'name' in process_list[0]:
-                return process_list[0]['name']
-
-        except Exception as e:
-            print(f"Error getting PM2 process name: {e}")
-
-        return None
-
-    # Example usage:
-    pm2_process_name = get_pm2_process_name()
-    print(f"PM2 Process Name: {pm2_process_name}")
-
     role = ctx.guild.get_role(int(commandRole))
     if role in ctx.author.roles:
         if username is None:
