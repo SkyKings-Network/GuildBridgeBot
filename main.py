@@ -688,12 +688,11 @@ def createbot():
             "port": port,
             "username": accountusername,
             "version": "1.8.9",
-            "auth": accountType
+            "auth": accountType,
+            "viewDistance": "tiny",
         }
     )
     oncommands()
-    bot.removeChatPattern("chat")
-    bot.removeChatPattern("whisper")
     
     
 asyncio.run(main())
