@@ -51,11 +51,13 @@ mkdir bridges/bridgebots/<NAME_OF_GUILD>-Bridgebot
 
 cp -r GuildBridgeBot/ bridges/bridgebots/<NAME_OF_GUILD>-Bridgebot/
 
+cd bridges/bridgebots/<NAME_OF_GUILD>-Bridgebot/GuildBridgeBot/
+
 nano config.json
 
 pip install -r requirements.txt
 
-pm2 start main.py --name index
+pm2 start main.py --name index --interpreter python3
 
 # Setting Up IPC Server
 (For jack only)
