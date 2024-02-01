@@ -204,7 +204,7 @@ async def kick(ctx, username, reason):
             embedVar = discord.Embed(description="Please enter a username and a reason!")
             await ctx.send(embed=embedVar)
         if username is not None:
-            bot.chat("/g kick " + username)
+            bot.chat("/g kick " + username + "" + reason)
             embedVar = discord.Embed(description=username + " has been kicked for " + reason + "!")
             await ctx.send(embed=embedVar)
     else:

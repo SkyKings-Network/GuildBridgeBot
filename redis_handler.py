@@ -30,7 +30,7 @@ class RedisManager:
                 return {"success": False, "error": "timeout"}
             return {"success": True}
         elif message_data["endpoint"] == "kick":
-            self.mineflayer_bot.chat("/g kick " + message_data["data"]["username"])
+            self.mineflayer_bot.chat("/g kick " + message_data["data"]["username"] + " " + message_data["data"]["reason"])
             try:
                 await self.bot.wait_for(
                     "hypixel_guild_member_kick", timeout=10,
