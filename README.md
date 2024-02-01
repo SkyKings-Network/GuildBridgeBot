@@ -2,6 +2,7 @@
 
 # To Do
 
+[-] Make IPC server not turn on if disabled in config
 [-] Make seperate files for everything
 [-] Make !update fully update it and restart
 [-] Add api for bots to connect
@@ -55,3 +56,8 @@ nano config.json
 pip install -r requirements.txt
 
 pm2 start main.py --name index
+
+# Setting Up IPC Server
+(For jack only)
+
+Set client name to correct name

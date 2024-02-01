@@ -707,5 +707,4 @@ def createbot():
     client.redis_manager.mineflayer_bot = bot
     oncommands()
     
-    
 asyncio.run(main())
