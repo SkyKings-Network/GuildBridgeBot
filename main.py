@@ -4,7 +4,6 @@ import discord
 import time
 from typing import Any
 import os
-import requests
 import asyncio
 from datetime import datetime
 from discord.client import Client
