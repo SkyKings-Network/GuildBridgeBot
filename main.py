@@ -12,6 +12,7 @@ from discord.ext.commands import has_permissions, MissingPermissions
 from discord import Client, Intents, Embed
 from redis_handler import RedisManager
 
+import sys
 from javascript import require, On
 
 from redis_handler import RedisManager
@@ -598,11 +599,13 @@ def oncommands():
     @On(bot, "end")
     def kicked(this, reason):
         client.dispatch("send_discord_message", "Bot Offline")
+        time.sleep(30)
         print("Bot offline!")
-        print(str(reason))
-        print("Restarting...")
-
-        createbot()
+        sys.exit()
+        
+        # print(str(reason))
+        # print("Restarting...")
+        # createbot()
 
     @On(bot, "error")
     def error(this, reason):
