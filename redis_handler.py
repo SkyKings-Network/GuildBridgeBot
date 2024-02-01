@@ -107,7 +107,7 @@ class RedisManager:
 
     async def reader(self):
         self.redis = redis.Redis(host=self.config["host"], password=self.config["port"])
-        async with self.bot.redis.pubsub() as pubsub:
+        async with self.redis.pubsub() as pubsub:
             channel = self.recieve_channel + ":" + self.client_name
             await pubsub.subscribe(channel)
             print(f"Subscribed to {channel}")
@@ -174,7 +174,7 @@ class RedisManager:
         if "type" not in data:
             data["type"] = "request"
         data["source"] = self.client_name
-        await self.bot.redis.publish(self.send_channel, json.dumps(data))
+        await self.redis.publish(self.send_channel, json.dumps(data))
         return data["uuid"]
 
     async def request(self, endpoint: str, **data):
