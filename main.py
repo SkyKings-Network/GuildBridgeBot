@@ -31,11 +31,11 @@ accountusername = data["minecraft"]["username"]
 accountType = data["minecraft"]["accountType"]
 
 token = data["discord"]["token"]
-channelid = data["discord"]["channel"]
-officerchannelid = data["discord"]["officerChannel"]
-commandRole = data["discord"]["commandRole"]
-overrideRole = data["discord"]["overrideRole"]
-ownerID = data["discord"]["ownerId"]
+channelid = int(data["discord"]["channel"]) if data["discord"]["channel"] else None
+officerchannelid = int(data["discord"]["officerChannel"]) if data["discord"]["officerChannel"] else None
+commandRole = int(data["discord"]["commandRole"]) if data["discord"]["commandRole"] else None
+overrideRole = int(data["discord"]["overrideRole"]) if data["discord"]["overrideRole"] else None
+ownerID = int(data["discord"]["ownerId"]) if data["discord"]["ownerId"] else None
 prefix = data["discord"]["prefix"]
 
 autoaccept = data["settings"]["autoaccept"]
@@ -285,257 +285,261 @@ async def toggleaccept(ctx):
 
 @client.event
 async def on_send_discord_message(message):
-    channel = client.get_channel(channelid)
-    if message.startswith("Guild >"):
-        message = message.replace("Guild >", "")
-        if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
-            if "]:" in message:
-                memberusername = message.split()[1]
+    try:
+        print("ye")
+        channel = client.get_channel(channelid)
+        if message.startswith("Guild >"):
+            message = message.replace("Guild >", "")
+            if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
+                if "]:" in message:
+                    memberusername = message.split()[1]
+                else:
+                    memberusername = message.split()[1][:-1]
             else:
-                memberusername = message.split()[1][:-1]
-        else:
-            if "]:" in message:
-                memberusername = message.split()[0]
-            else:
-                memberusername = message.split()[0][:-1]
+                if "]:" in message:
+                    memberusername = message.split()[0]
+                else:
+                    memberusername = message.split()[0][:-1]
 
-        if " joined." in message:
-            embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x56F98A)
-            embedVar.set_author(name=message, icon_url="https://www.mc-heads.net/avatar/" + memberusername)
-        elif " left." in message:
-            embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0xFF6347)
-            embedVar.set_author(name=message, icon_url="https://www.mc-heads.net/avatar/" + memberusername)
-        else:
+            if " joined." in message:
+                embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x56F98A)
+                embedVar.set_author(name=message, icon_url="https://www.mc-heads.net/avatar/" + memberusername)
+            elif " left." in message:
+                embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0xFF6347)
+                embedVar.set_author(name=message, icon_url="https://www.mc-heads.net/avatar/" + memberusername)
+            else:
+                message = message.split(":", maxsplit=1)
+                message = message[1]
+
+                embedVar = Embed(description=message, timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+                embedVar.set_author(name=memberusername, icon_url="https://www.mc-heads.net/avatar/" + memberusername)
+
+                client.dispatch("hypixel_guild_message", memberusername, message)
+
+            await channel.send(embed=embedVar)
+
+        elif message.startswith("Officer >"):
+            message = message.replace("Officer >", "")
+            if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
+                if "]:" in message:
+                    memberusername = message.split()[1]
+                else:
+                    memberusername = message.split()[1][:-1]
+            else:
+                if "]:" in message:
+                    memberusername = message.split()[0]
+                else:
+                    memberusername = message.split()[0][:-1]
             message = message.split(":", maxsplit=1)
             message = message[1]
 
             embedVar = Embed(description=message, timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
             embedVar.set_author(name=memberusername, icon_url="https://www.mc-heads.net/avatar/" + memberusername)
 
-            client.dispatch("hypixel_guild_message", memberusername, message)
-
-        await channel.send(embed=embedVar)
-
-    elif message.startswith("Officer >"):
-        message = message.replace("Officer >", "")
-        if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
-            if "]:" in message:
-                memberusername = message.split()[1]
-            else:
-                memberusername = message.split()[1][:-1]
-        else:
-            if "]:" in message:
-                memberusername = message.split()[0]
-            else:
-                memberusername = message.split()[0][:-1]
-        message = message.split(":", maxsplit=1)
-        message = message[1]
-
-        embedVar = Embed(description=message, timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-        embedVar.set_author(name=memberusername, icon_url="https://www.mc-heads.net/avatar/" + memberusername)
-
-        client.dispatch("hypixel_guild_officer_message", memberusername, message)
-
-        await channel.send(embed=embedVar)
-
-    elif "Click here to accept or type /guild accept " in message:
-        if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
-            playername = message.split()[2]
-        else:
-            playername = message.split()[1]
-
-        embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-        embedVar.set_author(name=f"{playername} has requested to join the guild.", icon_url="https://www.mc-heads.net/avatar/" + playername)
-
-        client.dispatch("hypixel_guild_join_request", playername)
-
-        await channel.send(embed=embedVar)
-
-    elif " joined the guild!" in message:
-        message = message.split()
-        if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
-            playername = message[1]
-        else:
-            playername = message[0]
-
-        embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-        embedVar.set_author(name=f"{playername} has joined the guild!", icon_url="https://www.mc-heads.net/avatar/" + playername)
-
-        client.dispatch("hypixel_guild_member_join", playername)
-
-        await channel.send(embed=embedVar)
-        
-    elif " left the guild!" in message:
-        message = message.split()
-        if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
-            playername = message[1]
-        else:
-            playername = message[0]
-
-        embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-        embedVar.set_author(name=f"{playername} has left the guild!", icon_url="https://www.mc-heads.net/avatar/" + playername)
-
-        await channel.send(embed=embedVar)
-
-        client.dispatch("hypixel_guild_member_leave", playername)
-
-    elif " was promoted from " in message:
-        message = message.split()
-        if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
-            playername = message[1]
-        else:
-            playername = message[0]
-
-        from_rank = message[-3]
-        to_rank = message[-1]
-
-        embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-        embedVar.set_author(
-            name=f"{playername} has been promoted from {from_rank} to {to_rank}!",
-            icon_url="https://www.mc-heads.net/avatar/" + playername
-        )
-
-        await channel.send(embed=embedVar)
-
-        client.dispatch("hypixel_guild_member_promote", playername, from_rank, to_rank)
-
-    elif " was demoted from " in message:
-        message = message.split()
-        if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
-            playername = message[1]
-        else:
-            playername = message[0]
-
-        from_rank = message[-3]
-        to_rank = message[-1]
-
-        embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-        embedVar.set_author(
-            name=f"{playername} has been demoted from {from_rank} to {to_rank}!",
-            icon_url="https://www.mc-heads.net/avatar/" + playername
-        )
-
-        await channel.send(embed=embedVar)
-
-        client.dispatch("hypixel_guild_member_demote", playername, from_rank, to_rank)
-
-    elif " was kicked from the guild!" in message:
-        message = message.split()
-        if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
-            playername = message[1]
-        else:
-            playername = message[0]
-
-        embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-        embedVar.set_author(
-            name=f"{playername} was kicked from the guild!",
-            icon_url="https://www.mc-heads.net/avatar/" + playername
-        )
-
-        await channel.send(embed=embedVar)
-
-        client.dispatch("hypixel_guild_member_kick", playername)
-
-    elif " was kicked from the guild by " in message:
-        message = message.split()
-        if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
-            playername = message[1]
-        else:
-            playername = message[0]
-
-        embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-        embedVar.set_author(
-            name=f"{playername} was kicked from the guild!",
-            icon_url="https://www.mc-heads.net/avatar/" + playername
-        )
-
-        await channel.send(embed=embedVar)
-
-        client.dispatch("hypixel_guild_member_kick", playername)
-
-    elif "Disabled guild join/leave notifications!" in message:
-        embedVar = Embed(description="Disabled guild join/leave notifications!", colour=0x1ABC9C)
-        await channel.send(embed=embedVar)
-
-    elif "Enabled guild join/leave notifications!" in message:
-        embedVar = Embed(description="Enabled guild join/leave notifications!", colour=0x1ABC9C)
-        await channel.send(embed=embedVar)
-
-    elif "You cannot say the same message twice!" in message:
-        embedVar = Embed(description="You cannot say the same message twice!", colour=0x1ABC9C)
-        await channel.send(embed=embedVar)
-
-        client.dispatch("hypixel_guild_message_send_failed", message)
-
-    elif "You don't have access to the officer chat!" in message:
-        embedVar = Embed(description="You don't have access to the officer chat!", colour=0x1ABC9C)
-        await channel.send(embed=embedVar)
-
-        client.dispatch("hypixel_guild_message_send_failed", message)
-
-    elif "You invited" in message and "to your guild. They have 5 minutes to accept." in message:
-        message = message.split()
-        if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
-            playername = message[4]
-        else:
-            playername = message[3]
-
-        embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-        embedVar.set_author(
-            name=f"{playername} has been invited to the guild!",
-            icon_url="https://www.mc-heads.net/avatar/" + playername
-        )
-
-        await channel.send(embed=embedVar)
-
-        client.dispatch("hypixel_guild_member_invite", playername)
-
-    elif " is already in another guild!" in message:
-        message = message.split()
-        if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
-            playername = message[0]
-        else:
-            playername = message[0]
-
-        embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-        embedVar.set_author(
-            name=f"{playername} is already in another guild!",
-            icon_url="https://www.mc-heads.net/avatar/" + playername
-        )
-
-        await channel.send(embed=embedVar)
-
-        client.dispatch("hypixel_guild_member_invite_failed", playername)
-
-    elif "You cannot invite this player to your guild!" in message:
-        embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-        embedVar.set_author(
-            name=f"You cannot invite this player to your guild!",
-        )
-
-        await channel.send(embed=embedVar)
-
-        client.dispatch("hypixel_guild_member_invite_failed", None)
-
-    else:
-        if "Offline Members:" in message:
-            message = re.split("--", message)
-            embed = ""
-            length = len(message)
-            for i in range(length):
-                if i == 0:
-                    pass
-                elif i % 2 == 0:
-                    ii = i - 1
-                    embed += "**" + message[ii] + "** " + message[i]
-
-            embedVar = Embed(description=embed, colour=0x1ABC9C)
-            await channel.send(embed=embedVar)
-
-        else:
-            embedVar = Embed(description=message, colour=0x1ABC9C)
+            client.dispatch("hypixel_guild_officer_message", memberusername, message)
 
             await channel.send(embed=embedVar)
+
+        elif "Click here to accept or type /guild accept " in message:
+            if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
+                playername = message.split()[2]
+            else:
+                playername = message.split()[1]
+
+            embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+            embedVar.set_author(name=f"{playername} has requested to join the guild.", icon_url="https://www.mc-heads.net/avatar/" + playername)
+
+            client.dispatch("hypixel_guild_join_request", playername)
+
+            await channel.send(embed=embedVar)
+
+        elif " joined the guild!" in message:
+            message = message.split()
+            if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
+                playername = message[1]
+            else:
+                playername = message[0]
+
+            embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+            embedVar.set_author(name=f"{playername} has joined the guild!", icon_url="https://www.mc-heads.net/avatar/" + playername)
+
+            client.dispatch("hypixel_guild_member_join", playername)
+
+            await channel.send(embed=embedVar)
+            
+        elif " left the guild!" in message:
+            message = message.split()
+            if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
+                playername = message[1]
+            else:
+                playername = message[0]
+
+            embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+            embedVar.set_author(name=f"{playername} has left the guild!", icon_url="https://www.mc-heads.net/avatar/" + playername)
+
+            await channel.send(embed=embedVar)
+
+            client.dispatch("hypixel_guild_member_leave", playername)
+
+        elif " was promoted from " in message:
+            message = message.split()
+            if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
+                playername = message[1]
+            else:
+                playername = message[0]
+
+            from_rank = message[-3]
+            to_rank = message[-1]
+
+            embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+            embedVar.set_author(
+                name=f"{playername} has been promoted from {from_rank} to {to_rank}!",
+                icon_url="https://www.mc-heads.net/avatar/" + playername
+            )
+
+            await channel.send(embed=embedVar)
+
+            client.dispatch("hypixel_guild_member_promote", playername, from_rank, to_rank)
+
+        elif " was demoted from " in message:
+            message = message.split()
+            if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
+                playername = message[1]
+            else:
+                playername = message[0]
+
+            from_rank = message[-3]
+            to_rank = message[-1]
+
+            embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+            embedVar.set_author(
+                name=f"{playername} has been demoted from {from_rank} to {to_rank}!",
+                icon_url="https://www.mc-heads.net/avatar/" + playername
+            )
+
+            await channel.send(embed=embedVar)
+
+            client.dispatch("hypixel_guild_member_demote", playername, from_rank, to_rank)
+
+        elif " was kicked from the guild!" in message:
+            message = message.split()
+            if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
+                playername = message[1]
+            else:
+                playername = message[0]
+
+            embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+            embedVar.set_author(
+                name=f"{playername} was kicked from the guild!",
+                icon_url="https://www.mc-heads.net/avatar/" + playername
+            )
+
+            await channel.send(embed=embedVar)
+
+            client.dispatch("hypixel_guild_member_kick", playername)
+
+        elif " was kicked from the guild by " in message:
+            message = message.split()
+            if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
+                playername = message[1]
+            else:
+                playername = message[0]
+
+            embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+            embedVar.set_author(
+                name=f"{playername} was kicked from the guild!",
+                icon_url="https://www.mc-heads.net/avatar/" + playername
+            )
+
+            await channel.send(embed=embedVar)
+
+            client.dispatch("hypixel_guild_member_kick", playername)
+
+        elif "Disabled guild join/leave notifications!" in message:
+            embedVar = Embed(description="Disabled guild join/leave notifications!", colour=0x1ABC9C)
+            await channel.send(embed=embedVar)
+
+        elif "Enabled guild join/leave notifications!" in message:
+            embedVar = Embed(description="Enabled guild join/leave notifications!", colour=0x1ABC9C)
+            await channel.send(embed=embedVar)
+
+        elif "You cannot say the same message twice!" in message:
+            embedVar = Embed(description="You cannot say the same message twice!", colour=0x1ABC9C)
+            await channel.send(embed=embedVar)
+
+            client.dispatch("hypixel_guild_message_send_failed", message)
+
+        elif "You don't have access to the officer chat!" in message:
+            embedVar = Embed(description="You don't have access to the officer chat!", colour=0x1ABC9C)
+            await channel.send(embed=embedVar)
+
+            client.dispatch("hypixel_guild_message_send_failed", message)
+
+        elif "You invited" in message and "to your guild. They have 5 minutes to accept." in message:
+            message = message.split()
+            if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
+                playername = message[4]
+            else:
+                playername = message[3]
+
+            embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+            embedVar.set_author(
+                name=f"{playername} has been invited to the guild!",
+                icon_url="https://www.mc-heads.net/avatar/" + playername
+            )
+
+            await channel.send(embed=embedVar)
+
+            client.dispatch("hypixel_guild_member_invite", playername)
+
+        elif " is already in another guild!" in message:
+            message = message.split()
+            if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
+                playername = message[0]
+            else:
+                playername = message[0]
+
+            embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+            embedVar.set_author(
+                name=f"{playername} is already in another guild!",
+                icon_url="https://www.mc-heads.net/avatar/" + playername
+            )
+
+            await channel.send(embed=embedVar)
+
+            client.dispatch("hypixel_guild_member_invite_failed", playername)
+
+        elif "You cannot invite this player to your guild!" in message:
+            embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+            embedVar.set_author(
+                name=f"You cannot invite this player to your guild!",
+            )
+
+            await channel.send(embed=embedVar)
+
+            client.dispatch("hypixel_guild_member_invite_failed", None)
+
+        else:
+            if "Offline Members:" in message:
+                message = re.split("--", message)
+                embed = ""
+                length = len(message)
+                for i in range(length):
+                    if i == 0:
+                        pass
+                    elif i % 2 == 0:
+                        ii = i - 1
+                        embed += "**" + message[ii] + "** " + message[i]
+
+                embedVar = Embed(description=embed, colour=0x1ABC9C)
+                await channel.send(embed=embedVar)
+
+            else:
+                embedVar = Embed(description=message, colour=0x1ABC9C)
+
+                await channel.send(embed=embedVar)
+    except Exception as e:
+        print(e)
 
 
 def oncommands():
@@ -650,8 +654,6 @@ def createbot():
         "auth": accountType
     })
     oncommands()
-    bot.removeChatPattern("chat")
-    bot.removeChatPattern("whisper")
     
     
 asyncio.run(main())
