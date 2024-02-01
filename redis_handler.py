@@ -120,7 +120,7 @@ class RedisManager:
                         try:
                             message_data = json.loads(message["data"])
                         except Exception as e:  # pylint: disable=broad-exception-caught
-                            await self.bot.on_error("ipc_server", error=e)
+                            print(e)
                             continue
                         if message_data.get("type") not in ("request", "response"):
                             print(
@@ -151,9 +151,7 @@ class RedisManager:
                         try:
                             response = await self.process_request(message_data)
                         except Exception as e:  # pylint: disable=broad-exception-caught
-                            await self.bot.on_error(
-                                f"ipc_server:{message_data['endpoint']}", error=e
-                            )
+                            print(e)
                             await self.send_message(
                                 type="response",
                                 uuid=message_data["uuid"],
@@ -166,7 +164,7 @@ class RedisManager:
                             data=response,
                         )
                 except Exception as e:  # pylint: disable=broad-exception-caught
-                    await self.bot.on_error("ipc_server", error=e)
+                    print(e)
                     continue
         print("IPC server closed")
 
