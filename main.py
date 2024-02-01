@@ -151,13 +151,13 @@ async def on_message(message):
             if str(message.content).startswith(prefix):
                 pass
             else:
-                discord = message.author.name
+                discord = message.author.display_name
                 send_minecraft_message(discord, message.content, "General")
         if message.channel.id == int(officerchannelid):
             if str(message.content).startswith(prefix):
                 pass
             else:
-                discord = message.author.name
+                discord = message.author.display_name
                 send_minecraft_message(discord, message.content, "Officer")
     try:
         await client.process_commands(message)
@@ -613,7 +613,6 @@ def oncommands():
 
     @On(bot, "login")
     def login(this):
-        client.dispatch("send_discord_message", "Bot Online")
         print("Bot is logged in.")
         print(bot.username)
 
@@ -672,6 +671,7 @@ def oncommands():
                     wait_response = False
                     client.dispatch("send_discord_message", "\n".join(message_buffer))
                     message_buffer.clear()
+
                 if "Unknown command" in message:
                     client.dispatch("minecraft_pong", message)
                 if "Click here to accept or type /guild accept " in message:
@@ -727,6 +727,7 @@ def createbot():
             "version": "1.8.9"
         }
     )
+    client.dispatch("send_discord_message", "Bot Online")
     client.redis_manager.mineflayer_bot = bot
     oncommands()
     
