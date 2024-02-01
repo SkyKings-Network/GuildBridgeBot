@@ -54,6 +54,7 @@ async def main():
     async with client:
         redis_manager = RedisManager(client, bot, data["redis"])
         await redis_manager.start()
+        client.redis_manager = redis_manager
         await client.start(token)
 
 
@@ -692,6 +693,7 @@ def createbot():
             "viewDistance": "tiny",
         }
     )
+    client.redis_manager.mineflayer_bot = bot
     oncommands()
     
     

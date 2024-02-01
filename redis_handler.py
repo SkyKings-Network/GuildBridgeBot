@@ -19,6 +19,8 @@ class RedisManager:
         self.read_task = asyncio.create_task(self.reader())
 
     async def process_request(self, message_data):
+        if self.mineflayer_bot is None:
+            return {"success": False, "error": "bot not connected"}
         if message_data["endpoint"] == "alive":
             self.mineflayer_bot.chat("/ping")
             try:
