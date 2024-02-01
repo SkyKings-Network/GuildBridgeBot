@@ -181,6 +181,10 @@ async def invite(ctx, username):
     def get_pm2_process_name():
         try:
             result = subprocess.run(['pm2', 'j', 'list'], capture_output=True, text=True)
+            
+            # Print the raw output from the command
+            print(f"Raw PM2 List Output: {result.stdout}")
+            
             process_list = json.loads(result.stdout)
             
             # Assuming there is only one process managed by PM2
