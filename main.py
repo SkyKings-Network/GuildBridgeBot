@@ -31,6 +31,7 @@ port = data["server"]["port"]
 accountusername = data["minecraft"]["username"]
 accountType = data["minecraft"]["accountType"]
 
+process_name = data["discord"]["process_name"]
 token = data["discord"]["token"]
 channelid = int(data["discord"]["channel"]) if data["discord"]["channel"] else None
 officerchannelid = int(data["discord"]["officerChannel"]) if data["discord"]["officerChannel"] else None
@@ -127,14 +128,14 @@ async def relog(ctx, *, delay):
             embedVar = discord.Embed(description="Relogging in " + str(delay) + " seconds")
             await ctx.send(embed=embedVar)
             await asyncio.sleep(delay)
-            bot.end()
+            os.system(f"pm2 restart {process_name}")
         else:
             embedVar = discord.Embed(
                 description="<:x:930865879351189524> You do not have permission to use this command!"
                 )
             await ctx.send(embed=embedVar)
     except KeyError:
-        print("YO SOME SHIT HAS GONE HORRIBLY WRONG")
+        print("Error")
 
 
 @client.check
@@ -169,8 +170,8 @@ async def update(ctx):
         os.system("git pull")
         await asyncio.sleep(10)
         print("Rebooting Bot (/update)")
-        sys.exit()
-        # sys exit doesnt shut down bot
+        os.system(f"pm2 restart {process_name}")
+
 
     else:
         embedVar = discord.Embed(description="<:x:930865879351189524> You do not have permission to use this command!")
