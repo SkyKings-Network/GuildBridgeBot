@@ -40,13 +40,16 @@ prefix = data["discord"]["prefix"]
 
 autoaccept = data["settings"]["autoaccept"]
 
-client = commands.Bot(command_prefix=commands.when_mentioned_or(prefix), case_insensitive=True,
-                  allowed_mentions=discord.AllowedMentions(everyone=False), intents=discord.Intents.all(),
-                  help_command=None)
+client = commands.Bot(
+    command_prefix=commands.when_mentioned_or(prefix), case_insensitive=True,
+    allowed_mentions=discord.AllowedMentions(everyone=False), intents=discord.Intents.all(),
+    help_command=None
+    )
 
 bot: Any = None  # type: ignore
 
 wait_response = False
+
 
 async def main():
     async with client:
@@ -54,15 +57,27 @@ async def main():
         await redis_manager.start()
         await client.start(token)
 
+
 @client.command(name="help")
 async def _help(ctx):
-    embedVar = discord.Embed(title="Bridge Bot | Help Commands", description="``< >`` = Required arguments\n``[ ]`` = Optional arguments", colour=0x1ABC9C, timestamp=ctx.message.created_at)
-    embedVar.add_field(name="Discord Commands", value=f"``{prefix}invite [username]``: Invites the user to the guild\n``{prefix}promote [username]``: Promotes the given user\n" +
-    f"``{prefix}demote [username]``: Demotes the given user\n``{prefix}setrank [username] [rank]``: Sets the given user to a specific rank\n" +
-    f"``{prefix}kick [username] <reason>``: Kicks the given user\n``{prefix}notifications``: Toggles join / leave notifications\n``{prefix}online``: Shows the online members\n" + 
-    f"``{prefix}override <command>``: Forces the bot to use a given command\n``{prefix}toggleaccept``: Toggles auto accepting members joining the guild\n" +
-    f"``{prefix}mute (username) (time)`` - Mutes the user for a specific time\n``{prefix}unmute (username)`` - Unmutes the user", inline=False)
-    embedVar.add_field(name="Info", value=f"Prefix: ``{prefix}``\nGuild Channel: <#{channelid}>\nCommand Role: <@&{commandRole}>\nOverride Role: <@&{overrideRole}>\nVersion: ``0.2``", inline=False)
+    embedVar = discord.Embed(
+        title="Bridge Bot | Help Commands", description="``< >`` = Required arguments\n``[ ]`` = Optional arguments",
+        colour=0x1ABC9C, timestamp=ctx.message.created_at
+        )
+    embedVar.add_field(
+        name="Discord Commands",
+        value=f"``{prefix}invite [username]``: Invites the user to the guild\n``{prefix}promote [username]``: Promotes the given user\n" +
+              f"``{prefix}demote [username]``: Demotes the given user\n``{prefix}setrank [username] [rank]``: Sets the given user to a specific rank\n" +
+              f"``{prefix}kick [username] <reason>``: Kicks the given user\n``{prefix}notifications``: Toggles join / leave notifications\n``{prefix}online``: Shows the online members\n" +
+              f"``{prefix}override <command>``: Forces the bot to use a given command\n``{prefix}toggleaccept``: Toggles auto accepting members joining the guild\n" +
+              f"``{prefix}mute (username) (time)`` - Mutes the user for a specific time\n``{prefix}unmute (username)`` - Unmutes the user",
+        inline=False
+        )
+    embedVar.add_field(
+        name="Info",
+        value=f"Prefix: ``{prefix}``\nGuild Channel: <#{channelid}>\nCommand Role: <@&{commandRole}>\nOverride Role: <@&{overrideRole}>\nVersion: ``0.2``",
+        inline=False
+        )
     embedVar.set_footer(text=f"Made by SkyKings")
     await ctx.send(embed=embedVar)
 
@@ -74,25 +89,29 @@ async def on_ready():
     print(f"Bot Running as {client.user}")
     createbot()
 
+
 @client.command()
 async def online(ctx):
     bot.chat("/g online")
+
 
 @client.command(name="list")
 async def _list(ctx):
     bot.chat("/g list")
 
-@client.command(aliases=['o', 'over'])  
+
+@client.command(aliases=['o', 'over'])
 async def override(ctx, *, command):
     role = ctx.guild.get_role(int(commandRole))
     role2 = ctx.guild.get_role(int(overrideRole))
     if role in ctx.author.roles and role2 in ctx.author.roles:
         bot.chat("/" + command)
-        embedVar = discord.Embed(description = f"``/{command}`` has been sent!", colour=0x1ABC9C)
+        embedVar = discord.Embed(description=f"``/{command}`` has been sent!", colour=0x1ABC9C)
         await ctx.send(embed=embedVar)
     else:
-        embedVar = discord.Embed(description = "<:x:930865879351189524> You do not have permission to use this command!")
+        embedVar = discord.Embed(description="<:x:930865879351189524> You do not have permission to use this command!")
         await ctx.send(embed=embedVar)
+
 
 @client.command(aliases=['r'])
 async def relog(ctx, *, delay):
@@ -100,20 +119,24 @@ async def relog(ctx, *, delay):
         delay = int(delay)
         role = ctx.guild.get_role(int(commandRole))
         if role in ctx.author.roles:
-            embedVar = discord.Embed(description = "Relogging in " + str(delay) + " seconds")
+            embedVar = discord.Embed(description="Relogging in " + str(delay) + " seconds")
             await ctx.send(embed=embedVar)
             await asyncio.sleep(delay)
             bot.end()
         else:
-            embedVar = discord.Embed(description = "<:x:930865879351189524> You do not have permission to use this command!")
+            embedVar = discord.Embed(
+                description="<:x:930865879351189524> You do not have permission to use this command!"
+                )
             await ctx.send(embed=embedVar)
     except KeyError:
         print("YO SOME SHIT HAS GONE HORRIBLY WRONG")
+
 
 @client.check
 async def on_command(ctx):
     print(ctx.command.qualified_name)
     return True
+
 
 @client.event
 async def on_message(message):
@@ -132,111 +155,118 @@ async def on_message(message):
                 send_minecraft_message(discord, message.content, "Officer")
     await client.process_commands(message)
 
+
 @client.command()
 async def invite(ctx, username):
     role = ctx.guild.get_role(int(commandRole))
     if role in ctx.author.roles:
         if username is None:
-            embedVar = discord.Embed(description = "Please enter a username!")
+            embedVar = discord.Embed(description="Please enter a username!")
             await ctx.send(embed=embedVar)
         if username is not None:
             bot.chat("/g invite " + username)
-            embedVar = discord.Embed(description = username + " has been invited!")
+            embedVar = discord.Embed(description=username + " has been invited!")
             await ctx.send(embed=embedVar)
     else:
-        embedVar = discord.Embed(description = "<:x:930865879351189524> You do not have permission to use this command!")
+        embedVar = discord.Embed(description="<:x:930865879351189524> You do not have permission to use this command!")
         await ctx.send(embed=embedVar)
-    
+
 
 @client.command()
 async def kick(ctx, username, reason):
     role = ctx.guild.get_role(int(commandRole))
     if role in ctx.author.roles:
         if username is None or reason is None:
-            embedVar = discord.Embed(description = "Please enter a username and a reason!")
+            embedVar = discord.Embed(description="Please enter a username and a reason!")
             await ctx.send(embed=embedVar)
         if username is not None:
             bot.chat("/g kick " + username)
-            embedVar = discord.Embed(description = username + " has been kicked for " + reason + "!")
+            embedVar = discord.Embed(description=username + " has been kicked for " + reason + "!")
             await ctx.send(embed=embedVar)
     else:
-        embedVar = discord.Embed(description = "<:x:930865879351189524> You do not have permission to use this command!")
+        embedVar = discord.Embed(description="<:x:930865879351189524> You do not have permission to use this command!")
         await ctx.send(embed=embedVar)
+
 
 @client.command()
 async def promote(ctx, username):
     role = ctx.guild.get_role(int(commandRole))
     if role in ctx.author.roles:
         if username is None:
-            embedVar = discord.Embed(description = "Please enter a username!")
+            embedVar = discord.Embed(description="Please enter a username!")
             await ctx.send(embed=embedVar)
         if username is not None:
             bot.chat("/g promote " + username)
-            embedVar = discord.Embed(description = username + " has been promoted!")
+            embedVar = discord.Embed(description=username + " has been promoted!")
             await ctx.send(embed=embedVar)
     else:
-        embedVar = discord.Embed(description = "<:x:930865879351189524> You do not have permission to use this command!")
+        embedVar = discord.Embed(description="<:x:930865879351189524> You do not have permission to use this command!")
         await ctx.send(embed=embedVar)
+
 
 @client.command()
 async def mute(ctx, username, time):
     role = ctx.guild.get_role(int(commandRole))
     if role in ctx.author.roles:
         if username is None or time is None:
-            embedVar = discord.Embed(description = "Please enter a username and time! ``!mute (username) (time)")
+            embedVar = discord.Embed(description="Please enter a username and time! ``!mute (username) (time)")
             await ctx.send(embed=embedVar)
         else:
             bot.chat("/g mute " + username + " " + time)
-            embedVar = discord.Embed(description = username + " has been muted for " + time)
+            embedVar = discord.Embed(description=username + " has been muted for " + time)
             await ctx.send(embed=embedVar)
     else:
-        embedVar = discord.Embed(description = "<:x:930865879351189524> You do not have permission to use this command!")
+        embedVar = discord.Embed(description="<:x:930865879351189524> You do not have permission to use this command!")
         await ctx.send(embed=embedVar)
+
 
 @client.command()
 async def unmute(ctx, username):
     role = ctx.guild.get_role(int(commandRole))
     if role in ctx.author.roles:
         if username is None or time is None:
-            embedVar = discord.Embed(description = "Please enter a username! ``!unmute (username)")
+            embedVar = discord.Embed(description="Please enter a username! ``!unmute (username)")
             await ctx.send(embed=embedVar)
         else:
             bot.chat("/g unmute " + username)
-            embedVar = discord.Embed(description = username + " has been unmuted")
+            embedVar = discord.Embed(description=username + " has been unmuted")
             await ctx.send(embed=embedVar)
     else:
-        embedVar = discord.Embed(description = "<:x:930865879351189524> You do not have permission to use this command!")
+        embedVar = discord.Embed(description="<:x:930865879351189524> You do not have permission to use this command!")
         await ctx.send(embed=embedVar)
+
 
 @client.command()
 async def setrank(ctx, username, rank):
     role = ctx.guild.get_role(int(commandRole))
     if role in ctx.author.roles:
         if username is None or rank is None:
-            embedVar = discord.Embed(description = "Please enter a username and rank!")
+            embedVar = discord.Embed(description="Please enter a username and rank!")
             await ctx.send(embed=embedVar)
         if username is not None:
             bot.chat("/g setrank " + username + " " + rank)
-            embedVar = discord.Embed(description = username + " has been promoted to " + rank)
+            embedVar = discord.Embed(description=username + " has been promoted to " + rank)
             await ctx.send(embed=embedVar)
     else:
-        embedVar = discord.Embed(description = "<:x:930865879351189524> You do not have permission to use this command!")
+        embedVar = discord.Embed(description="<:x:930865879351189524> You do not have permission to use this command!")
         await ctx.send(embed=embedVar)
+
 
 @client.command()
 async def demote(ctx, username):
     role = ctx.guild.get_role(int(commandRole))
     if role in ctx.author.roles:
         if username is None:
-            embedVar = discord.Embed(description = "Please enter a username!")
+            embedVar = discord.Embed(description="Please enter a username!")
             await ctx.send(embed=embedVar)
         if username is not None:
             bot.chat("/g demote " + username)
-            embedVar = discord.Embed(description = username + " has been demoted!")
+            embedVar = discord.Embed(description=username + " has been demoted!")
             await ctx.send(embed=embedVar)
     else:
-        embedVar = discord.Embed(description = "<:x:930865879351189524> You do not have permission to use this command!")
+        embedVar = discord.Embed(description="<:x:930865879351189524> You do not have permission to use this command!")
         await ctx.send(embed=embedVar)
+
 
 @client.command()
 async def notifications(ctx):
@@ -244,29 +274,31 @@ async def notifications(ctx):
     if role in ctx.author.roles:
         bot.chat("/g notifications")
     else:
-        embedVar = discord.Embed(description = "<:x:930865879351189524> You do not have permission to use this command!")
+        embedVar = discord.Embed(description="<:x:930865879351189524> You do not have permission to use this command!")
         await ctx.send(embed=embedVar)
+
 
 @client.command()
 async def toggleaccept(ctx):
     role = ctx.guild.get_role(int(commandRole))
     if role in ctx.author.roles:
         if autoaccept:
-            embedVar = discord.Embed(description = ":white_check_mark: Auto accepting guild invites is now ``off``!")
+            embedVar = discord.Embed(description=":white_check_mark: Auto accepting guild invites is now ``off``!")
             await ctx.send(embed=embedVar)
             data["settings"]["autoaccept"] = False
-            
+
         else:
-            embedVar = discord.Embed(description = ":white_check_mark: Auto accepting guild invites is now ``on``!")
+            embedVar = discord.Embed(description=":white_check_mark: Auto accepting guild invites is now ``on``!")
             await ctx.send(embed=embedVar)
             data["settings"]["autoaccept"] = True
 
         with open(filename, "w") as file:
-            json.dump(data,file, indent=2)
+            json.dump(data, file, indent=2)
 
     else:
-        embedVar = discord.Embed(description = "<:x:930865879351189524> You do not have permission to use this command!")
+        embedVar = discord.Embed(description="<:x:930865879351189524> You do not have permission to use this command!")
         await ctx.send(embed=embedVar)
+
 
 # custom client events:
 # hypixel_guild_message
@@ -346,8 +378,8 @@ async def on_send_discord_message(message):
             else:
                 playername = message.split()[1]
 
-            embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-            embedVar.set_author(name=f"{playername} has requested to join the guild.", icon_url="https://www.mc-heads.net/avatar/" + playername)
+        embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+        embedVar.set_author(name=f"{playername} has requested to join the guild.", icon_url="https://www.mc-heads.net/avatar/" + playername)
 
             client.dispatch("hypixel_guild_join_request", playername)
 
@@ -360,22 +392,22 @@ async def on_send_discord_message(message):
             else:
                 playername = message[0]
 
-            embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-            embedVar.set_author(name=f"{playername} has joined the guild!", icon_url="https://www.mc-heads.net/avatar/" + playername)
+        embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+        embedVar.set_author(name=f"{playername} has joined the guild!", icon_url="https://www.mc-heads.net/avatar/" + playername)
 
             client.dispatch("hypixel_guild_member_join", playername)
 
-            await channel.send(embed=embedVar)
-            
-        elif " left the guild!" in message:
-            message = message.split()
-            if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
-                playername = message[1]
-            else:
-                playername = message[0]
+        await channel.send(embed=embedVar)
+        
+    elif " left the guild!" in message:
+        message = message.split()
+        if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
+            playername = message[1]
+        else:
+            playername = message[0]
 
-            embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-            embedVar.set_author(name=f"{playername} has left the guild!", icon_url="https://www.mc-heads.net/avatar/" + playername)
+        embedVar = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+        embedVar.set_author(name=f"{playername} has left the guild!", icon_url="https://www.mc-heads.net/avatar/" + playername)
 
             await channel.send(embed=embedVar)
 
@@ -544,6 +576,7 @@ async def on_send_discord_message(message):
 
 def oncommands():
     message_buffer = []
+
     @On(bot, "login")
     def login(this):
         client.dispatch("send_discord_message", "Bot Online")
@@ -564,19 +597,19 @@ def oncommands():
     @On(bot, "error")
     def error(this, reason):
         print(reason)
-        
+
     @On(bot, "messagestr")
     def chat(this, message, messagePosition, jsonMsg, sender, verified):
         def print_message(_message):
             max_length = 100  # Maximum length of each chunk
-            chunks = [_message[i:i+max_length] for i in range(0, len(_message), max_length)]
+            chunks = [_message[i:i + max_length] for i in range(0, len(_message), max_length)]
             for chunk in chunks:
                 print(chunk)
 
         print_message(message)
 
         global wait_response
-        
+
         if bot.username is None:
             pass
         else:
@@ -609,18 +642,18 @@ def oncommands():
                     client.dispatch("send_discord_message", message)
                     send_minecraft_message(None, message, "invite")
                 elif " is already in another guild!" in message or \
-                    ("You invited" in message and "to your guild. They have 5 minutes to accept." in message) or\
-                    " joined the guild!" in message or \
-                    " left the guild!" in message or \
-                    " was promoted from " in message or \
-                    " was demoted from " in message or \
-                    " was kicked from the guild!" in message or \
-                    " was kicked from the guild by " in message or \
-                    "You cannot invite this player to your guild!" in message or \
-                    "Disabled guild join/leave notifications!" in message or \
-                    "Enabled guild join/leave notifications!" in message or \
-                    "You cannot say the same message twice!" in message or \
-                    "You don't have access to the officer chat!" in message:
+                        ("You invited" in message and "to your guild. They have 5 minutes to accept." in message) or \
+                        " joined the guild!" in message or \
+                        " left the guild!" in message or \
+                        " was promoted from " in message or \
+                        " was demoted from " in message or \
+                        " was kicked from the guild!" in message or \
+                        " was kicked from the guild by " in message or \
+                        "You cannot invite this player to your guild!" in message or \
+                        "Disabled guild join/leave notifications!" in message or \
+                        "Enabled guild join/leave notifications!" in message or \
+                        "You cannot say the same message twice!" in message or \
+                        "You don't have access to the officer chat!" in message:
                     client.dispatch("send_discord_message", message)
 
 
@@ -644,16 +677,21 @@ def send_minecraft_command(message):
     message = message.replace("!o ", "/")
     bot.chat(message)
 
+
 def createbot():
     global bot
-    bot = mineflayer.createBot({
-        "host": host,
-        "port": port,
-        "username": accountusername,
-        "version": "1.8.9",
-        "auth": accountType
-    })
+    bot = mineflayer.createBot(
+        {
+            "host": host,
+            "port": port,
+            "username": accountusername,
+            "version": "1.8.9",
+            "auth": accountType
+        }
+    )
     oncommands()
+    bot.removeChatPattern("chat")
+    bot.removeChatPattern("whisper")
     
     
 asyncio.run(main())
