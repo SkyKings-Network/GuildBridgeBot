@@ -535,7 +535,7 @@ async def on_send_discord_message(message):
         await channel.send(embed=embedVar)
 
         client.dispatch("hypixel_guild_message_send_failed", message)
-
+        
     elif ("You invited" in message and "to your guild. They have 5 minutes to accept." in message) or "You sent an offline invite to" in message:
         print("yes!")
         message = message.split()
