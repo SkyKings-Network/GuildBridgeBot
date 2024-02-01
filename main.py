@@ -10,6 +10,7 @@ from discord.client import Client
 from discord.ext import commands, tasks
 from discord.ext.commands import has_permissions, MissingPermissions
 from discord import Client, Intents, Embed
+from redis_handler import RedisManager
 
 from javascript import require, On
 
@@ -80,7 +81,7 @@ async def online(ctx):
 async def _list(ctx):
     bot.chat("/g list")
 
-@client.command(aliases=['o', 'over'])
+@client.command(aliases=['o', 'over'])  
 async def override(ctx, *, command):
     role = ctx.guild.get_role(int(commandRole))
     role2 = ctx.guild.get_role(int(overrideRole))
@@ -106,8 +107,7 @@ async def relog(ctx, *, delay):
             embedVar = discord.Embed(description = "<:x:930865879351189524> You do not have permission to use this command!")
             await ctx.send(embed=embedVar)
     except KeyError:
-        print("Error")
-
+        print("YO SOME SHIT HAS GONE HORRIBLY WRONG")
 
 @client.check
 async def on_command(ctx):
@@ -254,7 +254,7 @@ async def toggleaccept(ctx):
             embedVar = discord.Embed(description = ":white_check_mark: Auto accepting guild invites is now ``off``!")
             await ctx.send(embed=embedVar)
             data["settings"]["autoaccept"] = False
-
+            
         else:
             embedVar = discord.Embed(description = ":white_check_mark: Auto accepting guild invites is now ``on``!")
             await ctx.send(embed=embedVar)
@@ -363,7 +363,7 @@ async def on_send_discord_message(message):
         client.dispatch("hypixel_guild_member_join", playername)
 
         await channel.send(embed=embedVar)
-
+        
     elif " left the guild!" in message:
         message = message.split()
         if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
@@ -553,7 +553,6 @@ def oncommands():
         print("Bot offline!")
         print(str(reason))
         print("Restarting...")
-        time.sleep(5.2)
 
         createbot()
 
@@ -570,6 +569,7 @@ def oncommands():
                 print(chunk)
 
         print_message(message)
+
         global wait_response
         
         if bot.username is None:
@@ -594,12 +594,10 @@ def oncommands():
                     wait_response = True
                 if wait_response is True:
                     message_buffer.append(message)
-                if "Online Members:" in message and wait_response:
+                if "Offline Members:" in message and wait_response:
                     wait_response = False
                     client.dispatch("send_discord_message", "\n".join(message_buffer))
                     message_buffer.clear()
-                    
-
                 if "Unknown Command" in message and "/ping" in message:
                     client.dispatch("minecraft_pong", message)
                 if "Click here to accept or type /guild accept " in message:
@@ -648,11 +646,12 @@ def createbot():
         "port": port,
         "username": accountusername,
         "version": "1.8.9",
-        "auth": accountType,
-        "viewDistance": 1
+        "auth": accountType
     })
     oncommands()
     bot.removeChatPattern("chat")
     bot.removeChatPattern("whisper")
-
+    client.dispatch("send_discord_message", "Bot Online")
+    
+    
 asyncio.run(main())
