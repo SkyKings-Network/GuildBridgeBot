@@ -140,22 +140,17 @@ async def relog(ctx, *, delay):
 
 @client.check
 async def on_command(ctx):
-    print("test")
     print(ctx.command.qualified_name)
     return True
 
 
 @client.event
 async def on_message(message):
-    print("1")
     if not message.author.bot:
-        print("2")
         if message.channel.id == int(channelid):
             if str(message.content).startswith(prefix):
-                print("4")
                 pass
             else:
-                print("5")
                 discord = message.author.name
                 send_minecraft_message(discord, message.content, "General")
         if message.channel.id == int(officerchannelid):
@@ -165,7 +160,6 @@ async def on_message(message):
                 discord = message.author.name
                 send_minecraft_message(discord, message.content, "Officer")
     try:
-        print("3")
         await client.process_commands(message)
     except Exception as e:
         print(e)
