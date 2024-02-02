@@ -104,18 +104,10 @@ class DiscordBridgeBot(commands.Bot):
                     username = username.split(" ")[1]
                 else:
                     username = username.split(" ")[0]
-
                 username = username.strip()
-                print("EMBED ---------")
-                print(username)
-                print(message)
-                print("EMBED ---------")
+
                 embed = Embed(description=message, timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-                try:
-                    embed.set_author(name=username, icon_url="https://www.mc-heads.net/avatar/" + username)
-                except Exception as e:
-                    print(e)
-                    print(username)
+                embed.set_author(name=username, icon_url="https://www.mc-heads.net/avatar/" + username)
                 self.dispatch("hypixel_guild_message", username, message)
                 
             try:
@@ -123,8 +115,6 @@ class DiscordBridgeBot(commands.Bot):
                     if not embed.author.icon_url.startswith("https://"):
                         raise ValueError("Invalid URL")
                 await channel.send(embed=embed)
-            except ValueError as ve:
-                print(f"Discord > Failed to send message {message} to channel {channel}: {ve}")
             except Exception as e:
                 print(f"Discord > Failed to send message {message} to channel {channel}: {e}")
 
