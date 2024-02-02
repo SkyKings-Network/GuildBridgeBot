@@ -16,7 +16,7 @@ class RedisManager:
         self.recieve_channel = config.recieveChannel
         self.send_channel = config.sendChannel
         self._response_waiters: dict[str, asyncio.Future] = {}
-        self.redis = None
+        self.redis: redis.Redis = None
         self._is_running = False
 
     @property
@@ -232,9 +232,8 @@ class RedisManager:
         return response
 
     async def close(self):
-        self.read_task.cancel()
-        await self.read_task
         await self.redis.close()
+        self.read_task.cancel()
 
     @classmethod
     async def create(cls, discord_bot, mineflayer_bot):
