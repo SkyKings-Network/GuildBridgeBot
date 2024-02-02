@@ -16,6 +16,9 @@ class MinecraftBotManager:
         self.auto_restart = True
         self._online = False
 
+    def chat(self, message):
+        self.bot.chat(message)
+
     def oncommands(self):
         message_buffer = []
 
