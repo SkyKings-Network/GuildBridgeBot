@@ -17,10 +17,19 @@ class RedisManager:
         self.send_channel = config.sendChannel
         self._response_waiters: dict[str, asyncio.Future] = {}
         self.redis = None
+        self._is_running = False
+
+    @property
+    def running(self):
+        if not self._is_running:
+            return False
+        if self.read_task is None:
+            return False
+        return not self.read_task.done()
 
     async def start(self):
-        if self.read_task is not None and not self.read_task.done():
-            raise RuntimeError("Read task already started")
+        if self.running:
+            raise RuntimeError("Already running")
         self.read_task = asyncio.create_task(self.reader())
 
     async def process_request(self, message_data):
@@ -135,8 +144,11 @@ class RedisManager:
                 channel = self.recieve_channel + ":" + self.client_name
                 await pubsub.subscribe(channel)
                 print(f"Redis > Subscribed to {channel}")
-                while not self.bot.is_closed():
-                    message = await pubsub.get_message(ignore_subscribe_messages=True)
+                while not self.bot.is_closed() and self.running:
+                    try:
+                        message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=10)
+                    except asyncio.TimeoutError:
+                        continue
                     if message is None:
                         continue
                     try:
