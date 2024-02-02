@@ -47,7 +47,9 @@ class Admin(commands.Cog):
         embedVar = discord.Embed(description=":white_check_mark: Rebooting Bot...")
         await ctx.send(embed=embedVar)
         os.system("git pull")
+        print('b')
         await self.bot.close()
+        print('a')
 
     @commands.command()
     @commands.has_role(config.overrideRole)
