@@ -2,10 +2,10 @@
 
 ## To Do
 
-[-] Make sure its optimized as close as the javascript one
-[-] Add requirements to autoaccept
-[-] Make logs easier to read (less print statements)
-[-] Remake the doc to setup servers
+- [ ] Improve minecraft -> discord speed
+  - Possible use a queue instead of dispatching events
+- [ ] Add requirements to autoaccept
+- [ ] Make logs easier to read (less print statements)
 
 
 ## Initial Setup
