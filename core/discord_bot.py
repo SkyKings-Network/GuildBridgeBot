@@ -63,6 +63,7 @@ class DiscordBridgeBot(commands.Bot):
     # hypixel_guild_member_invite_failed
     # hypixel_guild_message_send_failed
     async def on_send_discord_message(self, message):
+        print(discord_config.channel)
         channel = self.get_channel(discord_config.channel)
         print(f"Discord > Sending message {message} to channel {channel}")
         if message.startswith("Guild >"):
