@@ -98,19 +98,14 @@ class DiscordBridgeBot(commands.Bot):
                     embed.set_author(name=message, icon_url="https://www.mc-heads.net/avatar/" + memberusername)
             else:
                 username, message = regex.match(message).groups()
-                print(username)
                 if self.mineflayer_bot.bot.username in username:
                     return
-                print(1, username, 1)
                 if "[" in username:
                     username = username.split("]")[1]
                 username = username.strip()
-                print(2, username, 2)
                 embed = Embed(description=message, timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-                embed.set_author(name=username, icon_url="https://www.mc-heads.net/avatar/" + username.strip())
-                print(3, username, 3 )
+                embed.set_author(name=username, icon_url="https://www.mc-heads.net/avatar/" + username)
                 self.dispatch("hypixel_guild_message", username, message)
-                print(4, username, 4)
             try:
                 await channel.send(embed=embed)
             except Exception as e:
@@ -126,6 +121,7 @@ class DiscordBridgeBot(commands.Bot):
             message = message.replace("Guild >", "")
             if "[" in username:
                 username = username.split("]")[1]
+            username = username.strip()
             embed = Embed(description=message, timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
             embed.set_author(name=username, icon_url="https://www.mc-heads.net/avatar/" + username)
             self.dispatch("hypixel_guild_officer_message", username, message)
