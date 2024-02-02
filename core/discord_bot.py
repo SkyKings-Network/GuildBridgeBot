@@ -102,9 +102,12 @@ class DiscordBridgeBot(commands.Bot):
                     return
                 # Username = [MVP+] Jacktheguy [GM]
                 # Make the username remove the [MVP+] and [GM]
+
                 if username.startswith("["):
+                    username.split(" ")
                     username = username[1]
                 else:
+                    username.split(" ")
                     username = username[0]
 
                 username = username.strip()
