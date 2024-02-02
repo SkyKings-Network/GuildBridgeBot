@@ -10,8 +10,7 @@
         "commandRole": "",
         "overrideRole": "",
         "ownerId": "",
-        "prefix": "!",
-        "process_name": "index"
+        "prefix": "!"
     },
     "redis": {
         "host": "redisIP",
