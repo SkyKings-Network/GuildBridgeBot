@@ -17,12 +17,9 @@ class RedisManager:
         self.send_channel = config.sendChannel
         self._response_waiters: dict[str, asyncio.Future] = {}
         self.redis: redis.Redis = None
-        self._is_running = False
 
     @property
     def running(self):
-        if not self._is_running:
-            return False
         if self.read_task is None:
             return False
         return not self.read_task.done()
@@ -118,17 +115,19 @@ class RedisManager:
             returned = await asyncio.wait(
                 [
                     asyncio.Task(self.bot.wait_for(
-                        "hypixel_guild_member_invite_failed", timeout=10,
+                        "hypixel_guild_member_invite_failed",
                         check=chk,
                     ), name="invite_failed"),
                     asyncio.Task(self.bot.wait_for(
-                        "hypixel_guild_member_invite", timeout=10,
+                        "hypixel_guild_member_invite",
                         check=chk,
                     ), name="invite_success")
                 ],
                 return_when=asyncio.FIRST_COMPLETED,
                 timeout=10,
             )
+            for task in returned[1]:
+                task.cancel()
             if len(returned[0]) == 0:
                 return {"success": False, "error": "timeout"}
             if returned[0].pop().get_name() == "invite_success":
