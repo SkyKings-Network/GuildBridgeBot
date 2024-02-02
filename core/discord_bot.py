@@ -45,11 +45,16 @@ class DiscordBridgeBot(commands.Bot):
         print(f"Discord > Command {ctx.command} has been invoked by {ctx.author}")
 
     async def close(self):
+        print(f"Discord > Bot {self.user} is shutting down...")
         if self.mineflayer_bot is not None:
             self.mineflayer_bot.auto_restart = False
+            print("Discord > Stopping Minecraft bot...")
             self.mineflayer_bot.quit()
+            print("Discord > Minecraft bot has been stopped.")
         if self.redis_manager is not None:
+            print("Discord > Stopping redis...")
             await self.redis_manager.close()
+            print("Discord > Redis has been stopped.")
         await super().close()
 
     # custom client events:
