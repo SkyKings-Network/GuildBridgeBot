@@ -49,6 +49,17 @@ class Admin(commands.Cog):
         os.system("git pull")
         await self.bot.close()
 
+    @commands.command()
+    @commands.has_role(config.overrideRole)
+    async def reload(self, ctx):
+        embedVar = discord.Embed(description="Reloading extensions...")
+        msg = await ctx.send(embed=embedVar)
+        os.system("git pull")
+        for ext in self.bot.extensions:
+            await self.bot.reload_extensions(ext)
+        embed = discord.Embed(description=":white_check_mark: Extensions reloaded!")
+        await msg.edit(embed=embed)
+
 
 async def setup(bot):
     await bot.add_cog(Admin(bot))

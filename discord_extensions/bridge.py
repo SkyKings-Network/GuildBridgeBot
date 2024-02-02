@@ -69,6 +69,7 @@ class Bridge(commands.Cog):
     @commands.command(name="list")
     @commands.cooldown(1, 5, commands.BucketType.channel)
     async def _list(self, ctx):
+        print(self.bot.mineflayer_bot)
         self.bot.mineflayer_bot.chat("/g list")
 
 
