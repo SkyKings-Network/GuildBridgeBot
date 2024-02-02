@@ -30,7 +30,7 @@ class Admin(commands.Cog):
     @commands.command(aliases=['r'])
     @commands.has_role(config.commandRole)
     async def relog(self, ctx):
-        self.bot.mineflayer_bot.quit()
+        self.bot.mineflayer_bot.stop(True)
         embedVar = discord.Embed(description="Restarting the bot...")
         await ctx.send(embed=embedVar)
 
@@ -47,9 +47,7 @@ class Admin(commands.Cog):
         embedVar = discord.Embed(description=":white_check_mark: Rebooting Bot...")
         await ctx.send(embed=embedVar)
         os.system("git pull")
-        print('b')
         await self.bot.close()
-        print('a')
 
     @commands.command()
     @commands.has_role(config.overrideRole)

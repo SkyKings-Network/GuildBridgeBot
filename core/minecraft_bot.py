@@ -19,6 +19,10 @@ class MinecraftBotManager:
     def chat(self, message):
         self.bot.chat(message)
 
+    def stop(self, restart: bool = True):
+        self.auto_restart = restart
+        self.bot.quit()
+
     def oncommands(self):
         message_buffer = []
 

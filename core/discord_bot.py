@@ -47,9 +47,8 @@ class DiscordBridgeBot(commands.Bot):
     async def close(self):
         print(f"Discord > Bot {self.user} is shutting down...")
         if self.mineflayer_bot is not None:
-            self.mineflayer_bot.auto_restart = False
             print("Discord > Stopping Minecraft bot...")
-            self.mineflayer_bot.quit()
+            self.mineflayer_bot.stop()
             print("Discord > Minecraft bot has been stopped.")
         if self.redis_manager is not None:
             print("Discord > Stopping redis...")
