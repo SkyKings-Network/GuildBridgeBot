@@ -104,7 +104,11 @@ class DiscordBridgeBot(commands.Bot):
                     username = username.split("]")[1]
                 username = username.strip()
                 embed = Embed(description=message, timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-                embed.set_author(name=username, icon_url="https://www.mc-heads.net/avatar/" + username)
+                try:
+                    embed.set_author(name=username, icon_url="https://www.mc-heads.net/avatar/" + username)
+                except Exception as e:
+                    print(e)
+                    print(username)
                 self.dispatch("hypixel_guild_message", username, message)
             try:
                 await channel.send(embed=embed)
