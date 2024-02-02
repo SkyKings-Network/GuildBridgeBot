@@ -141,9 +141,7 @@ class RedisManager:
                 channel = self.recieve_channel + ":" + self.client_name
                 await pubsub.subscribe(channel)
                 print(f"Redis > Subscribed to {channel}")
-                print(self.bot.is_closed(), self.running)
                 while (not self.bot.is_closed()) and self.running:
-                    print(self.bot.is_closed(), self.running)
                     try:
                         message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=10)
                     except asyncio.TimeoutError:
