@@ -110,7 +110,10 @@ class DiscordBridgeBot(commands.Bot):
                 print(3, username, message)
                 self.dispatch("hypixel_guild_message", username, message)
                 print(4, username, message)
-            await channel.send(embed=embed)
+            try:
+                await channel.send(embed=embed)
+            except Exception as e:
+                print(f"Discord > Failed to send message {message} to channel {channel}: {e}")
 
         elif message.startswith("Officer >"):
             channel = self.get_channel(discord_config.officerChannel)
