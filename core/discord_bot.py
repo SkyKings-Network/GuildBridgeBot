@@ -41,6 +41,9 @@ class DiscordBridgeBot(commands.Bot):
                 self.mineflayer_bot.send_minecraft_message(message.author.display_name, message.content, "Officer")
         await self.process_commands(message)
 
+    async def on_command(self, ctx):
+        print(f"Discord > Command {ctx.command} has been invoked by {ctx.author}")
+
     async def close(self):
         if self.mineflayer_bot is not None:
             self.mineflayer_bot.auto_restart = False
