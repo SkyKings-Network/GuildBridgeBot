@@ -70,11 +70,11 @@ class DiscordBridgeBot(commands.Bot):
     # hypixel_guild_member_invite_failed
     # hypixel_guild_message_send_failed
     async def on_send_discord_message(self, message):
-        print(discord_config.channel)
+        print(self.mineflayer_bot.bot.username)
         channel = self.get_channel(discord_config.channel)
         print(f"Discord > Sending message {message} to channel {channel}")
         if message.startswith("Guild >"):
-            if message.startswith("Guild > " + self.mineflayer_bot.username):
+            if message.startswith("Guild > " + self.mineflayer_bot.bot.username):
                 return
             message = message.replace("Guild >", "")
             if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
