@@ -47,6 +47,8 @@ class MinecraftBotManager:
                     print("Mineflayer > Restarting...")
                     new_bot = self.createbot(self.client)
                     self.client.mineflayer_bot = new_bot
+            else:
+                raise SystemExit
 
         @On(self.bot, "error")
         def error(this, reason):
