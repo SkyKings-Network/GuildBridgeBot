@@ -103,6 +103,10 @@ class DiscordBridgeBot(commands.Bot):
                 if "[" in username:
                     username = username.split("]")[1]
                 username = username.strip()
+                print("EMBED ---------")
+                print(username)
+                print(message)
+                print("EMBED ---------")
                 embed = Embed(description=message, timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
                 try:
                     embed.set_author(name=username, icon_url="https://www.mc-heads.net/avatar/" + username)
@@ -110,6 +114,7 @@ class DiscordBridgeBot(commands.Bot):
                     print(e)
                     print(username)
                 self.dispatch("hypixel_guild_message", username, message)
+                
             try:
                 if embed.author and embed.author.icon_url:
                     if not embed.author.icon_url.startswith("https://"):
