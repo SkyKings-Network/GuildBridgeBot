@@ -100,8 +100,13 @@ class DiscordBridgeBot(commands.Bot):
                 username, message = regex.match(message).groups()
                 if self.mineflayer_bot.bot.username in username:
                     return
-                # if "[" in username:
-                #     username = username.split("]")[1]
+                # Username = [MVP+] Jacktheguy [GM]
+                # Make the username remove the [MVP+] and [GM]
+                if username.startswith("["):
+                    username = username[1]
+                else:
+                    username = username[0]
+
                 username = username.strip()
                 print("EMBED ---------")
                 print(username)
