@@ -22,8 +22,8 @@ class MinecraftBotManager:
         def login(this):
             print("Bot is logged in.")
             print(self.bot.username)
-
-            self.bot.chat("/§")
+            self.bot.chat("§")
+            self.client.dispatch("send_discord_message", "Bot Online")
 
         @On(self.bot, "end")
         def kicked(this, reason):
