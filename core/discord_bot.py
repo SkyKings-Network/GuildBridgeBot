@@ -50,6 +50,7 @@ class DiscordBridgeBot(commands.Bot):
         print(f"Discord > Bot {self.user} is shutting down...")
         if self.mineflayer_bot is not None:
             print("Discord > Stopping Minecraft bot...")
+            await self.on_send_discord_message("Bot Offline")
             self.mineflayer_bot.stop(False)
             print("Discord > Minecraft bot has been stopped.")
         if self.redis_manager is not None:
@@ -96,6 +97,7 @@ class DiscordBridgeBot(commands.Bot):
                     embed.set_author(name=message, icon_url="https://www.mc-heads.net/avatar/" + memberusername)
             else:
                 username, message = regex.match(message).groups()
+                print(username, message)
                 if self.mineflayer_bot.bot.username in username:
                     return
                 message = message.replace("Guild >", "")

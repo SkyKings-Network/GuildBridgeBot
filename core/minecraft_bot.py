@@ -38,13 +38,13 @@ class MinecraftBotManager:
         @On(self.bot, "end")
         def kicked(this, reason):
             self._online = False
-            self.client.dispatch("send_discord_message", "Bot Offline")
-            print("Bot offline!")
+            print("Mineflayer > Bot offline!")
             if self.auto_restart:
+                self.client.dispatch("send_discord_message", "Bot Offline")
                 time.sleep(10)
                 # maybe it changed between now and then
                 if self.auto_restart:
-                    print("Restarting...")
+                    print("Mineflayer > Restarting...")
                     new_bot = self.createbot(self.client)
                     self.client.mineflayer_bot = new_bot
 
@@ -58,7 +58,7 @@ class MinecraftBotManager:
                 max_length = 100  # Maximum length of each chunk
                 chunks = [_message[i:i + max_length] for i in range(0, len(_message), max_length)]
                 for chunk in chunks:
-                    print(chunk)
+                    print("Mineflayer >", chunk)
 
             print_message(message)
 
