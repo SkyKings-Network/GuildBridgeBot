@@ -1,22 +1,26 @@
 import asyncio
 import json
+import traceback
 import uuid
 import redis.asyncio as redis
+from core.config import redis as config
 
 
 class RedisManager:
-    def __init__(self, bot, mineflayer_bot, config):
+    def __init__(self, bot, mineflayer_bot):
         self.read_task: asyncio.Task = None  # type: ignore
         self.bot = bot
         self.mineflayer_bot = mineflayer_bot
         self.config = config
-        self.client_name = config["clientName"]
-        self.recieve_channel = config["recieveChannel"]
-        self.send_channel = config["sendChannel"]
+        self.client_name = config.clientName
+        self.recieve_channel = config.recieveChannel
+        self.send_channel = config.sendChannel
         self._response_waiters: dict[str, asyncio.Future] = {}
         self.redis = None
 
     async def start(self):
+        if self.read_task is not None and not self.read_task.done():
+            raise RuntimeError("Read task already started")
         self.read_task = asyncio.create_task(self.reader())
 
     async def process_request(self, message_data):
@@ -125,67 +129,68 @@ class RedisManager:
         return {"success": False, "error": "invalid endpoint"}
 
     async def reader(self):
-        self.redis = redis.Redis(host=self.config["host"], password=self.config["password"], port=self.config["port"])
-        async with self.redis.pubsub() as pubsub:
-            channel = self.recieve_channel + ":" + self.client_name
-            await pubsub.subscribe(channel)
-            print(f"Subscribed to {channel}")
-            while not self.bot.is_closed():
-                try:
+        try:
+            self.redis = redis.Redis(host=self.config["host"], password=self.config["password"], port=self.config["port"])
+            async with self.redis.pubsub() as pubsub:
+                channel = self.recieve_channel + ":" + self.client_name
+                await pubsub.subscribe(channel)
+                print(f"Redis > Subscribed to {channel}")
+                while not self.bot.is_closed():
                     message = await pubsub.get_message(ignore_subscribe_messages=True)
-                    if message is not None:
-                        try:
-                            message_data = json.loads(message["data"])
-                        except Exception as e:  # pylint: disable=broad-exception-caught
-                            print(e)
-                            continue
-                        if message_data.get("type") not in ("request", "response"):
-                            print(
-                                "WARN: Invalid payload (missing or invalid `type`)\n"
-                                "```\n" + str(message_data) + "\n"
-                                                              "```"
-                            )
-                            continue
-                        if message_data["type"] == "response":
-                            print(
-                                "DEBUG: Response recieved\n"
-                                "```\n" + str(message_data) + "\n"
-                                                              "```"
-                            )
-                            future = self._response_waiters.get(message_data["uuid"])
-                            if future is not None:
-                                future.set_result(message_data["data"])
-                            continue
-                        if message_data.get("source") == self.client_name:
-                            continue
-                        if "source" not in message_data:
-                            print(
-                                "WARN: Invalid payload (missing source)\n"
-                                "```\n" + str(message_data) + "\n"
-                                                              "```"
-                            )
-                            continue
-                        try:
-                            response = await self.process_request(message_data)
-                        except Exception as e:  # pylint: disable=broad-exception-caught
-                            print(e)
-                            await self.send_message(
-                                type="response",
-                                uuid=message_data["uuid"],
-                                data={"error": str(e)},
-                            )
-                            continue
+                    if message is None:
+                        continue
+                    try:
+                        message_data = json.loads(message["data"])
+                    except json.JSONDecodeError as e:  # pylint: disable=broad-exception-caught
+                        print("Redis > Invalid payload recieved: " + str(e))
+                        continue
+                    if message_data.get("type") not in ("request", "response"):
+                        print(
+                            "Redis > Invalid payload recieved (missing or invalid `type`)"
+                        )
+                        continue
+                    if message_data["type"] == "response":
+                        future = self._response_waiters.get(message_data["uuid"])
+                        if future is not None:
+                            future.set_result(message_data["data"])
+                        continue
+                    if message_data.get("source") == self.client_name:
+                        continue
+                    if "source" not in message_data:
+                        print(
+                            "Redis > Invalid payload recieved (missing source)"
+                        )
+                        continue
+                    try:
+                        response = await self.process_request(message_data)
+                    except Exception as e:  # pylint: disable=broad-exception-caught
                         await self.send_message(
                             type="response",
                             uuid=message_data["uuid"],
-                            data=response,
+                            data={"error": str(e)},
                         )
-                except Exception as e:  # pylint: disable=broad-exception-caught
-                    print(e)
-                    continue
-        print("IPC server closed")
+                        print("Redis > Error processing request\n" + str(e))
+                        traceback.print_exc()
+                        print("Payload: " + str(message_data))
+                        continue
+                    await self.send_message(
+                        type="response",
+                        uuid=message_data["uuid"],
+                        data=response,
+                    )
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            print("Redis > Critical error occurred\n" + str(e))
+            traceback.print_exc()
+        finally:
+            if self.redis is not None:
+                await self.close()
+        print("Redis > Connection closed")
 
     async def send_message(self, **data) -> str:
+        if self.redis is None:
+            raise RuntimeError("Redis not connected")
         if "uuid" not in data:
             data["uuid"] = str(uuid.uuid4().hex)
         if "type" not in data:
@@ -195,6 +200,8 @@ class RedisManager:
         return data["uuid"]
 
     async def request(self, endpoint: str, **data):
+        if self.redis is None:
+            raise RuntimeError("Redis not connected")
         payload = {
             "source": self.client_name,
             "type": "request",
@@ -212,8 +219,13 @@ class RedisManager:
         del self._response_waiters[payload["uuid"]]
         return response
 
+    async def close(self):
+        self.read_task.cancel()
+        await self.read_task
+        await self.redis.close()
+
     @classmethod
-    async def create(cls, bot: "Bot"):
-        self = cls(bot)
+    async def create(cls, discord_bot, mineflayer_bot):
+        self = cls(discord_bot, mineflayer_bot)
         await self.start()
         return self

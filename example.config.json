@@ -1,31 +1,27 @@
 {
     "server": {
-      "host": "mc.hypixel.net",
-      "port": 25565
-    },
-    "minecraft": {
-      "username": "example@gmail.com",
-      "accountType": "microsoft"
+        "host": "mc.hypixel.net",
+        "port": 25565
     },
     "discord": {
-      "token": "",
-      "channel": "",
-      "officerChannel": "",
-      "commandRole": "",
-      "overrideRole": "",
-      "ownerId": "",
-      "prefix": "!",
-      "process_name": "index"
+        "token": "",
+        "channel": "",
+        "officerChannel": "",
+        "commandRole": "",
+        "overrideRole": "",
+        "ownerId": "",
+        "prefix": "!",
+        "process_name": "index"
     },
     "redis": {
-      "host": "redisIP",
-      "port": 6379,
-      "password": "redisPassword",
-      "clientName": "clientName",
-      "recieveChannel": "bridge-bot",
-      "sendChannel": "bridge-bot-control"
+        "host": "redisIP",
+        "port": 6379,
+        "password": "redisPassword",
+        "clientName": "clientName",
+        "recieveChannel": "bridge-bot",
+        "sendChannel": "bridge-bot-control"
     },
     "settings": {
-      "autoaccept": false
+        "autoaccept": false
     }
-  }
+}
