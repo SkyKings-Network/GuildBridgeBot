@@ -17,12 +17,9 @@ class RedisManager:
         self.send_channel = config.sendChannel
         self._response_waiters: dict[str, asyncio.Future] = {}
         self.redis: redis.Redis = None
-        self._is_running = False
 
     @property
     def running(self):
-        if not self._is_running:
-            return False
         if self.read_task is None:
             return False
         return not self.read_task.done()
