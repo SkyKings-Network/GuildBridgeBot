@@ -60,8 +60,7 @@ class MinecraftBotManager:
                 max_length = 100  # Maximum length of each chunk
                 chunks = [_message[i:i + max_length] for i in range(0, len(_message), max_length)]
                 for chunk in chunks:
-                    for line in chunk.splitlines():
-                        print("Mineflayer >", line)
+                    print(chunk)
 
             print_message(message)
 
