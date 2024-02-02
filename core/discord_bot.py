@@ -8,6 +8,8 @@ from core.config import discord as discord_config, redis as redis_config
 from core.minecraft_bot import MinecraftBotManager
 from core.redis_handler import RedisManager
 
+regex = re.compile(r"Guild > (.+): (.+)")
+regex_officer = re.compile(r"Officer > (.+): (.+)")
 
 class DiscordBridgeBot(commands.Bot):
     def __init__(self):
@@ -70,59 +72,53 @@ class DiscordBridgeBot(commands.Bot):
     # hypixel_guild_member_invite_failed
     # hypixel_guild_message_send_failed
     async def on_send_discord_message(self, message):
-        print(self.mineflayer_bot.bot.username)
         channel = self.get_channel(discord_config.channel)
         print(f"Discord > Sending message {message} to channel {channel}")
         if message.startswith("Guild >"):
-            if message.startswith("Guild > " + self.mineflayer_bot.bot.username):
-                return
-            message = message.replace("Guild >", "")
-            if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
-                if "]:" in message:
-                    memberusername = message.split()[1]
+            if ":" not in message:
+                if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
+                    if "]:" in message:
+                        memberusername = message.split()[1]
+                    else:
+                        memberusername = message.split()[1][:-1]
                 else:
-                    memberusername = message.split()[1][:-1]
+                    if "]:" in message:
+                        memberusername = message.split()[0]
+                    else:
+                        memberusername = message.split()[0][:-1]
+                if self.mineflayer_bot.bot.username in memberusername:
+                    return
+                if " joined." in message:
+                    embed = Embed(timestamp=discord.utils.utcnow(), colour=0x56F98A)
+                    embed.set_author(name=message, icon_url="https://www.mc-heads.net/avatar/" + memberusername)
+                elif " left." in message:
+                    embed = Embed(timestamp=discord.utils.utcnow(), colour=0xFF6347)
+                    embed.set_author(name=message, icon_url="https://www.mc-heads.net/avatar/" + memberusername)
             else:
-                if "]:" in message:
-                    memberusername = message.split()[0]
-                else:
-                    memberusername = message.split()[0][:-1]
-            if " joined." in message:
-                embed = Embed(timestamp=discord.utils.utcnow(), colour=0x56F98A)
-                embed.set_author(name=message, icon_url="https://www.mc-heads.net/avatar/" + memberusername)
-            elif " left." in message:
-                embed = Embed(timestamp=discord.utils.utcnow(), colour=0xFF6347)
-                embed.set_author(name=message, icon_url="https://www.mc-heads.net/avatar/" + memberusername)
-            else:
-                message = message.split(":", maxsplit=1)
-                message = message[1]
+                username, message = regex.match(message).groups()
+                if self.mineflayer_bot.bot.username in username:
+                    return
+                message = message.replace("Guild >", "")
+                if "[" in username:
+                    username = username.split("]")[1]
                 embed = Embed(description=message, timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-                embed.set_author(name=memberusername, icon_url="https://www.mc-heads.net/avatar/" + memberusername)
-                self.dispatch("hypixel_guild_message", memberusername, message)
+                embed.set_author(name=username, icon_url="https://www.mc-heads.net/avatar/" + username)
+                self.dispatch("hypixel_guild_message", username, message)
             await channel.send(embed=embed)
     
         elif message.startswith("Officer >"):
             channel = self.get_channel(discord_config.officerChannel)
             if channel is None:
                 return
-            if message.startswith("Officer > " + self.mineflayer_bot.username):
+            username, message = regex_officer.match(message).groups()
+            if self.mineflayer_bot.bot.username in username:
                 return
-            message = message.replace("Officer >", "")
-            if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
-                if "]:" in message:
-                    memberusername = message.split()[1]
-                else:
-                    memberusername = message.split()[1][:-1]
-            else:
-                if "]:" in message:
-                    memberusername = message.split()[0]
-                else:
-                    memberusername = message.split()[0][:-1]
-            message = message.split(":", maxsplit=1)
-            message = message[1]
+            message = message.replace("Guild >", "")
+            if "[" in username:
+                username = username.split("]")[1]
             embed = Embed(description=message, timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-            embed.set_author(name=memberusername, icon_url="https://www.mc-heads.net/avatar/" + memberusername)
-            self.dispatch("hypixel_guild_officer_message", memberusername, message)
+            embed.set_author(name=username, icon_url="https://www.mc-heads.net/avatar/" + username)
+            self.dispatch("hypixel_guild_officer_message", username, message)
             await channel.send(embed=embed)
     
         # Bot recieved guild invite
