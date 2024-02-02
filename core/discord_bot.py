@@ -70,6 +70,8 @@ class DiscordBridgeBot(commands.Bot):
         channel = self.get_channel(discord_config.channel)
         print(f"Discord > Sending message {message} to channel {channel}")
         if message.startswith("Guild >"):
+            if message.startswith("Guild > " + self.mineflayer_bot.username):
+                return
             message = message.replace("Guild >", "")
             if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
                 if "]:" in message:
@@ -98,6 +100,8 @@ class DiscordBridgeBot(commands.Bot):
         elif message.startswith("Officer >"):
             channel = self.get_channel(discord_config.officerChannel)
             if channel is None:
+                return
+            if message.startswith("Officer > " + self.mineflayer_bot.username):
                 return
             message = message.replace("Officer >", "")
             if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:

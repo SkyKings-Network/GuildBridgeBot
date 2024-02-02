@@ -14,6 +14,7 @@ class MinecraftBotManager:
         self.wait_response = False
         self.message_buffer = []
         self.auto_restart = True
+        self._online = False
 
     def oncommands(self):
         message_buffer = []
@@ -23,10 +24,13 @@ class MinecraftBotManager:
             print("Bot is logged in.")
             print(self.bot.username)
             self.bot.chat("§")
-            self.client.dispatch("send_discord_message", "Bot Online")
+            if not self._online:
+                self.client.dispatch("send_discord_message", "Bot Online")
+            self._online = True
 
         @On(self.bot, "end")
         def kicked(this, reason):
+            self._online = False
             self.client.dispatch("send_discord_message", "Bot Offline")
             print("Bot offline!")
             if self.auto_restart:
