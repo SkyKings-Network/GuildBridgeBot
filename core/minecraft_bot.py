@@ -39,16 +39,14 @@ class MinecraftBotManager:
         def kicked(this, reason):
             self._online = False
             print("Mineflayer > Bot offline!")
+            self.client.dispatch("send_discord_message", "Bot Offline")
             if self.auto_restart:
-                self.client.dispatch("send_discord_message", "Bot Offline")
                 time.sleep(10)
                 # maybe it changed between now and then
                 if self.auto_restart:
                     print("Mineflayer > Restarting...")
                     new_bot = self.createbot(self.client)
                     self.client.mineflayer_bot = new_bot
-            else:
-                raise SystemExit
 
         @On(self.bot, "error")
         def error(this, reason):
