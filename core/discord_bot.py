@@ -91,7 +91,7 @@ class DiscordBridgeBot(commands.Bot):
                 if " joined." in message:
                     embed = Embed(timestamp=discord.utils.utcnow(), colour=0x56F98A)
                     embed.set_author(name=message, icon_url="https://www.mc-heads.net/avatar/" + memberusername)
-                elif " left." in message:
+                else:
                     embed = Embed(timestamp=discord.utils.utcnow(), colour=0xFF6347)
                     embed.set_author(name=message, icon_url="https://www.mc-heads.net/avatar/" + memberusername)
             else:
