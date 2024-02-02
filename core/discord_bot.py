@@ -111,7 +111,12 @@ class DiscordBridgeBot(commands.Bot):
                     print(username)
                 self.dispatch("hypixel_guild_message", username, message)
             try:
+                if embed.author and embed.author.icon_url:
+                    if not embed.author.icon_url.startswith("https://"):
+                        raise ValueError("Invalid URL")
                 await channel.send(embed=embed)
+            except ValueError as ve:
+                print(f"Discord > Failed to send message {message} to channel {channel}: {ve}")
             except Exception as e:
                 print(f"Discord > Failed to send message {message} to channel {channel}: {e}")
 
