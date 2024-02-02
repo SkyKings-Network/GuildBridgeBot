@@ -69,7 +69,9 @@ class MinecraftBotManager:
                     pass
                 else:
                     if message.startswith("Guild >"):
+                        print("Test Delay 5")
                         self.client.dispatch("send_discord_message", message)
+                        print("Test Delay 6")
 
                     elif message.startswith("Officer >"):
                         self.client.dispatch("send_discord_message", message)
