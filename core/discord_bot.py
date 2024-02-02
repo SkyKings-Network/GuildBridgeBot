@@ -8,8 +8,9 @@ from core.config import discord as discord_config, redis as redis_config
 from core.minecraft_bot import MinecraftBotManager
 from core.redis_handler import RedisManager
 
-regex = re.compile(r"Guild > (.+): (.+)")
-regex_officer = re.compile(r"Officer > (.+): (.+)")
+regex = re.compile(r"Guild > ([\[\]+ a-zA-Z0-9_]+): (.+)")
+regex_officer = re.compile(r"Officer > ([\[\]+ a-zA-Z0-9_]+): (.+)")
+
 
 class DiscordBridgeBot(commands.Bot):
     def __init__(self):
@@ -107,7 +108,7 @@ class DiscordBridgeBot(commands.Bot):
                 embed.set_author(name=username, icon_url="https://www.mc-heads.net/avatar/" + username)
                 self.dispatch("hypixel_guild_message", username, message)
             await channel.send(embed=embed)
-    
+
         elif message.startswith("Officer >"):
             channel = self.get_channel(discord_config.officerChannel)
             if channel is None:
@@ -122,24 +123,24 @@ class DiscordBridgeBot(commands.Bot):
             embed.set_author(name=username, icon_url="https://www.mc-heads.net/avatar/" + username)
             self.dispatch("hypixel_guild_officer_message", username, message)
             await channel.send(embed=embed)
-    
+
         # Bot recieved guild invite
         elif "Click here to accept or type /guild accept " in message:
             if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
                 playername = message.split()[2]
             else:
                 playername = message.split()[1]
-    
+
             embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
             embed.set_author(
                 name=f"{playername} invited me to a guild.",
                 icon_url="https://www.mc-heads.net/avatar/" + playername
             )
-    
+
             self.dispatch("hypixel_guild_invite_recieved", playername)
-    
+
             await channel.send(embed=embed)
-    
+
         # Someone joined/left the guild
         elif " joined the guild!" in message:
             message = message.split()
@@ -165,7 +166,7 @@ class DiscordBridgeBot(commands.Bot):
             )
             await channel.send(embed=embed)
             self.dispatch("hypixel_guild_member_leave", playername)
-    
+
         # Someone was promoted/demoted
         elif " was promoted from " in message:
             message = message.split()
@@ -196,9 +197,9 @@ class DiscordBridgeBot(commands.Bot):
                 icon_url="https://www.mc-heads.net/avatar/" + playername
             )
             await channel.send(embed=embed)
-    
+
             self.dispatch("hypixel_guild_member_demote", playername, from_rank, to_rank)
-    
+
         # Someone was kicked
         elif " was kicked from the guild!" in message:
             message = message.split()
@@ -226,7 +227,7 @@ class DiscordBridgeBot(commands.Bot):
             )
             await channel.send(embed=embed)
             self.dispatch("hypixel_guild_member_kick", playername)
-    
+
         # Join/leave notifications toggled
         elif "Disabled guild join/leave notifications!" in message:
             embed = Embed(description="Disabled guild join/leave notifications!", colour=0x1ABC9C)
@@ -234,7 +235,7 @@ class DiscordBridgeBot(commands.Bot):
         elif "Enabled guild join/leave notifications!" in message:
             embed = Embed(description="Enabled guild join/leave notifications!", colour=0x1ABC9C)
             await channel.send(embed=embed)
-    
+
         # Hypixel antispam filter
         elif "You cannot say the same message twice!" in message:
             embed = Embed(description="You cannot say the same message twice!", colour=0x1ABC9C)
