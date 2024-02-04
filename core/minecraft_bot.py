@@ -1,3 +1,4 @@
+import asyncio
 import os
 import threading
 import time
@@ -18,12 +19,15 @@ class MinecraftBotManager:
         self.auto_restart = True
         self._online = False
 
-    def chat(self, message):
-        self.bot.chat(message)
+    async def chat(self, message):
+        await self.bot.loop.run_in_executor(None, self.bot.chat, message)
 
     def stop(self, restart: bool = True):
         self.auto_restart = restart
         self.bot.quit()
+
+    def send_to_discord(self, message):
+        asyncio.run_coroutine_threadsafe(self.bot.send_discord_message(message), self.bot.loop)
 
     def oncommands(self):
         message_buffer = []
@@ -34,15 +38,14 @@ class MinecraftBotManager:
             print(self.bot.username)
             self.bot.chat("§")
             if not self._online:
-                self.client.dispatch("send_discord_message", "Bot Online")
+                self.send_to_discord("Bot Online")
             self._online = True
-            print(threading.get_ident(), os.getpid())
 
         @On(self.bot, "end")
         def kicked(this, reason):
             self._online = False
             print("Mineflayer > Bot offline!")
-            self.client.dispatch("send_discord_message", "Bot Offline")
+            self.send_to_discord("Bot Offline")
             if self.auto_restart:
                 time.sleep(10)
                 # maybe it changed between now and then
@@ -71,11 +74,8 @@ class MinecraftBotManager:
                 if message.startswith("Guild > " + self.bot.username) or message.startswith("Officer > " + self.bot.username):
                     pass
                 else:
-                    if message.startswith("Guild >"):
-                        self.client.dispatch("send_discord_message", message)
-
-                    elif message.startswith("Officer >"):
-                        self.client.dispatch("send_discord_message", message)
+                    if message.startswith("Guild >") or message.startswith("Officer >"):
+                        self.send_to_discord(message)
 
                     # Online Command
                     elif "Guild Name: " in message:
@@ -85,13 +85,13 @@ class MinecraftBotManager:
                         message_buffer.append(message)
                     if "Offline Members:" in message and self.wait_response:
                         self.wait_response = False
-                        self.client.dispatch("send_discord_message", "\n".join(message_buffer))
+                        self.send_to_discord("\n".join(message_buffer))
                         message_buffer.clear()
 
                     if "Unknown command" in message:
-                        self.client.dispatch("minecraft_pong", message)
+                        self.send_to_discord(message)
                     if "Click here to accept or type /guild accept " in message:
-                        self.client.dispatch("send_discord_message", message)
+                        self.send_to_discord(message)
                         self.send_minecraft_message(None, message, "invite")
                     elif " is already in another guild!" in message or \
                             ("You invited" in message and "to your guild. They have 5 minutes to accept." in message) or \
@@ -106,7 +106,7 @@ class MinecraftBotManager:
                             "Enabled guild join/leave notifications!" in message or \
                             "You cannot say the same message twice!" in message or \
                             "You don't have access to the officer chat!" in message:
-                        self.client.dispatch("send_discord_message", message)
+                        self.send_to_discord(message)
 
     def send_minecraft_message(self, discord, message, type):
         if type == "General":

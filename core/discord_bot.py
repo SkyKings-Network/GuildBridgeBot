@@ -29,7 +29,6 @@ class DiscordBridgeBot(commands.Bot):
 
     async def on_ready(self):
         print(f"Discord > Bot Running as {self.user}")
-        print(threading.get_ident(), os.getpid())
         if self.mineflayer_bot is None:
             print("Discord > Starting the Minecraft bot...")
             self.mineflayer_bot = MinecraftBotManager.createbot(self)
@@ -76,7 +75,9 @@ class DiscordBridgeBot(commands.Bot):
     # hypixel_guild_member_invite
     # hypixel_guild_member_invite_failed
     # hypixel_guild_message_send_failed
-    async def on_send_discord_message(self, message):
+    async def send_discord_message(self, message):
+        if "Unknown command" in message:
+            self.dispatch("minecraft_pong")
         print("Test Delay")
         channel = self.get_channel(discord_config.channel)
         print(f"Discord > Sending message {message} to channel {channel}")

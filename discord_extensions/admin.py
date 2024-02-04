@@ -13,7 +13,7 @@ class Admin(commands.Cog):
     @commands.command()
     @commands.has_role(config.overrideRole)
     async def notifications(self, ctx):
-        self.bot.mineflayer_bot.chat("/g notifications")
+        await self.bot.mineflayer_bot.chat("/g notifications")
 
     @commands.command()
     @commands.has_role(config.overrideRole)
@@ -37,7 +37,7 @@ class Admin(commands.Cog):
     @commands.command(aliases=['o', 'over'])
     @commands.has_role(config.overrideRole)
     async def override(self, ctx, *, command):
-        self.bot.mineflayer_bot.chat("/" + command)
+        await self.bot.mineflayer_bot.chat("/" + command)
         embedVar = discord.Embed(description=f"``/{command}`` has been sent!", colour=0x1ABC9C)
         await ctx.send(embed=embedVar)
 

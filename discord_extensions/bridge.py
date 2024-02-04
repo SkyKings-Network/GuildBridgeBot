@@ -10,7 +10,7 @@ class Bridge(commands.Cog):
     @commands.command()
     @commands.has_role(config.commandRole)
     async def invite(self, ctx, username):
-        self.bot.mineflayer_bot.chat("/g invite " + username)
+        await self.bot.mineflayer_bot.chat("/g invite " + username)
         embedVar = discord.Embed(description=username + " has been invited!")
         await ctx.send(embed=embedVar)
 
@@ -18,59 +18,58 @@ class Bridge(commands.Cog):
     @commands.has_role(config.commandRole)
     async def kick(self, ctx, username, reason=None):
         if reason is None:
-            self.bot.mineflayer_bot.chat("/g kick " + username)
+            await self.bot.mineflayer_bot.chat("/g kick " + username)
             embedVar = discord.Embed(description=username + " has been kicked!")
             await ctx.send(embed=embedVar)
         else:
-            self.bot.mineflayer_bot.chat("/g kick " + username + "" + reason)
+            await self.bot.mineflayer_bot.chat("/g kick " + username + "" + reason)
             embedVar = discord.Embed(description=username + " has been kicked for " + reason + "!")
             await ctx.send(embed=embedVar)
 
     @commands.command()
     @commands.has_role(config.commandRole)
     async def promote(self, ctx, username):
-        self.bot.mineflayer_bot.chat("/g promote " + username)
+        await self.bot.mineflayer_bot.chat("/g promote " + username)
         embedVar = discord.Embed(description=username + " has been promoted!")
         await ctx.send(embed=embedVar)
 
     @commands.command()
     @commands.has_role(config.commandRole)
     async def mute(self, ctx, username, time):
-        self.bot.mineflayer_bot.chat("/g mute " + username + " " + time)
+        await self.bot.mineflayer_bot.chat("/g mute " + username + " " + time)
         embedVar = discord.Embed(description=username + " has been muted for " + time)
         await ctx.send(embed=embedVar)
 
     @commands.command()
     @commands.has_role(config.commandRole)
     async def unmute(self, ctx, username):
-        self.bot.mineflayer_bot.chat("/g unmute " + username)
+        await self.bot.mineflayer_bot.chat("/g unmute " + username)
         embedVar = discord.Embed(description=username + " has been unmuted")
         await ctx.send(embed=embedVar)
 
     @commands.command()
     @commands.has_role(config.commandRole)
     async def setrank(self, ctx, username, rank):
-        self.bot.mineflayer_bot.chat("/g setrank " + username + " " + rank)
+        await self.bot.mineflayer_bot.chat("/g setrank " + username + " " + rank)
         embedVar = discord.Embed(description=username + " has been promoted to " + rank)
         await ctx.send(embed=embedVar)
 
     @commands.command()
     @commands.has_role(config.commandRole)
     async def demote(self, ctx, username):
-        self.bot.mineflayer_bot.chat("/g demote " + username)
+        await self.bot.mineflayer_bot.chat("/g demote " + username)
         embedVar = discord.Embed(description=username + " has been demoted!")
         await ctx.send(embed=embedVar)
 
     @commands.command()
     @commands.cooldown(1, 5, commands.BucketType.channel)
     async def online(self, ctx):
-        self.bot.mineflayer_bot.chat("/g online")
+        await self.bot.mineflayer_bot.chat("/g online")
 
     @commands.command(name="list")
     @commands.cooldown(1, 5, commands.BucketType.channel)
     async def _list(self, ctx):
-        print(self.bot.mineflayer_bot)
-        self.bot.mineflayer_bot.chat("/g list")
+        await self.bot.mineflayer_bot.chat("/g list")
 
 
 async def setup(bot):

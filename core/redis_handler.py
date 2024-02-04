@@ -33,14 +33,14 @@ class RedisManager:
         if self.mineflayer_bot is None:
             return {"success": False, "error": "bot not connected"}
         if message_data["endpoint"] == "alive":
-            self.mineflayer_bot.chat("/ping")
+            await self.mineflayer_bot.chat("/ping")
             try:
                 await self.bot.wait_for("minecraft_pong", timeout=10)
             except asyncio.TimeoutError:
                 return {"success": False, "error": "timeout"}
             return {"success": True}
         elif message_data["endpoint"] == "kick":
-            self.mineflayer_bot.chat("/g kick " + message_data["data"]["username"] + " " + message_data["data"]["reason"])
+            await self.mineflayer_bot.chat("/g kick " + message_data["data"]["username"] + " " + message_data["data"]["reason"])
             try:
                 await self.bot.wait_for(
                     "hypixel_guild_member_kick", timeout=10,
@@ -50,15 +50,15 @@ class RedisManager:
                 return {"success": False, "error": "timeout"}
             return {"success": True}
         elif message_data["endpoint"] == "mute":
-            self.mineflayer_bot.chat("/g mute " + message_data["data"]["username"])
+            await self.mineflayer_bot.chat("/g mute " + message_data["data"]["username"])
             # TODO: write a success check for this
             return {"success": True}
         elif message_data["endpoint"] == "unmute":
-            self.mineflayer_bot.chat("/g unmute " + message_data["data"]["username"])
+            await self.mineflayer_bot.chat("/g unmute " + message_data["data"]["username"])
             # TODO: write a success check for this
             return {"success": True}
         elif message_data["endpoint"] == "setrank":
-            self.mineflayer_bot.chat(
+            await self.mineflayer_bot.chat(
                 "/g setrank " + message_data["data"]["username"] + " " + message_data["data"]["rank"]
                 )
             # wait for either hypixel_guild_member_promote or hypixel_guild_member_demote
@@ -84,7 +84,7 @@ class RedisManager:
                 return {"success": False, "error": "timeout"}
             return {"success": True}
         elif message_data["endpoint"] == "promote":
-            self.mineflayer_bot.chat("/g promote " + message_data["data"]["username"])
+            await self.mineflayer_bot.chat("/g promote " + message_data["data"]["username"])
             try:
                 await self.bot.wait_for(
                     "hypixel_guild_member_promote", timeout=10,
@@ -94,7 +94,7 @@ class RedisManager:
                 return {"success": False, "error": "timeout"}
             return {"success": True}
         elif message_data["endpoint"] == "demote":
-            self.mineflayer_bot.chat("/g demote " + message_data["data"]["username"])
+            await self.mineflayer_bot.chat("/g demote " + message_data["data"]["username"])
             try:
                 await self.bot.wait_for(
                     "hypixel_guild_member_demote", timeout=10,
@@ -104,11 +104,11 @@ class RedisManager:
                 return {"success": False, "error": "timeout"}
             return {"success": True}
         elif message_data["endpoint"] == "override":
-            self.mineflayer_bot.chat(message_data["data"]["command"])
+            await self.mineflayer_bot.chat(message_data["data"]["command"])
             # can't really write a check for this
             return {"success": True}
         elif message_data["endpoint"] == "invite":
-            self.mineflayer_bot.chat("/g invite " + message_data["data"]["username"])
+            await self.mineflayer_bot.chat("/g invite " + message_data["data"]["username"])
             # wait for hypixel_guild_member_invite_failed or hypixel_guild_member_invite
             # return on first completed event
             chk = lambda x: x.lower() == message_data["data"]["username"].lower()
