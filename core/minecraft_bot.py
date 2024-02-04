@@ -78,15 +78,15 @@ class MinecraftBotManager:
                         self.send_to_discord(message)
 
                     # Online Command
-                    elif "Guild Name: " in message:
+                    if message.startswith("Guild Name: "):
                         message_buffer.clear()
                         self.wait_response = True
-                    if self.wait_response is True:
-                        message_buffer.append(message)
-                    if "Offline Members:" in message and self.wait_response:
+                    if message == "-----------------------------------------------------":
                         self.wait_response = False
                         self.send_to_discord("\n".join(message_buffer))
                         message_buffer.clear()
+                    if self.wait_response is True:
+                        message_buffer.append(message)
 
                     if "Unknown command" in message:
                         self.send_to_discord(message)
