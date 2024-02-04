@@ -1,5 +1,6 @@
 import asyncio
 import os
+import sys
 import threading
 import time
 
@@ -38,7 +39,6 @@ class MinecraftBotManager:
             print(self.bot.username)
             self.bot.chat("§")
             if not self._online:
-                self.client.dispatch("mc_bot_state_update", "online")
                 self.send_to_discord("Bot Online")
             self._online = True
 
@@ -47,7 +47,6 @@ class MinecraftBotManager:
             self._online = False
             print("Mineflayer > Bot offline!")
             self.send_to_discord("Bot Offline")
-            self.client.dispatch("mc_bot_state_update", "offline")
             if self.auto_restart:
                 time.sleep(10)
                 # maybe it changed between now and then
@@ -55,6 +54,9 @@ class MinecraftBotManager:
                     print("Mineflayer > Restarting...")
                     new_bot = self.createbot(self.client)
                     self.client.mineflayer_bot = new_bot
+            else:
+                # kill this thread forcefully
+                sys.exit(0)
 
         @On(self.bot, "error")
         def error(this, reason):
@@ -73,7 +75,9 @@ class MinecraftBotManager:
             if self.bot.username is None:
                 pass
             else:
-                if message.startswith("Guild > " + self.bot.username) or message.startswith("Officer > " + self.bot.username):
+                if message.startswith("Guild > " + self.bot.username) or message.startswith(
+                        "Officer > " + self.bot.username
+                        ):
                     pass
                 else:
                     if message.startswith("Guild >") or message.startswith("Officer >"):
