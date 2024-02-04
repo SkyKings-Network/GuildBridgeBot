@@ -14,6 +14,9 @@ config_format = settings = {
         "host": (str, "mc.hypixel.net"),
         "port": (int, 25565),
     },
+    "account": {
+        "email": (str,),
+    },
     "discord": {
         "token": (str,),
         "channel": (int,),
@@ -111,6 +114,7 @@ class ConfigObject:
 
 
 server = ConfigObject("server")
+account = ConfigObject("account")
 discord = ConfigObject("discord")
 redis = ConfigObject("redis")
 settings = ConfigObject("settings")

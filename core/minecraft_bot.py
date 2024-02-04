@@ -1,12 +1,10 @@
 import asyncio
-import os
 import sys
-import threading
 import time
 
 from javascript import require, On
 
-from core.config import server, settings
+from core.config import server, settings, account
 
 mineflayer = require("mineflayer")
 
@@ -145,6 +143,7 @@ class MinecraftBotManager:
                 "host": server.host,
                 "port": server.port,
                 "version": "1.8.9",
+                "username": account.email,
                 "auth": "microsoft",
                 "viewDistance": "tiny",
             }

@@ -3,6 +3,9 @@
         "host": "mc.hypixel.net",
         "port": 25565
     },
+    "account": {
+        "email": ""
+    },
     "discord": {
         "token": "",
         "channel": "",
