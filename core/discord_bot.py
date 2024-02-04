@@ -49,6 +49,9 @@ class DiscordBridgeBot(commands.Bot):
     async def on_command(self, ctx):
         print(f"Discord > Command {ctx.command} has been invoked by {ctx.author}")
 
+    async def on_mc_bot_state_update(self, state):
+        pass
+
     async def close(self):
         print(f"Discord > Bot {self.user} is shutting down...")
         if self.mineflayer_bot is not None:
