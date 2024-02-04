@@ -81,9 +81,7 @@ class DiscordBridgeBot(commands.Bot):
     async def send_discord_message(self, message):
         if "Unknown command" in message:
             self.dispatch("minecraft_pong")
-        print("Test Delay")
         channel = self.get_channel(discord_config.channel)
-        print(f"Discord > Sending message {message} to channel {channel}")
         if message.startswith("Guild >"):
             if ":" not in message:
                 if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
