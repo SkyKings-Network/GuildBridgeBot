@@ -1,4 +1,6 @@
+import os
 import re
+import threading
 
 import discord
 from discord import Embed
@@ -27,6 +29,7 @@ class DiscordBridgeBot(commands.Bot):
 
     async def on_ready(self):
         print(f"Discord > Bot Running as {self.user}")
+        print(threading.get_ident(), os.getpid())
         if self.mineflayer_bot is None:
             print("Discord > Starting the Minecraft bot...")
             self.mineflayer_bot = MinecraftBotManager.createbot(self)

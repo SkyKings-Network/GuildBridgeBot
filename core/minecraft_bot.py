@@ -1,3 +1,5 @@
+import os
+import threading
 import time
 
 from javascript import require, On
@@ -34,6 +36,7 @@ class MinecraftBotManager:
             if not self._online:
                 self.client.dispatch("send_discord_message", "Bot Online")
             self._online = True
+            print(threading.get_ident(), os.getpid())
 
         @On(self.bot, "end")
         def kicked(this, reason):
