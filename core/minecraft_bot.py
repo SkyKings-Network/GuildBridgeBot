@@ -38,6 +38,7 @@ class MinecraftBotManager:
             print(self.bot.username)
             self.bot.chat("§")
             if not self._online:
+                self.client.dispatch("minecraft_bot_online")
                 self.send_to_discord("Bot Online")
             self._online = True
 
@@ -46,6 +47,7 @@ class MinecraftBotManager:
             self._online = False
             print("Mineflayer > Bot offline!")
             self.send_to_discord("Bot Offline")
+            self.client.dispatch("minecraft_bot_offline")
             if self.auto_restart:
                 time.sleep(10)
                 # maybe it changed between now and then
