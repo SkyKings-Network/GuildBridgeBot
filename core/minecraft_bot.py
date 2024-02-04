@@ -20,14 +20,14 @@ class MinecraftBotManager:
         self._online = False
 
     async def chat(self, message):
-        await self.bot.loop.run_in_executor(None, self.bot.chat, message)
+        await self.client.loop.run_in_executor(None, self.bot.chat, message)
 
     def stop(self, restart: bool = True):
         self.auto_restart = restart
         self.bot.quit()
 
     def send_to_discord(self, message):
-        asyncio.run_coroutine_threadsafe(self.bot.send_discord_message(message), self.bot.loop)
+        asyncio.run_coroutine_threadsafe(self.client.send_discord_message(message), self.client.loop)
 
     def oncommands(self):
         message_buffer = []
