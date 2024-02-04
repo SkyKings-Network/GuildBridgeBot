@@ -312,7 +312,7 @@ class DiscordBridgeBot(commands.Bot):
             self.dispatch("hypixel_guild_member_invite_failed", None)
 
         # /g list command response
-        elif "Offline Members:" in message:
+        elif "Total Members:" in message:
             message = re.split("--", message)
             embed = ""
             length = len(message)
