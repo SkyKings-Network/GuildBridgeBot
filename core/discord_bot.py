@@ -325,7 +325,7 @@ class DiscordBridgeBot(commands.Bot):
                 elif i % 2 == 0:
                     ii = i - 1
                     embed += "**" + message[ii] + "** " + message[i]
-            embed = Embed(description=embed, colour=0x1ABC9C)
+            embed = Embed(description=embed.replace("_", "\\_"), colour=0x1ABC9C)
             await channel.send(embed=embed)
 
         # Everything else is sent as a normal message
