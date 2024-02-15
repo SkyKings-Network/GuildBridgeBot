@@ -24,6 +24,8 @@ class MinecraftBotManager:
     def stop(self, restart: bool = True):
         self.auto_restart = restart
         self.bot.quit()
+        while self._online:
+            time.sleep(0.2)
 
     def send_to_discord(self, message):
         asyncio.run_coroutine_threadsafe(self.client.send_discord_message(message), self.client.loop)
@@ -42,9 +44,9 @@ class MinecraftBotManager:
 
         @On(self.bot, "end")
         def kicked(this, reason):
-            self._online = False
             print("Mineflayer > Bot offline!")
             self.send_to_discord("Bot Offline")
+            self._online = False
             if self.auto_restart:
                 time.sleep(10)
                 # maybe it changed between now and then
