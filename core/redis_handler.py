@@ -172,6 +172,7 @@ class RedisManager:
                             "Redis > Invalid payload recieved (missing source)"
                         )
                         continue
+                    print(f"Redis > Handling message from {message_data.get('source')}")
                     try:
                         response = await self.process_request(message_data)
                     except Exception as e:  # pylint: disable=broad-exception-caught
@@ -190,6 +191,7 @@ class RedisManager:
                         data=response,
                     )
         except asyncio.CancelledError:
+            print("Redis > Task Cancelled")
             pass
         except Exception as e:  # pylint: disable=broad-exception-caught
             print("Redis > Critical error occurred\n" + str(e))
