@@ -15,7 +15,7 @@ config_format = settings = {
         "port": (int, 25565),
     },
     "account": {
-        "email": (str,""),
+        "email": (str,),
     },
     "discord": {
         "token": (str,),
