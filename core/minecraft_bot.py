@@ -55,6 +55,8 @@ class MinecraftBotManager:
             else:
                 # kill this thread forcefully
                 sys.exit(0)
+                self.send_to_discord("Bot Offline")
+                print("we tried")
 
         @On(self.bot, "error")
         def error(this, reason):
