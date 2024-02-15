@@ -53,10 +53,8 @@ class MinecraftBotManager:
                     new_bot = self.createbot(self.client)
                     self.client.mineflayer_bot = new_bot
                     return
-            # kill this thread forcefully
-            sys.exit(0)
-            self.send_to_discord("Bot Offline")
-            print("we tried")
+            print("womp womp")
+            
 
         @On(self.bot, "error")
         def error(this, reason):
