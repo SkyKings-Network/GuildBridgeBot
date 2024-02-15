@@ -220,9 +220,10 @@ class DiscordBridgeBot(commands.Bot):
             message = message.split()
             print(message, 1)
             if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
-                playername = message[2]
-            else:
                 playername = message[1]
+                print(0)
+            else:
+                playername = message[0]
             embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
             embed.set_author(
                 name=f"{playername} was kicked from the guild!",
@@ -234,9 +235,10 @@ class DiscordBridgeBot(commands.Bot):
             message = message.split()
             print(message, 2)
             if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
-                playername = message[2]
-            else:
+                print(0)
                 playername = message[1]
+            else:
+                playername = message[0]
             embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
             embed.set_author(
                 name=f"{playername} was kicked from the guild!",
