@@ -52,11 +52,11 @@ class MinecraftBotManager:
                     print("Mineflayer > Restarting...")
                     new_bot = self.createbot(self.client)
                     self.client.mineflayer_bot = new_bot
-            else:
-                # kill this thread forcefully
-                sys.exit(0)
-                self.send_to_discord("Bot Offline")
-                print("we tried")
+                    return
+            # kill this thread forcefully
+            sys.exit(0)
+            self.send_to_discord("Bot Offline")
+            print("we tried")
 
         @On(self.bot, "error")
         def error(this, reason):
