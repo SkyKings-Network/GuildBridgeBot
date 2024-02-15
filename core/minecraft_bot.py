@@ -2,7 +2,7 @@ import asyncio
 import sys
 import time
 
-from javascript import require, On
+from javascript import require, On, config
 
 from core.config import server, settings, account
 
@@ -53,7 +53,10 @@ class MinecraftBotManager:
                     new_bot = self.createbot(self.client)
                     self.client.mineflayer_bot = new_bot
                     return
-            print("womp womp")
+            for state, handler, thread in config.event_loop.threads:
+                thread.terminate()
+            config.event_loop.threads = []
+            config.event_loop.stop()
             
 
         @On(self.bot, "error")
