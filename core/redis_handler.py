@@ -192,7 +192,8 @@ class RedisManager:
                     )
         except asyncio.CancelledError:
             print("Redis > Task Cancelled")
-            pass
+        except redis.ConnectionError:
+            print("Redis > Redis connection closed")
         except Exception as e:  # pylint: disable=broad-exception-caught
             print("Redis > Critical error occurred\n" + str(e))
             traceback.print_exc()
