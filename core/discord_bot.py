@@ -218,6 +218,7 @@ class DiscordBridgeBot(commands.Bot):
         # Someone was kicked
         elif " was kicked from the guild!" in message:
             message = message.split()
+            print(message, 1)
             if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
                 playername = message[2]
             else:
@@ -231,6 +232,7 @@ class DiscordBridgeBot(commands.Bot):
             self.dispatch("hypixel_guild_member_kick", playername)
         elif " was kicked from the guild by " in message:
             message = message.split()
+            print(message, 2)
             if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
                 playername = message[2]
             else:
