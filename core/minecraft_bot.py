@@ -138,6 +138,7 @@ class MinecraftBotManager:
 
     @classmethod
     def createbot(cls, client):
+        print("Mineflayer > Creating the bot...")
         bot = mineflayer.createBot(
             {
                 "host": server.host,
@@ -148,7 +149,9 @@ class MinecraftBotManager:
                 "viewDistance": "tiny",
             }
         )
+        print("Mineflayer > Initialized")
         botcls = cls(client, bot)
         client.mineflayer_bot = botcls
         botcls.oncommands()
+        print("Mineflayer > Events registered")
         return botcls
