@@ -16,15 +16,10 @@ class Bridge(commands.Cog):
 
     @commands.command()
     @commands.has_role(config.commandRole)
-    async def kick(self, ctx, username, reason=None):
-        if reason is None:
-            await self.bot.mineflayer_bot.chat("/g kick " + username)
-            embedVar = discord.Embed(description=username + " has been kicked!")
-            await ctx.send(embed=embedVar)
-        else:
-            await self.bot.mineflayer_bot.chat("/g kick " + username + "" + reason)
-            embedVar = discord.Embed(description=username + " has been kicked for " + reason + "!")
-            await ctx.send(embed=embedVar)
+    async def kick(self, ctx, username, *, reason):
+        await self.bot.mineflayer_bot.chat("/g kick " + username + " " + reason)
+        embedVar = discord.Embed(description=username + " has been kicked for " + reason + "!")
+        await ctx.send(embed=embedVar)
 
     @commands.command()
     @commands.has_role(config.commandRole)
