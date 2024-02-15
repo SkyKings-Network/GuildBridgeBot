@@ -42,6 +42,12 @@ config_format = settings = {
 
 def validate_config(_config):
     for key, value in config_format.items():
+        if _config.get(key) is None:
+            # Check if anything is required
+            for k, v in value.items():
+                if len(v) == 1:
+                    raise InvalidConfig(f"Missing required section '{key}'")
+            _config[key] = {}
         for k, v in value.items():
             config_val = _config[key].get(k)
             if config_val is None or config_val == "":
