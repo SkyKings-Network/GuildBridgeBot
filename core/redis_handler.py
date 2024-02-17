@@ -63,8 +63,8 @@ class RedisManager:
                 )
             # wait for either hypixel_guild_member_promote or hypixel_guild_member_demote
             # return on first completed event
-            chk = lambda x, f, t: (x.lower() == message_data["data"]["username"].lower() and
-                                   t.lower() == message_data["data"]["rank"].lower() if x is not None and t is not None else False)
+            chk = lambda p, f, t: ((p.lower() == message_data["data"]["username"].lower() and
+                                   t.lower() == message_data["data"]["rank"].lower()) if (p is not None and t is not None) else False)
             try:
                 await asyncio.wait(
                     [
@@ -88,7 +88,7 @@ class RedisManager:
             try:
                 await self.bot.wait_for(
                     "hypixel_guild_member_promote", timeout=10,
-                    check=lambda x: x.lower() == message_data["data"]["username"].lower() if x is not None else False,
+                    check=lambda p, f, t: p.lower() == message_data["data"]["username"].lower() if p is not None else False,
                 )
             except asyncio.TimeoutError:
                 return {"success": False, "error": "timeout"}
@@ -98,7 +98,7 @@ class RedisManager:
             try:
                 await self.bot.wait_for(
                     "hypixel_guild_member_demote", timeout=10,
-                    check=lambda x: x.lower() == message_data["data"]["username"].lower() if x is not None else False,
+                    check=lambda p, f, t: p.lower() == message_data["data"]["username"].lower() if p is not None else False,
                 )
             except asyncio.TimeoutError:
                 return {"success": False, "error": "timeout"}
