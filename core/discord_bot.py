@@ -35,6 +35,8 @@ class DiscordBridgeBot(commands.Bot):
     async def send_invite(self, username):
         fut = asyncio.Future()
         self.invite_queue.put_nowait([username, fut])
+        if self._proc_invite_task is None or self._proc_invite_task.done():
+            self._proc_inv_task = asyncio.create_task(self._process_invites())
         return await fut
 
     async def on_ready(self):
