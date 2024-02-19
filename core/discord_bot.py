@@ -170,7 +170,7 @@ class DiscordBridgeBot(commands.Bot):
 
     async def send_user_message(
         self, username, message, *, officer: bool = False
-    ) -> discord.Message | discord.WebhookMessage | None:
+    ) -> Union[discord.Message, discord.WebhookMessage, None]:
         if self.webhook:
             return await self.send_message(
                 username=username,
