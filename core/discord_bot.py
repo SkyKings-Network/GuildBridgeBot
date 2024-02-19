@@ -2,6 +2,7 @@ import asyncio
 import os
 import re
 import threading
+import traceback
 
 import discord
 from discord import Embed
@@ -33,7 +34,7 @@ class DiscordBridgeBot(commands.Bot):
 
     async def send_invite(self, username):
         fut = asyncio.Future()
-        await self.invite_queue.put([username, fut])
+        self.invite_queue.put_nowait([username, fut])
         return await fut
 
     async def on_ready(self):
@@ -79,6 +80,7 @@ class DiscordBridgeBot(commands.Bot):
     async def _process_invites(self):
         try:
             while not self.is_closed():
+                print("Discord > Waiting for invite...")
                 username, fut = await self.invite_queue.get()
                 print(f"Discord > Processing invite for {username}")
                 self._current_invite_future = fut
@@ -89,6 +91,9 @@ class DiscordBridgeBot(commands.Bot):
                 self._current_invite_future = None
         except asyncio.CancelledError:
             pass
+        except Exception as e:
+            print(f"Discord > Invite processor has been stopped: {e}")
+            traceback.print_exc()
         print("Discord > Invite processor has been stopped.")
 
     # custom client events:
