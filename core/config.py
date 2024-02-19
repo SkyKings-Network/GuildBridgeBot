@@ -25,6 +25,8 @@ config_format = settings = {
         "overrideRole": (int, ""),
         "ownerId": (int, ""),
         "prefix": (str, "!"),
+        "webhookURL": (str, ""),
+        "officerWebhookURL": (str, ""),
     },
     "redis": {
         "host": (str, ""),
