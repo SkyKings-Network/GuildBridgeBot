@@ -17,6 +17,15 @@ from core.redis_handler import RedisManager
 regex = re.compile(r"Guild > ([\[\]+ a-zA-Z0-9_]+): (.+)")
 regex_officer = re.compile(r"Officer > ([\[\]+ a-zA-Z0-9_]+): (.+)")
 
+emoji_regex = re.compile(r"<a?:(\w+):\d+>")
+mention_regex = re.compile(r"<@!?(\d+)>")
+role_mention_regex = re.compile(r"<@&(\d+)>")
+channel_mention_regex = re.compile(r"<#(\d+)>")
+
+
+def emoji_repl(match):
+    return f":{match.group(1)}:"
+
 
 class DiscordBridgeBot(commands.Bot):
     def __init__(self):
@@ -71,9 +80,9 @@ class DiscordBridgeBot(commands.Bot):
             if str(message.content).startswith(discord_config.prefix):
                 pass
             elif message.channel.id == int(discord_config.channel):
-                self.mineflayer_bot.send_minecraft_message(message.author.display_name, message.content, "General")
+                await self.send_minecraft_user_message(message.author.display_name, message)
             elif message.channel.id == int(discord_config.officerChannel):
-                self.mineflayer_bot.send_minecraft_message(message.author.display_name, message.content, "Officer")
+                await self.send_minecraft_user_message(message.author.display_name, message, officer=True)
         await self.process_commands(message)
 
     async def on_command(self, ctx):
@@ -175,6 +184,57 @@ class DiscordBridgeBot(commands.Bot):
             embed = Embed(description=message, colour=0x1ABC9C, timestamp=discord.utils.utcnow())
             embed.set_author(name=username, icon_url="https://www.mc-heads.net/avatar/" + username)
             return await self.send_message(embed=embed, officer=officer)
+
+    async def send_minecraft_user_message(self, username, message: discord.Message, *, officer: bool = False):
+        content = message.content
+        # replace emojis
+        content = emoji_regex.sub(emoji_repl, content)
+        # replace member mentions
+        mentions = message.mentions
+        for mention in mentions:
+            content = content.replace(f"<@!{mention.id}>", f"@{mention.name}")
+            content = content.replace(f"<@{mention.id}>", f"@{mention.name}")
+        # replace role mentions
+        roles = message.role_mentions
+        for role in roles:
+            content = content.replace(f"<@&{role.id}>", f"@{role.name}")
+        # channel mentions
+        channels = message.channel_mentions
+        for channel in channels:
+            content = content.replace(f"<#{channel.id}>", f"#{channel.name}")
+        # replace the rest of the mentions
+        user_mentions = set(mention_regex.findall(content))
+        for mention in user_mentions:
+            userid = int(mention)
+            try:
+                user = await self.fetch_user(int(mention))
+                content = content.replace(f"<@!{mention}>", f"@{user.name}")
+                content = content.replace(f"<@{mention}>", f"@{user.name}")
+            except discord.NotFound:
+                content = content.replace(f"<@&{mention}>", f"@unknown-user")
+        role_mentions = set(role_mention_regex.findall(content))
+        for mention in role_mentions:
+            roleid = int(mention)
+            role = message.guild.get_role(roleid)
+            if role:
+                content = content.replace(f"<@&{mention}>", f"@{role.name}")
+            else:
+                content = content.replace(f"<@&{mention}>", f"@unknown-role")
+        channel_mentions = set(channel_mention_regex.findall(content))
+        for mention in channel_mentions:
+            channelid = int(mention)
+            channel = self.get_channel(channelid)
+            if channel:
+                content = content.replace(f"<#{mention}>", f"#{channel.name}")
+            else:
+                content = content.replace(f"<#{mention}>", f"#unknown-channel")
+        if officer:
+            content = f"/oc {username}: {content}"
+        else:
+            content = f"/gc {username}: {content}"
+        if len(content) > 256:
+            content = content[:253] + "..."
+        self.mineflayer_bot.chat(content)
 
     # custom client events:
     # hypixel_guild_message
