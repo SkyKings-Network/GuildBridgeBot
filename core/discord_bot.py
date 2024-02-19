@@ -352,7 +352,7 @@ class DiscordBridgeBot(commands.Bot):
             self.dispatch("hypixel_guild_member_invite_failed", None)
 
         elif "Your guild is full!" in message:
-            embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+            embed = Embed(colour=0x1ABC9C)
             embed.set_author(
                 name=f"The guild is full!",
             )
