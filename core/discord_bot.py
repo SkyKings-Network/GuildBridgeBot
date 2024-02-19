@@ -341,6 +341,22 @@ class DiscordBridgeBot(commands.Bot):
             self._current_invite_future.set_result((False, 'inGuild'))
             self.dispatch("hypixel_guild_member_invite_failed", playername)
 
+        # Person bot invited is in already in the guild
+        elif " is already in your guild!" in message:
+            message = message.split()
+            if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
+                playername = message[1]
+            else:
+                playername = message[0]
+            embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+            embed.set_author(
+                name=f"{playername} is already in your guild!",
+                icon_url="https://www.mc-heads.net/avatar/" + playername
+            )
+            await channel.send(embed=embed)
+            self._current_invite_future.set_result((False, 'inThisGuild'))
+            self.dispatch("hypixel_guild_member_invite_failed", playername)
+
         # Person bot invited has guild invites disabled (can't figure out who)
         elif "You cannot invite this player to your guild!" in message:
             embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
