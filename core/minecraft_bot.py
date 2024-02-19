@@ -2,7 +2,7 @@ import asyncio
 import sys
 import time
 
-from javascript import require, On
+from javascript import require, On, config
 
 from core.config import server, settings, account
 
@@ -24,6 +24,8 @@ class MinecraftBotManager:
     def stop(self, restart: bool = True):
         self.auto_restart = restart
         self.bot.quit()
+        while self._online:
+            time.sleep(0.2)
 
     def send_to_discord(self, message):
         asyncio.run_coroutine_threadsafe(self.client.send_discord_message(message), self.client.loop)
@@ -42,9 +44,9 @@ class MinecraftBotManager:
 
         @On(self.bot, "end")
         def kicked(this, reason):
-            self._online = False
             print("Mineflayer > Bot offline!")
             self.send_to_discord("Bot Offline")
+            self._online = False
             if self.auto_restart:
                 time.sleep(10)
                 # maybe it changed between now and then
@@ -52,9 +54,12 @@ class MinecraftBotManager:
                     print("Mineflayer > Restarting...")
                     new_bot = self.createbot(self.client)
                     self.client.mineflayer_bot = new_bot
-            else:
-                # kill this thread forcefully
-                sys.exit(0)
+                    return
+            for state, handler, thread in config.event_loop.threads:
+                thread.terminate()
+            config.event_loop.threads = []
+            config.event_loop.stop()
+            
 
         @On(self.bot, "error")
         def error(this, reason):
@@ -138,6 +143,7 @@ class MinecraftBotManager:
 
     @classmethod
     def createbot(cls, client):
+        print("Mineflayer > Creating the bot...")
         bot = mineflayer.createBot(
             {
                 "host": server.host,
@@ -148,7 +154,9 @@ class MinecraftBotManager:
                 "viewDistance": "tiny",
             }
         )
+        print("Mineflayer > Initialized")
         botcls = cls(client, bot)
         client.mineflayer_bot = botcls
         botcls.oncommands()
+        print("Mineflayer > Events registered")
         return botcls

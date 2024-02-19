@@ -44,7 +44,7 @@ class RedisManager:
             try:
                 await self.bot.wait_for(
                     "hypixel_guild_member_kick", timeout=10,
-                    check=lambda x: x.lower() == message_data["data"]["username"].lower(),
+                    check=lambda x: x.lower() == message_data["data"]["username"].lower() if x is not None else False,
                 )
             except asyncio.TimeoutError:
                 return {"success": False, "error": "timeout"}
@@ -63,8 +63,8 @@ class RedisManager:
                 )
             # wait for either hypixel_guild_member_promote or hypixel_guild_member_demote
             # return on first completed event
-            chk = lambda x, f, t: (x.lower() == message_data["data"]["username"].lower() and
-                                   t.lower() == message_data["data"]["rank"].lower())
+            chk = lambda p, f, t: ((p.lower() == message_data["data"]["username"].lower() and
+                                   t.lower() == message_data["data"]["rank"].lower()) if (p is not None and t is not None) else False)
             try:
                 await asyncio.wait(
                     [
@@ -88,7 +88,7 @@ class RedisManager:
             try:
                 await self.bot.wait_for(
                     "hypixel_guild_member_promote", timeout=10,
-                    check=lambda x: x.lower() == message_data["data"]["username"].lower(),
+                    check=lambda p, f, t: p.lower() == message_data["data"]["username"].lower() if p is not None else False,
                 )
             except asyncio.TimeoutError:
                 return {"success": False, "error": "timeout"}
@@ -98,7 +98,7 @@ class RedisManager:
             try:
                 await self.bot.wait_for(
                     "hypixel_guild_member_demote", timeout=10,
-                    check=lambda x: x.lower() == message_data["data"]["username"].lower(),
+                    check=lambda p, f, t: p.lower() == message_data["data"]["username"].lower() if p is not None else False,
                 )
             except asyncio.TimeoutError:
                 return {"success": False, "error": "timeout"}
@@ -159,6 +159,7 @@ class RedisManager:
                             "Redis > Invalid payload recieved (missing source)"
                         )
                         continue
+                    print(f"Redis > Handling message from {message_data.get('source')}")
                     try:
                         response = await self.process_request(message_data)
                     except Exception as e:  # pylint: disable=broad-exception-caught
@@ -177,7 +178,9 @@ class RedisManager:
                         data=response,
                     )
         except asyncio.CancelledError:
-            pass
+            print("Redis > Task Cancelled")
+        except redis.ConnectionError:
+            print("Redis > Redis connection closed")
         except Exception as e:  # pylint: disable=broad-exception-caught
             print("Redis > Critical error occurred\n" + str(e))
             traceback.print_exc()

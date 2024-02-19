@@ -68,7 +68,6 @@ class DiscordBridgeBot(commands.Bot):
         print(f"Discord > Bot {self.user} is shutting down...")
         if self.mineflayer_bot is not None:
             print("Discord > Stopping Minecraft bot...")
-            await self.send_discord_message("Bot Offline")
             self.mineflayer_bot.stop(False)
             print("Discord > Minecraft bot has been stopped.")
         if self.redis_manager is not None:
