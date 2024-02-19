@@ -228,6 +228,12 @@ class DiscordBridgeBot(commands.Bot):
                 content = content.replace(f"<#{mention}>", f"#{channel.name}")
             else:
                 content = content.replace(f"<#{mention}>", f"#unknown-channel")
+        if content.strip() == "":
+            try:
+                await message.add_reaction("❌")
+            except discord.HTTPException:
+                pass
+            return
         if officer:
             content = f"/oc {username}: {content}"
         else:
