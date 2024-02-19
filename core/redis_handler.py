@@ -108,31 +108,18 @@ class RedisManager:
             # can't really write a check for this
             return {"success": True}
         elif message_data["endpoint"] == "invite":
-            await self.mineflayer_bot.chat("/g invite " + message_data["data"]["username"])
-            # wait for hypixel_guild_member_invite_failed or hypixel_guild_member_invite
-            # return on first completed event
-            chk = lambda x: x.lower() == message_data["data"]["username"].lower()
-            returned = await asyncio.wait(
-                [
-                    asyncio.Task(self.bot.wait_for(
-                        "hypixel_guild_member_invite_failed",
-                        check=chk,
-                    ), name="invite_failed"),
-                    asyncio.Task(self.bot.wait_for(
-                        "hypixel_guild_member_invite",
-                        check=chk,
-                    ), name="invite_success")
-                ],
-                return_when=asyncio.FIRST_COMPLETED,
-                timeout=10,
-            )
-            for task in returned[1]:
-                task.cancel()
-            if len(returned[0]) == 0:
+            try:
+                returned = await asyncio.wait_for(
+                    asyncio.create_task(
+                        self.bot.send_invite(message_data["data"]["username"])
+                    ),
+                    timeout=10,
+                )
+            except asyncio.TimeoutError:
                 return {"success": False, "error": "timeout"}
-            if returned[0].pop().get_name() == "invite_success":
+            if returned[0]:
                 return {"success": True}
-            return {"success": False, "error": "invite failed"}
+            return {"success": False, "error": returned[1]}
 
         return {"success": False, "error": "invalid endpoint"}
 

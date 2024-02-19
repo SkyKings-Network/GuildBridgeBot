@@ -10,9 +10,7 @@ class Bridge(commands.Cog):
     @commands.command()
     @commands.has_role(config.commandRole)
     async def invite(self, ctx, username):
-        await self.bot.mineflayer_bot.chat("/g invite " + username)
-        embedVar = discord.Embed(description=username + " has been invited!")
-        await ctx.send(embed=embedVar)
+        await self.bot.send_invite(username)
 
     @commands.command()
     @commands.has_role(config.commandRole)

@@ -1,3 +1,4 @@
+import asyncio
 import os
 import re
 import threading
@@ -26,6 +27,14 @@ class DiscordBridgeBot(commands.Bot):
         )
         self.mineflayer_bot = None
         self.redis_manager = None
+        self.invite_queue = asyncio.Queue()
+        self._current_invite_future: asyncio.Future | None = None
+        self._proc_inv_task: asyncio.Task | None = None
+
+    async def send_invite(self, username):
+        fut = asyncio.Future()
+        await self.invite_queue.put([username, fut])
+        return await fut
 
     async def on_ready(self):
         print(f"Discord > Bot Running as {self.user}")
@@ -35,6 +44,9 @@ class DiscordBridgeBot(commands.Bot):
         if self.redis_manager is None and redis_config.host:
             print("Discord > Starting the Redis manager...")
             self.redis_manager = await RedisManager.create(self, self.mineflayer_bot)
+        if self._proc_inv_task is None or self._proc_inv_task.done():
+            print("Discord > Starting the invite processor...")
+            self._proc_inv_task = asyncio.create_task(self._process_invites())
 
     async def on_message(self, message: discord.Message):
         if not message.author.bot:
@@ -64,6 +76,21 @@ class DiscordBridgeBot(commands.Bot):
             await self.redis_manager.close()
             print("Discord > Redis has been stopped.")
         await super().close()
+
+    async def _process_invites(self):
+        try:
+            while not self.is_closed():
+                username, fut = await self.invite_queue.get()
+                print(f"Discord > Processing invite for {username}")
+                self._current_invite_future = fut
+                await self.mineflayer_bot.chat(f"/g invite {username}")
+                await asyncio.wait_for(fut, timeout=30)
+                if not fut.done():
+                    fut.set_result((False, "timeout"))
+                self._current_invite_future = None
+        except asyncio.CancelledError:
+            pass
+        print("Discord > Invite processor has been stopped.")
 
     # custom client events:
     # hypixel_guild_message
@@ -115,7 +142,7 @@ class DiscordBridgeBot(commands.Bot):
                 embed = Embed(description=message, timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
                 embed.set_author(name=username, icon_url="https://www.mc-heads.net/avatar/" + username)
                 self.dispatch("hypixel_guild_message", username, message)
-                
+
             try:
                 if embed.author and embed.author.icon_url:
                     if not embed.author.icon_url.startswith("https://"):
@@ -286,6 +313,7 @@ class DiscordBridgeBot(commands.Bot):
                 icon_url="https://www.mc-heads.net/avatar/" + playername
             )
             await channel.send(embed=embed)
+            self._current_invite_future.set_result((True, None))
             self.dispatch("hypixel_guild_member_invite", playername)
 
         # Person bot invited is in another guild
@@ -301,6 +329,7 @@ class DiscordBridgeBot(commands.Bot):
                 icon_url="https://www.mc-heads.net/avatar/" + playername
             )
             await channel.send(embed=embed)
+            self._current_invite_future.set_result((False, 'inGuild'))
             self.dispatch("hypixel_guild_member_invite_failed", playername)
 
         # Person bot invited has guild invites disabled (can't figure out who)
@@ -310,6 +339,16 @@ class DiscordBridgeBot(commands.Bot):
                 name=f"You cannot invite this player to your guild!",
             )
             await channel.send(embed=embed)
+            self._current_invite_future.set_result((False, 'invitesOff'))
+            self.dispatch("hypixel_guild_member_invite_failed", None)
+
+        elif "Your guild is full!" in message:
+            embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+            embed.set_author(
+                name=f"The guild is full!",
+            )
+            await channel.send(embed=embed)
+            self._current_invite_future.set_result((False, 'guildFull'))
             self.dispatch("hypixel_guild_member_invite_failed", None)
 
         # /g list command response
