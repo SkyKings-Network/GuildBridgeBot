@@ -21,10 +21,15 @@ emoji_regex = re.compile(r"<a?:(\w+):\d+>")
 mention_regex = re.compile(r"<@!?(\d+)>")
 role_mention_regex = re.compile(r"<@&(\d+)>")
 channel_mention_regex = re.compile(r"<#(\d+)>")
+slash_mention_regex = re.compile(r"</([\w\- ]+):\d+>")
 
 
 def emoji_repl(match):
     return f":{match.group(1)}:"
+
+
+def slash_mention_repl(match):
+    return f"/{match.group(1)}"
 
 
 class DiscordBridgeBot(commands.Bot):
@@ -202,6 +207,8 @@ class DiscordBridgeBot(commands.Bot):
         channels = message.channel_mentions
         for channel in channels:
             content = content.replace(f"<#{channel.id}>", f"#{channel.name}")
+        # slash mentions
+        content = slash_mention_regex.sub(slash_mention_repl, content)
         # replace the rest of the mentions
         user_mentions = set(mention_regex.findall(content))
         for mention in user_mentions:
