@@ -28,7 +28,7 @@ class DiscordBridgeBot(commands.Bot):
         )
         self.mineflayer_bot = None
         self.redis_manager = None
-        self.invite_queue = asyncio.Queue()
+        self.invite_queue: asyncio.Queue | None = None
         self._current_invite_future: asyncio.Future | None = None
         self._proc_inv_task: asyncio.Task | None = None
 
@@ -78,6 +78,8 @@ class DiscordBridgeBot(commands.Bot):
         await super().close()
 
     async def _process_invites(self):
+        if self.invite_queue is None:
+            self.invite_queue = asyncio.Queue()
         try:
             while not self.is_closed():
                 print("Discord > Waiting for invite...")
