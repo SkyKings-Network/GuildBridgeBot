@@ -3,6 +3,7 @@ import os
 import re
 import threading
 import traceback
+from typing import Union
 
 import aiohttp
 import discord
@@ -117,7 +118,7 @@ class DiscordBridgeBot(commands.Bot):
             traceback.print_exc()
         print("Discord > Invite processor has been stopped.")
 
-    async def _send_message(self, *args, **kwargs) -> discord.Message | discord.WebhookMessage | None:
+    async def _send_message(self, *args, **kwargs) -> Union[discord.Message, discord.WebhookMessage, None]:
         kwargs["allowed_mentions"] = discord.AllowedMentions.none()
         if kwargs.pop("officer", False):
             if self.officer_webhook:
@@ -158,7 +159,7 @@ class DiscordBridgeBot(commands.Bot):
                 except Exception as e:
                     print(f"Discord > Failed to send message to channel {channel}: {e}")
 
-    async def send_message(self, *args, **kwargs) -> discord.Message | discord.WebhookMessage | None:
+    async def send_message(self, *args, **kwargs) -> Union[discord.Message, discord.WebhookMessage, None]:
         retry = kwargs.pop("retry", True)
         try:
             return await self._send_message(*args, **kwargs)
