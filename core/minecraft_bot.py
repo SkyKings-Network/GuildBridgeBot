@@ -114,7 +114,8 @@ class MinecraftBotManager:
                             "Disabled guild join/leave notifications!" in message or \
                             "Enabled guild join/leave notifications!" in message or \
                             "You cannot say the same message twice!" in message or \
-                            "You don't have access to the officer chat!" in message:
+                            "You don't have access to the officer chat!" in message or \
+                            "Your guild is full!" in message:
                         self.send_to_discord(message)
 
     def send_minecraft_message(self, discord, message, type):
