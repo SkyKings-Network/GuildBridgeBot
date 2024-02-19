@@ -234,7 +234,7 @@ class DiscordBridgeBot(commands.Bot):
             content = f"/gc {username}: {content}"
         if len(content) > 256:
             content = content[:253] + "..."
-        self.mineflayer_bot.chat(content)
+        await self.mineflayer_bot.chat(content)
 
     # custom client events:
     # hypixel_guild_message
