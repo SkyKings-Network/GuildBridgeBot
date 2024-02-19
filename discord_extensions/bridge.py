@@ -10,49 +10,40 @@ class Bridge(commands.Cog):
     @commands.command()
     @commands.has_role(config.commandRole)
     async def invite(self, ctx, username):
-        await self.bot.send_invite(username)
+        result = await self.bot.send_invite(username)
+        if not result[0] and result[1] == "timeout":
+            embedVar = discord.Embed(description="Something went wrong trying to send an invite. Try again later.", color=discord.Color.red())
+            await ctx.send(embed=embedVar)
 
     @commands.command()
     @commands.has_role(config.commandRole)
     async def kick(self, ctx, username, *, reason):
         await self.bot.mineflayer_bot.chat("/g kick " + username + " " + reason)
-        embedVar = discord.Embed(description=username + " has been kicked for " + reason + "!")
-        await ctx.send(embed=embedVar)
 
     @commands.command()
     @commands.has_role(config.commandRole)
     async def promote(self, ctx, username):
         await self.bot.mineflayer_bot.chat("/g promote " + username)
-        embedVar = discord.Embed(description=username + " has been promoted!")
-        await ctx.send(embed=embedVar)
 
     @commands.command()
     @commands.has_role(config.commandRole)
     async def mute(self, ctx, username, time):
         await self.bot.mineflayer_bot.chat("/g mute " + username + " " + time)
-        embedVar = discord.Embed(description=username + " has been muted for " + time)
-        await ctx.send(embed=embedVar)
 
     @commands.command()
     @commands.has_role(config.commandRole)
     async def unmute(self, ctx, username):
         await self.bot.mineflayer_bot.chat("/g unmute " + username)
-        embedVar = discord.Embed(description=username + " has been unmuted")
-        await ctx.send(embed=embedVar)
 
     @commands.command()
     @commands.has_role(config.commandRole)
     async def setrank(self, ctx, username, rank):
         await self.bot.mineflayer_bot.chat("/g setrank " + username + " " + rank)
-        embedVar = discord.Embed(description=username + " has been promoted to " + rank)
-        await ctx.send(embed=embedVar)
 
     @commands.command()
     @commands.has_role(config.commandRole)
     async def demote(self, ctx, username):
         await self.bot.mineflayer_bot.chat("/g demote " + username)
-        embedVar = discord.Embed(description=username + " has been demoted!")
-        await ctx.send(embed=embedVar)
 
     @commands.command()
     @commands.cooldown(1, 5, commands.BucketType.channel)
