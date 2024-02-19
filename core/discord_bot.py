@@ -87,7 +87,10 @@ class DiscordBridgeBot(commands.Bot):
                 print(f"Discord > Processing invite for {username}")
                 self._current_invite_future = fut
                 await self.mineflayer_bot.chat(f"/g invite {username}")
-                await asyncio.wait_for(fut, timeout=30)
+                try:
+                    await asyncio.wait_for(fut, timeout=10)
+                except asyncio.TimeoutError:
+                    pass
                 if not fut.done():
                     fut.set_result((False, "timeout"))
                 self._current_invite_future = None
