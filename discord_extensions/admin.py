@@ -31,20 +31,20 @@ class Admin(commands.Cog):
     @commands.has_role(config.commandRole)
     async def relog(self, ctx):
         self.bot.mineflayer_bot.stop(True)
-        embedVar = discord.Embed(description="Restarting the bot...")
+        embedVar = discord.Embed(color=0x1ABC9C).set_author(name="Restarting the bot...")
         await ctx.send(embed=embedVar)
 
     @commands.command(aliases=['o', 'over'])
     @commands.has_role(config.overrideRole)
     async def override(self, ctx, *, command):
         await self.bot.mineflayer_bot.chat("/" + command)
-        embedVar = discord.Embed(description=f"``/{command}`` has been sent!", colour=0x1ABC9C)
+        embedVar = discord.Embed(color=0x1ABC9C).set_author(name=f"`/{command}` has been sent!")
         await ctx.send(embed=embedVar)
 
     @commands.command()
     @commands.has_role(config.overrideRole)
     async def update(self, ctx):
-        embedVar = discord.Embed(description=":white_check_mark: Rebooting Bot...")
+        embedVar = discord.Embed(color=0x1ABC9C).set_author(name="Updating the bot...")
         await ctx.send(embed=embedVar)
         os.system("git pull")
         await self.bot.close()
@@ -52,12 +52,12 @@ class Admin(commands.Cog):
     @commands.command()
     @commands.has_role(config.overrideRole)
     async def reload(self, ctx):
-        embedVar = discord.Embed(description="Reloading extensions...")
+        embedVar = discord.Embed(color=0x1ABC9C).set_author(name="Reloading extensions...")
         msg = await ctx.send(embed=embedVar)
         os.system("git pull")
         for ext in self.bot.extensions:
             await self.bot.reload_extensions(ext)
-        embed = discord.Embed(description=":white_check_mark: Extensions reloaded!")
+        embed = discord.Embed(color=0x1ABC9C).set_author(name="Extensions reloaded!")
         await msg.edit(embed=embed)
 
 
