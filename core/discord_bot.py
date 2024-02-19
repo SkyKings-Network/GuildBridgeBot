@@ -124,10 +124,7 @@ class DiscordBridgeBot(commands.Bot):
             if self.officer_webhook:
                 kwargs["wait"] = True
                 try:
-                    return await self.officer_webhook.send(
-                        *args, **kwargs,
-                        allowed_mentions=discord.AllowedMentions.none(),
-                    )
+                    return await self.officer_webhook.send(*args, **kwargs)
                 except Exception as e:
                     print(f"Discord > Failed to send message to officer webhook: {e}")
             else:
@@ -142,11 +139,7 @@ class DiscordBridgeBot(commands.Bot):
             if self.webhook:
                 kwargs["wait"] = True
                 try:
-                    return await self.webhook.send(
-                        *args, **kwargs,
-                        wait=True,
-                        allowed_mentions=discord.AllowedMentions.none(),
-                    )
+                    return await self.webhook.send(*args, **kwargs)
                 except Exception as e:
                     print(f"Discord > Failed to send message to webhook: {e}")
             else:
