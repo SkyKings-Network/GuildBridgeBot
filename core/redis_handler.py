@@ -40,8 +40,6 @@ class RedisManager:
                 return {"success": False, "error": "timeout"}
             return {"success": True}
         elif message_data["endpoint"] == "kick":
-            await self.mineflayer_bot.chat("/p Jacktheguy")
-            await asyncio.sleep(1)
             await self.mineflayer_bot.chat("/g kick " + message_data["data"]["username"] + " " + message_data["data"]["reason"])
             try:
                 await self.bot.wait_for(
