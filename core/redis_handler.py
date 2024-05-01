@@ -140,11 +140,11 @@ class RedisManager:
                     try:
                         message_data = json.loads(message["data"])
                     except json.JSONDecodeError as e:  # pylint: disable=broad-exception-caught
-                        print("Redis > Invalid payload recieved: " + str(e))
+                        print("Redis > Invalid payload received: " + str(e))
                         continue
                     if message_data.get("type") not in ("request", "response"):
                         print(
-                            "Redis > Invalid payload recieved (missing or invalid `type`)"
+                            "Redis > Invalid payload received (missing or invalid `type`)"
                         )
                         continue
                     if message_data["type"] == "response":
@@ -156,7 +156,7 @@ class RedisManager:
                         continue
                     if "source" not in message_data:
                         print(
-                            "Redis > Invalid payload recieved (missing source)"
+                            "Redis > Invalid payload received (missing source)"
                         )
                         continue
                     print(f"Redis > Handling message from {message_data.get('source')}")
