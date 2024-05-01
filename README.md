@@ -48,9 +48,10 @@ cd ~
 # Copy files for a new bridge bot
 mkdir bridges/<NAME_OF_GUILD>
 cp -r GuildBridgeBot/* bridges/<NAME_OF_GUILD>/
-cd bridges/bridgebots/<NAME_OF_GUILD>
+cd bridges/<NAME_OF_GUILD>
 
 # Create a virtal environment
+apt install python3.12-venv
 python3 -m venv venv
 source venv/bin/activate
 
@@ -61,8 +62,13 @@ pip install -r requirements.txt
 nano config.json
 
 # Then run the bot with pm2
-pm2 start main.py --name index --interpreter python3 --restart-delay=3000
+pm2 start main.py --name <NAME_OF_GUILD>-BridgeBot --interpreter python3 --restart-delay=3000
 ```
+
+## Updating A Bridge Bot
+
+Coming Soon TM
+
 
 ## Setting up Redis [Optional & Advanced]
 
