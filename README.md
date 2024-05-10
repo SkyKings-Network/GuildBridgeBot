@@ -62,7 +62,7 @@ python3 -m pip install -U -r requirements.txt
 nano config.json
 
 # Then run the bot with pm2
-pm2 start main.py --name <NAME_OF_GUILD>-BridgeBot --interpreter python3 --restart-delay=3000
+pm2 start main.py --name <NAME_OF_GUILD>-BridgeBot --interpreter ./venv/bin/python --restart-delay=3000
 ```
 
 ## Updating A Bridge Bot
