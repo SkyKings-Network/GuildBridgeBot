@@ -56,7 +56,7 @@ python3 -m venv venv
 source venv/bin/activate
 
 # Install requirements
-pip install -r requirements.txt
+python3 -m pip install -U -r requirements.txt
 
 # Update the config
 nano config.json
