@@ -27,6 +27,7 @@ npm install -g pm2
 # Install python3
 sudo apt-get update
 sudo apt install python3-pip
+apt install python3.12-venv
 
 # Clone the project
 git clone https://github.com/Jacktheguys/GuildBridgeBot
@@ -51,7 +52,6 @@ cp -r GuildBridgeBot/* bridges/<NAME_OF_GUILD>/
 cd bridges/<NAME_OF_GUILD>
 
 # Create a virtal environment
-apt install python3.12-venv
 python3 -m venv venv
 source venv/bin/activate
 
