@@ -150,6 +150,7 @@ class DiscordBridgeBot(commands.Bot):
                     return await self.officer_webhook.send(*args, **kwargs)
                 except Exception as e:
                     print(f"Discord > Failed to send message to officer webhook: {e}")
+                    await self.debug_webhook.send(traceback.format_exc())
             else:
                 channel = self.get_channel(discord_config.officerChannel)
                 if channel is None:
@@ -158,6 +159,7 @@ class DiscordBridgeBot(commands.Bot):
                     return await channel.send(*args, **kwargs)
                 except Exception as e:
                     print(f"Discord > Failed to send message to officer channel {channel}: {e}")
+                    await self.debug_webhook.send(traceback.format_exc())
         else:
             if self.webhook:
                 kwargs["wait"] = True
@@ -165,6 +167,7 @@ class DiscordBridgeBot(commands.Bot):
                     return await self.webhook.send(*args, **kwargs)
                 except Exception as e:
                     print(f"Discord > Failed to send message to webhook: {e}")
+                    await self.debug_webhook.send(traceback.format_exc())
             else:
                 channel = self.get_channel(discord_config.channel)
                 if channel is None:
@@ -174,6 +177,7 @@ class DiscordBridgeBot(commands.Bot):
                     return await channel.send(*args, **kwargs)
                 except Exception as e:
                     print(f"Discord > Failed to send message to channel {channel}: {e}")
+                    await self.debug_webhook.send(traceback.format_exc())
 
     async def send_message(self, *args, **kwargs) -> Union[discord.Message, discord.WebhookMessage, None]:
         retry = kwargs.pop("retry", True)
