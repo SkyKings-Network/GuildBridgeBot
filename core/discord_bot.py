@@ -199,6 +199,7 @@ class DiscordBridgeBot(commands.Bot):
                 officer=officer,
             )
         else:
+            print("user message")
             embed = Embed(description=message, colour=0x1ABC9C, timestamp=discord.utils.utcnow())
             embed.set_author(name=username, icon_url="https://www.mc-heads.net/avatar/" + username)
             return await self.send_message(embed=embed, officer=officer)
@@ -535,6 +536,7 @@ class DiscordBridgeBot(commands.Bot):
                 elif i % 2 == 0:
                     ii = i - 1
                     embed += "**" + message[ii] + "** " + message[i]
+            print("G list")
             embed = Embed(description=embed.replace("_", "\\_"), colour=0x1ABC9C)
             await self.send_message(embed=embed)
 
