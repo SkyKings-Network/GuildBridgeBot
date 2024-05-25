@@ -62,6 +62,15 @@ class DiscordBridgeBot(commands.Bot):
             self.webhook = discord.Webhook.from_url(discord_config.webhookURL, client=self)
         if discord_config.officerWebhookURL:
             self.officer_webhook = discord.Webhook.from_url(discord_config.officerWebhookURL, client=self)
+        if discord_config.debugWebhookURL:
+            self.debug_webhook = discord.Webhook.from_url(discord_config.debugWebhookURL, client=self)
+
+    async def send_debug_message(self, *args, **kwargs) -> None:
+        if self.debug_webhook:
+            try:
+                await self.debug_webhook.send(*args, **kwargs)
+            except Exception as e:
+                print(f"Discord > Failed to send debug message: {e}")
 
     async def on_ready(self):
         print(f"Discord > Bot Running as {self.user}")

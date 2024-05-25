@@ -17,6 +17,7 @@ class RedisManager:
         self.send_channel = config.sendChannel
         self._response_waiters: dict[str, asyncio.Future] = {}
         self.redis: redis.Redis = None
+        self._restart: bool = True
 
     @property
     def running(self):
@@ -184,10 +185,26 @@ class RedisManager:
         except Exception as e:  # pylint: disable=broad-exception-caught
             print("Redis > Critical error occurred\n" + str(e))
             traceback.print_exc()
+            content = f"Critical error occurred in RedisManager: {e}"
+            content += "\n```\n" + traceback.format_exc() + "\n```"
+            if len(content) > 2000:
+                # remove end codeblock, send first chunk, then send rest w/ block
+                content = content[:-4]
+                for i in range(0, len(content), 2000):
+                    if i == 0:
+                        await self.bot.send_debug_message(content[i:i + 1996] + "\n```")
+                    else:
+                        await self.bot.send_debug_message("```\n" + content[i:i + 1992] + "\n```")
+            else:
+                await self.bot.send_debug_message(content)
         finally:
             if self.redis is not None:
-                await self.close()
+                await self.close(restart=self._restart)
         print("Redis > Connection closed")
+        if self._restart:
+            await asyncio.sleep(5)
+            print("Redis > Restarting...")
+            await self.start()
 
     async def send_message(self, **data) -> str:
         if self.redis is None:
@@ -220,7 +237,8 @@ class RedisManager:
         del self._response_waiters[payload["uuid"]]
         return response
 
-    async def close(self):
+    async def close(self, *, restart: bool = False):
+        self._restart = restart
         await self.redis.close()
         self.read_task.cancel()
 

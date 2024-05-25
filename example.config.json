@@ -13,7 +13,8 @@
         "commandRole": "",
         "overrideRole": "",
         "ownerId": "",
-        "prefix": "!"
+        "prefix": "!",
+        "debugWebhookURL": ""
     },
     "redis": {
         "host": "redisIP",

@@ -27,6 +27,7 @@ config_format = settings = {
         "prefix": (str, "!"),
         "webhookURL": (str, ""),
         "officerWebhookURL": (str, ""),
+        "debugWebhookURL": (str, ""),
     },
     "redis": {
         "host": (str, ""),
