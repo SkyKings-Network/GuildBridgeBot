@@ -27,6 +27,7 @@ npm install -g pm2
 # Install python3
 sudo apt-get update
 sudo apt install python3-pip
+apt install python3.12-venv
 
 # Clone the project
 git clone https://github.com/Jacktheguys/GuildBridgeBot
@@ -48,21 +49,26 @@ cd ~
 # Copy files for a new bridge bot
 mkdir bridges/<NAME_OF_GUILD>
 cp -r GuildBridgeBot/* bridges/<NAME_OF_GUILD>/
-cd bridges/bridgebots/<NAME_OF_GUILD>
+cd bridges/<NAME_OF_GUILD>
 
 # Create a virtal environment
 python3 -m venv venv
 source venv/bin/activate
 
 # Install requirements
-pip install -r requirements.txt
+python3 -m pip install -U -r requirements.txt
 
 # Update the config
 nano config.json
 
 # Then run the bot with pm2
-pm2 start main.py --name index --interpreter python3 --restart-delay=3000
+pm2 start main.py --name <NAME_OF_GUILD>-BridgeBot --interpreter ./venv/bin/python --restart-delay=3000
 ```
+
+## Updating A Bridge Bot
+
+Coming Soon TM
+
 
 ## Setting up Redis [Optional & Advanced]
 

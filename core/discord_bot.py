@@ -399,7 +399,7 @@ class DiscordBridgeBot(commands.Bot):
         # Someone was kicked
         elif " was kicked from the guild!" in message:
             message = message.split()
-            if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
+            if "[VIP]" in message[0] or "[VIP+]" in message[0] or "[MVP]" in message[0] or "[MVP+]" in message[0] or "[MVP++]" in message[0]:
                 playername = message[1]
             else:
                 playername = message[0]
@@ -412,7 +412,7 @@ class DiscordBridgeBot(commands.Bot):
             await self.send_message(embed=embed)
         elif " was kicked from the guild by " in message:
             message = message.split()
-            if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
+            if "[VIP]" in message[0] or "[VIP+]" in message[0] or "[MVP]" in message[0] or "[MVP+]" in message[0] or "[MVP++]" in message[0]:
                 playername = message[1]
             else:
                 playername = message[0]
