@@ -1,4 +1,4 @@
-from core.config import discord as config
+
 
 
 class BridgeBotException(Exception):
@@ -13,10 +13,10 @@ class InvalidConfig(BridgeBotException):
 
 def send_debug_message(*args, **kwargs) -> None:
     """Send a debug message to the debug channel."""
+    from core.config import discord as config
+    if not config.debugWebhookURL:
+        return
     import requests
     url = config.debugWebhookURL
     requests.post(url, json={"content": " ".join(args), **kwargs})
 
-
-if not config.debugWebhookURL:
-    send_debug_message = lambda *args, **kwargs: None
