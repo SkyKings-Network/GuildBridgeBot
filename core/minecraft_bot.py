@@ -43,7 +43,7 @@ class MinecraftBotManager:
             self._online = True
 
         @On(self.bot, "end")
-        def kicked(this, reason):
+        def end(this, reason):
             print(f"Mineflayer > Bot offline: {reason}")
             self.send_to_discord("Bot Offline")
             self._online = False
@@ -58,6 +58,14 @@ class MinecraftBotManager:
                 thread.terminate()
             config.event_loop.threads = []
             config.event_loop.stop()
+        
+        @On(self.bot, "kicked")
+        def kicked(this, reason, loggedIn):
+            print(f"Mineflayer > Bot kicked: {reason}")
+            if loggedIn:
+                self.send_to_discord(f"Bot kicked: {reason}")
+            else:
+                self.send_to_discord(f"Bot kicked before logging in: {reason}")
             
 
         @On(self.bot, "error")
