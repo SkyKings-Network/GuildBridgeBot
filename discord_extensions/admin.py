@@ -48,6 +48,7 @@ class Admin(commands.Cog):
         await ctx.send(embed=embedVar)
         os.system("git pull")
         await self.bot.close()
+        await asyncio.sleep(10)
 
     @commands.command()
     @commands.has_role(config.overrideRole)
