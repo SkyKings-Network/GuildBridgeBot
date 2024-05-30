@@ -44,7 +44,7 @@ class MinecraftBotManager:
 
         @On(self.bot, "end")
         def kicked(this, reason):
-            print(f"Mineflayer > Bot offline: {this} {reason}")
+            print(f"Mineflayer > Bot offline: {reason}")
             self.send_to_discord("Bot Offline")
             self._online = False
             if self.auto_restart:
