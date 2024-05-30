@@ -48,8 +48,7 @@ class MinecraftBotManager:
             self.send_to_discord("Bot Offline")
             self._online = False
             if self.auto_restart:
-                time.sleep(10)
-                # maybe it changed between now and then
+                time.sleep(120)
                 if self.auto_restart:
                     print("Mineflayer > Restarting...")
                     new_bot = self.createbot(self.client)
