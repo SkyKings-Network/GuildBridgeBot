@@ -49,6 +49,7 @@ class DiscordBridgeBot(commands.Bot):
         self._proc_inv_task: asyncio.Task | None = None
         self.webhook: discord.Webhook | None = None
         self.officer_webhook: discord.Webhook | None = None
+        self.debug_webhook: discord.Webhook | None = None
 
     async def send_invite(self, username):
         fut = asyncio.Future()
@@ -63,6 +64,7 @@ class DiscordBridgeBot(commands.Bot):
         if discord_config.officerWebhookURL:
             self.officer_webhook = discord.Webhook.from_url(discord_config.officerWebhookURL, client=self)
         if discord_config.debugWebhookURL:
+            print("Discord > WARNING: Debug webhook is enabled!")
             self.debug_webhook = discord.Webhook.from_url(discord_config.debugWebhookURL, client=self)
 
     async def send_debug_message(self, *args, **kwargs) -> None:
@@ -191,6 +193,7 @@ class DiscordBridgeBot(commands.Bot):
     async def send_user_message(
         self, username, message, *, officer: bool = False
     ) -> Union[discord.Message, discord.WebhookMessage, None]:
+        await self.debug_webhook.send("user")
         if self.webhook:
             return await self.send_message(
                 username=username,
@@ -298,6 +301,7 @@ class DiscordBridgeBot(commands.Bot):
                 else:
                     embed = Embed(timestamp=discord.utils.utcnow(), colour=0xFF6347)
                     embed.set_author(name=message, icon_url="https://www.mc-heads.net/avatar/" + memberusername)
+                await self.debug_webhook.send("joined")
                 await self.send_message(embed=embed)
             else:
                 username, message = regex.match(message).groups()
@@ -340,6 +344,7 @@ class DiscordBridgeBot(commands.Bot):
             )
 
             self.dispatch("hypixel_guild_invite_recieved", playername)
+            await self.debug_webhook.send("invite")
             await self.send_message(embed=embed)
 
         # Someone joined/left the guild
@@ -354,6 +359,7 @@ class DiscordBridgeBot(commands.Bot):
                 name=f"{playername} has joined the guild!", icon_url="https://www.mc-heads.net/avatar/" + playername
             )
             self.dispatch("hypixel_guild_member_join", playername)
+            await self.debug_webhook.send("joined-guild")
             await self.send_message(embed=embed)
         elif " left the guild!" in message:
             message = message.split()
@@ -366,6 +372,7 @@ class DiscordBridgeBot(commands.Bot):
                 name=f"{playername} has left the guild!", icon_url="https://www.mc-heads.net/avatar/" + playername
             )
             self.dispatch("hypixel_guild_member_leave", playername)
+            await self.debug_webhook.send("left-guild")
             await self.send_message(embed=embed)
 
         # Someone was promoted/demoted
@@ -383,6 +390,7 @@ class DiscordBridgeBot(commands.Bot):
                 icon_url="https://www.mc-heads.net/avatar/" + playername
             )
             self.dispatch("hypixel_guild_member_promote", playername, from_rank, to_rank)
+            await self.debug_webhook.send("promoted")
             await self.send_message(embed=embed)
         elif " was demoted from " in message:
             message = message.split()
@@ -398,6 +406,7 @@ class DiscordBridgeBot(commands.Bot):
                 icon_url="https://www.mc-heads.net/avatar/" + playername
             )
             self.dispatch("hypixel_guild_member_demote", playername, from_rank, to_rank)
+            await self.debug_webhook.send("demoted")
             await self.send_message(embed=embed)
 
         # Someone was kicked
@@ -413,6 +422,7 @@ class DiscordBridgeBot(commands.Bot):
                 icon_url="https://www.mc-heads.net/avatar/" + playername
             )
             self.dispatch("hypixel_guild_member_kick", playername)
+            await self.debug_webhook.send("kicked")
             await self.send_message(embed=embed)
         elif " was kicked from the guild by " in message:
             message = message.split()
@@ -426,26 +436,31 @@ class DiscordBridgeBot(commands.Bot):
                 icon_url="https://www.mc-heads.net/avatar/" + playername
             )
             self.dispatch("hypixel_guild_member_kick", playername)
+            await self.debug_webhook.send("kicked-by")
             await self.send_message(embed=embed)
 
         # Join/leave notifications toggled
         elif "Disabled guild join/leave notifications!" in message:
             embed = Embed(description="Disabled guild join/leave notifications!", colour=0x1ABC9C)
+            await self.debug_webhook.send("disabled-notif")
             await self.send_message(embed=embed)
         elif "Enabled guild join/leave notifications!" in message:
             embed = Embed(description="Enabled guild join/leave notifications!", colour=0x1ABC9C)
+            await self.debug_webhook.send("enabled-notif")
             await self.send_message(embed=embed)
 
         # Hypixel antispam filter
         elif "You cannot say the same message twice!" in message:
             embed = Embed(description="You cannot say the same message twice!", colour=0x1ABC9C)
             self.dispatch("hypixel_guild_message_send_failed", message)
+            await self.debug_webhook.send("same-message")
             await self.send_message(embed=embed)
 
         # Bot cannot access officer chat
         elif "You don't have access to the officer chat!" in message:
             embed = Embed(description="You don't have access to the officer chat!", colour=0x1ABC9C)
             self.dispatch("hypixel_guild_message_send_failed", message)
+            await self.debug_webhook.send("officer-no-access")
             await self.send_message(embed=embed)
 
         # Bot invited someone
@@ -471,6 +486,7 @@ class DiscordBridgeBot(commands.Bot):
             )
             self._current_invite_future.set_result((True, None))
             self.dispatch("hypixel_guild_member_invite", playername)
+            await self.debug_webhook.send("invite-sent")
             await self.send_message(embed=embed)
 
         # Person bot invited is in another guild
@@ -487,6 +503,7 @@ class DiscordBridgeBot(commands.Bot):
             )
             self._current_invite_future.set_result((False, 'inGuild'))
             self.dispatch("hypixel_guild_member_invite_failed", playername)
+            await self.debug_webhook.send("invite-failed")
             await self.send_message(embed=embed)
 
         # Person bot invited is in already in the guild
@@ -503,6 +520,7 @@ class DiscordBridgeBot(commands.Bot):
             )
             self._current_invite_future.set_result((False, 'inThisGuild'))
             self.dispatch("hypixel_guild_member_invite_failed", playername)
+            await self.debug_webhook.send("invited-guild-member")
             await self.send_message(embed=embed)
 
         # Person bot invited has guild invites disabled (can't figure out who)
@@ -513,6 +531,7 @@ class DiscordBridgeBot(commands.Bot):
             )
             self._current_invite_future.set_result((False, 'invitesOff'))
             self.dispatch("hypixel_guild_member_invite_failed", None)
+            await self.debug_webhook.send("invite-disabled")
             await self.send_message(embed=embed)
 
         elif "Your guild is full!" in message:
@@ -522,6 +541,7 @@ class DiscordBridgeBot(commands.Bot):
             )
             self._current_invite_future.set_result((False, 'guildFull'))
             self.dispatch("hypixel_guild_member_invite_failed", None)
+            await self.debug_webhook.send("guild-full")
             await self.send_message(embed=embed)
 
         # /g list command response
@@ -536,9 +556,11 @@ class DiscordBridgeBot(commands.Bot):
                     ii = i - 1
                     embed += "**" + message[ii] + "** " + message[i]
             embed = Embed(description=embed.replace("_", "\\_"), colour=0x1ABC9C)
+            await self.debug_webhook.send("player-list")
             await self.send_message(embed=embed)
 
         # Everything else is sent as a normal message
         else:
+            await self.debug_webhook.send("normal-message: `"+message+"`")
             embed = Embed(colour=0x1ABC9C).set_author(name=message)
             await self.send_message(embed=embed)
