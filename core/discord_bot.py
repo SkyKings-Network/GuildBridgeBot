@@ -69,8 +69,8 @@ class DiscordBridgeBot(commands.Bot):
 
     async def send_debug_message(self, *args, **kwargs) -> None:
         if self.debug_webhook:
-            kwargs.setdefault("username", self.user.display_name)
-            kwargs.setdefault("avatar_url", self.user.display_avatar.url)
+            kwargs["username"] = self.user.display_name
+            kwargs["avatar_url"] = self.user.display_avatar.url
             try:
                 await self.debug_webhook.send(*args, **kwargs)
             except Exception as e:
