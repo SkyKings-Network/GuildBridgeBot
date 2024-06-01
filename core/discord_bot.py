@@ -561,6 +561,8 @@ class DiscordBridgeBot(commands.Bot):
 
         # Everything else is sent as a normal message
         else:
+            if message.strip() == "":
+                return
             await self.debug_webhook.send("normal-message: `"+message+"`")
             embed = Embed(colour=0x1ABC9C).set_author(name=message)
             await self.send_message(embed=embed)
