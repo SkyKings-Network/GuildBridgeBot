@@ -23,12 +23,14 @@ class ConfigKey:
         self.key = None
 
     def validate(self, value):
+        print(self.key, value)
         if not value:
             if self.required:
                 raise ValueError(f"Missing required key '{self.key}'")
         elif not isinstance(value, self.type):
             try:
                 value = self.type(value)
+                print(value, self.type)
             except Exception:
                 raise TypeError(f"Expected {self.type.__name__} for '{self.key}' but got {type(value).__name__}")
         return value
@@ -54,6 +56,7 @@ class _ConfigObject(type):
             else:
                 value.validate(config[key])
             setattr(obj, key, config[key])
+            print(key, config[key])
         return obj
 
 
@@ -169,6 +172,7 @@ except json.JSONDecodeError as e:
 
 validate_config(config)
 print("Config loaded successfully!")
+print(SettingsConfig.extensions)
 
 
 class ExtensionConfig(ConfigObject, base_key=""):

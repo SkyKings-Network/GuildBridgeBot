@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from core.config import discord as config
+from core.config import DiscordConfig
 
 
 class Bridge(commands.Cog):
@@ -8,7 +8,7 @@ class Bridge(commands.Cog):
         self.bot = bot
 
     @commands.command()
-    @commands.has_role(config.commandRole)
+    @commands.has_role(DiscordConfig.commandRole)
     async def invite(self, ctx, username):
         result = await self.bot.send_invite(username)
         if not result[0] and result[1] == "timeout":
@@ -19,33 +19,33 @@ class Bridge(commands.Cog):
             await ctx.send(embed=embedVar)
 
     @commands.command()
-    @commands.has_role(config.commandRole)
+    @commands.has_role(DiscordConfig.commandRole)
     async def kick(self, ctx, username, *, reason):
         await self.bot.mineflayer_bot.chat("/g kick " + username + " " + reason)
 
     @commands.command()
-    @commands.has_role(config.commandRole)
+    @commands.has_role(DiscordConfig.commandRole)
     async def promote(self, ctx, username):
         await self.bot.mineflayer_bot.chat("/g promote " + username)
 
     @commands.command()
-    @commands.has_role(config.commandRole)
+    @commands.has_role(DiscordConfig.commandRole)
     async def mute(self, ctx, username, time):
         await self.bot.mineflayer_bot.chat("/g mute " + username + " " + time)
         await self.bot.wait_for("message", check=lambda m: m.content == f"Successfully muted {username} for {time}.")
 
     @commands.command()
-    @commands.has_role(config.commandRole)
+    @commands.has_role(DiscordConfig.commandRole)
     async def unmute(self, ctx, username):
         await self.bot.mineflayer_bot.chat("/g unmute " + username)
 
     @commands.command()
-    @commands.has_role(config.commandRole)
+    @commands.has_role(DiscordConfig.commandRole)
     async def setrank(self, ctx, username, rank):
         await self.bot.mineflayer_bot.chat("/g setrank " + username + " " + rank)
 
     @commands.command()
-    @commands.has_role(config.commandRole)
+    @commands.has_role(DiscordConfig.commandRole)
     async def demote(self, ctx, username):
         await self.bot.mineflayer_bot.chat("/g demote " + username)
 

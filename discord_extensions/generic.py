@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from core.config import discord as config
+from core.config import DiscordConfig
 
 
 class Generic(commands.Cog):
@@ -16,26 +16,26 @@ class Generic(commands.Cog):
         )
         embed.add_field(
             name="Discord Commands",
-            value=f"``{config.prefix}invite <username>``: Invites the user to the guild\n"
-                  f"``{config.prefix}promote <username>``: Promotes the given user\n"
-                  f"``{config.prefix}demote <username>``: Demotes the given user\n"
-                  f"``{config.prefix}setrank <username> <rank>``: Sets the given user to a specific rank\n"
-                  f"``{config.prefix}kick <username> [reason]``: Kicks the given user\n"
-                  f"``{config.prefix}notifications``: Toggles join / leave notifications\n"
-                  f"``{config.prefix}online``: Shows the online members\n"
-                  f"``{config.prefix}override <command>``: Forces the bot to use a given command\n"
-                  f"``{config.prefix}toggleaccept``: Toggles auto accepting members joining the guild\n"
-                  f"``{config.prefix}mute <username> <time>`` - Mutes the user for a specific time\n"
-                  f"``{config.prefix}unmute <username>`` - Unmutes the user",
+            value=f"``{DiscordConfig.prefix}invite <username>``: Invites the user to the guild\n"
+                  f"``{DiscordConfig.prefix}promote <username>``: Promotes the given user\n"
+                  f"``{DiscordConfig.prefix}demote <username>``: Demotes the given user\n"
+                  f"``{DiscordConfig.prefix}setrank <username> <rank>``: Sets the given user to a specific rank\n"
+                  f"``{DiscordConfig.prefix}kick <username> [reason]``: Kicks the given user\n"
+                  f"``{DiscordConfig.prefix}notifications``: Toggles join / leave notifications\n"
+                  f"``{DiscordConfig.prefix}online``: Shows the online members\n"
+                  f"``{DiscordConfig.prefix}override <command>``: Forces the bot to use a given command\n"
+                  f"``{DiscordConfig.prefix}toggleaccept``: Toggles auto accepting members joining the guild\n"
+                  f"``{DiscordConfig.prefix}mute <username> <time>`` - Mutes the user for a specific time\n"
+                  f"``{DiscordConfig.prefix}unmute <username>`` - Unmutes the user",
             inline=False
         )
         embed.add_field(
             name="Info",
-            value=f"Prefix: ``{config.prefix}``\n"
-                  f"Guild Channel: <#{config.channel}>\n"
-                  f"Officer Channel: <#{config.officerChannel}>\n"
-                  f"Command Role: <@&{config.commandRole}>\n"
-                  f"Override Role: <@&{config.overrideRole}>\n"
+            value=f"Prefix: ``{DiscordConfig.prefix}``\n"
+                  f"Guild Channel: <#{DiscordConfig.channel}>\n"
+                  f"Officer Channel: <#{DiscordConfig.officerChannel}>\n"
+                  f"Command Role: <@&{DiscordConfig.commandRole}>\n"
+                  f"Override Role: <@&{DiscordConfig.overrideRole}>\n"
                   f"Version: ``1.0``",
             inline=False
         )
