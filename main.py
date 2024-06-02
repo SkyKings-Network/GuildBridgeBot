@@ -10,10 +10,12 @@ async def main():
         await bot.load_extension("discord_extensions.admin")
         await bot.load_extension("discord_extensions.bridge")
         await bot.load_extension("discord_extensions.generic")
-        print(SettingsConfig.extensions, type(SettingsConfig.extensions))
-        for extension in SettingsConfig.extensions:
-            await bot.load_extension(extension)
-        print("Extensions loaded!")
+        if SettingsConfig.extensions:
+            print(f"Ext > Loading {len(SettingsConfig.extensions)} extensions...")
+            for extension in SettingsConfig.extensions:
+                await bot.load_extension(extension, package="extensions" if extension.startswith(".") else None)
+                print(f"Ext > {extension} loaded!")
+            print("Ext > Extensions loaded!")
         await bot.start(DiscordConfig.token)
 
 

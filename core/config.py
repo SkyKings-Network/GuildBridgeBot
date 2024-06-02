@@ -11,7 +11,15 @@ __all__ = (
     "ExtensionConfig",
 )
 
-config = {}
+_fnf = False
+try:
+    with open("config.json", "r") as file:
+        config = json.load(file)
+except FileNotFoundError as e:
+    config = {}
+    _fnf = True
+except json.JSONDecodeError as e:
+    raise InvalidConfig("The config file is not a valid JSON file.") from e
 
 
 class ConfigKey:
@@ -23,14 +31,13 @@ class ConfigKey:
         self.key = None
 
     def validate(self, value):
-        print(self.key, value)
         if not value:
             if self.required:
                 raise ValueError(f"Missing required key '{self.key}'")
+            return self.default
         elif not isinstance(value, self.type):
             try:
                 value = self.type(value)
-                print(value, self.type)
             except Exception:
                 raise TypeError(f"Expected {self.type.__name__} for '{self.key}' but got {type(value).__name__}")
         return value
@@ -47,16 +54,17 @@ class _ConfigObject(type):
         obj.keys = keys
         obj.BASE_KEY = kwargs["base_key"]
         # validate the config
-        for key, value in keys.items():
-            value.key = key
-            if key in ("keys", "BASE_KEY"):
-                raise ValueError(f"Invalid key name '{key}'")
-            if key not in config:
-                config[key] = value.default
-            else:
-                value.validate(config[key])
-            setattr(obj, key, config[key])
-            print(key, config[key])
+        data = config.get(obj.BASE_KEY)
+        if data is not None:
+            for key, value in keys.items():
+                value.key = key
+                if key in ("keys", "BASE_KEY"):
+                    raise ValueError(f"Invalid key name '{key}'")
+                if key not in data:
+                    data[key] = value.default
+                else:
+                    value.validate(data[key])
+                setattr(obj, key, data[key])
         return obj
 
 
@@ -159,20 +167,12 @@ def generate_config():
         json.dump(_config, f, indent=4)
 
 
-try:
-    with open("config.json", "r") as file:
-        config = json.load(file)
-except FileNotFoundError as e:
+if _fnf:
     generate_config()
     raise InvalidConfig(
         "No config file was found, so we generated one for you. Please set it up before continuing."
-    ) from e
-except json.JSONDecodeError as e:
-    raise InvalidConfig("The config file is not a valid JSON file.") from e
-
+    )
 validate_config(config)
-print("Config loaded successfully!")
-print(SettingsConfig.extensions)
 
 
 class ExtensionConfig(ConfigObject, base_key=""):

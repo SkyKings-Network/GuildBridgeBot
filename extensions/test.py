@@ -1,2 +1,2 @@
-def setup(bot):
+async def setup(bot):
     print("Cog setup!")
