@@ -17,6 +17,7 @@ Instructions are for Linux/Ubuntu machines
 cd ~
 
 # Install nvm & node
+
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
 source ~/.bashrc
 nvm install 19.7.0
