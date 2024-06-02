@@ -32,6 +32,7 @@ class Bridge(commands.Cog):
     @commands.has_role(config.commandRole)
     async def mute(self, ctx, username, time):
         await self.bot.mineflayer_bot.chat("/g mute " + username + " " + time)
+        await self.bot.wait_for("message", check=lambda m: m.content == f"Successfully muted {username} for {time}.")
 
     @commands.command()
     @commands.has_role(config.commandRole)

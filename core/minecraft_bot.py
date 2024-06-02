@@ -4,7 +4,7 @@ import time
 
 from javascript import require, On, config
 
-from core.config import server, settings, account
+from core.config import ServerConfig, SettingsConfig, AccountConfig
 
 mineflayer = require("mineflayer")
 
@@ -97,7 +97,7 @@ class MinecraftBotManager:
                     if message.startswith("Guild Name: "):
                         message_buffer.clear()
                         self.wait_response = True
-                    if message == "-----------------------------------------------------":
+                    if message == "-----------------------------------------------------" and self.wait_response:
                         self.wait_response = False
                         self.send_to_discord("\n".join(message_buffer))
                         message_buffer.clear()
@@ -123,7 +123,9 @@ class MinecraftBotManager:
                             "You cannot say the same message twice!" in message or \
                             "You don't have access to the officer chat!" in message or \
                             "Your guild is full!" in message or \
-                            "is already in your guild!" in message:
+                            "is already in your guild!" in message or \
+                            ("has muted" in message and "for" in message) or \
+                            ("has unmuted" in message):
                         self.send_to_discord(message)
 
     def send_minecraft_message(self, discord, message, type):
@@ -137,7 +139,7 @@ class MinecraftBotManager:
             self.bot.chat(message_text)
 
         if type == "invite":
-            if settings.autoaccept:
+            if SettingsConfig.autoaccept:
                 message = message.split()
                 if ("[VIP]" in message or "[VIP+]" in message or
                         "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message):
@@ -155,10 +157,10 @@ class MinecraftBotManager:
         print("Mineflayer > Creating the bot...")
         bot = mineflayer.createBot(
             {
-                "host": server.host,
-                "port": server.port,
+                "host": ServerConfig.host,
+                "port": ServerConfig.port,
                 "version": "1.8.9",
-                "username": account.email,
+                "username": AccountConfig.email,
                 "auth": "microsoft",
                 "viewDistance": "tiny",
             }

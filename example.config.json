@@ -14,17 +14,20 @@
         "overrideRole": "",
         "ownerId": "",
         "prefix": "!",
+        "webhookURL": "",
+        "officerWebhookURL": "",
         "debugWebhookURL": ""
     },
     "redis": {
-        "host": "redisIP",
+        "host": "",
         "port": 6379,
-        "password": "redisPassword",
-        "clientName": "clientName",
-        "recieveChannel": "bridge-bot",
-        "sendChannel": "bridge-bot-control"
+        "password": "",
+        "clientName": "",
+        "recieveChannel": "",
+        "sendChannel": ""
     },
     "settings": {
-        "autoaccept": false
+        "autoaccept": false,
+        "extensions": []
     }
 }
