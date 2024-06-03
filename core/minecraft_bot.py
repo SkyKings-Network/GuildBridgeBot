@@ -41,11 +41,13 @@ class MinecraftBotManager:
             if not self._online:
                 self.send_to_discord("Bot Online")
             self._online = True
+            self.client.dispatch("minecraft_ready")
 
         @On(self.bot, "end")
         def end(this, reason):
             print(f"Mineflayer > Bot offline: {reason}")
             self.send_to_discord("Bot Offline")
+            self.client.dispatch("minecraft_disconnected")
             self._online = False
             if self.auto_restart:
                 time.sleep(120)
@@ -62,6 +64,7 @@ class MinecraftBotManager:
         @On(self.bot, "kicked")
         def kicked(this, reason, loggedIn):
             print(f"Mineflayer > Bot kicked: {reason}")
+            self.client.dispatch("minecraft_disconnected")
             if loggedIn:
                 self.send_to_discord(f"Bot kicked: {reason}")
             else:
@@ -71,6 +74,7 @@ class MinecraftBotManager:
         @On(self.bot, "error")
         def error(this, reason):
             print(reason)
+            self.client.dispatch("minecraft_error")
 
         @On(self.bot, "messagestr")
         def chat(this, message, messagePosition, jsonMsg, sender, verified):
@@ -125,7 +129,8 @@ class MinecraftBotManager:
                             "Your guild is full!" in message or \
                             "is already in your guild!" in message or \
                             ("has muted" in message and "for" in message) or \
-                            ("has unmuted" in message):
+                            "has unmuted" in message or \
+                            "You're currently guild muted" in message:
                         self.send_to_discord(message)
 
     def send_minecraft_message(self, discord, message, type):

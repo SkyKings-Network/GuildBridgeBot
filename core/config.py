@@ -28,7 +28,7 @@ except json.JSONDecodeError as e:
 class ConfigKey:
     def __init__(self, type: type, default=...):
         self.type = type
-        self.default = (default or "") if default is not ... else ""
+        self.default = default if default is not ... else ""
         self.required = default is ...
         self.basekey = None
         self.key = None
@@ -70,7 +70,7 @@ class _ConfigObject(type):
                         raise InvalidConfig(f"Missing required key '{key}' in section '{obj.BASE_KEY}'")
                     data[key] = value.default
                 else:
-                    value.validate(data[key])
+                    data[key] = value.validate(data[key])
                 setattr(obj, key, data[key])
         elif _completed_init and keys:
             # add all keys n stuff
@@ -211,7 +211,7 @@ def generate_config():
     for section in _config_objects:
         _config[section.BASE_KEY] = {}
         for k, v in section.keys.items():
-            _config[section.BASE_KEY][k] = v.default or ""
+            _config[section.BASE_KEY][k] = v.default if v.default not in (..., None) else ""
     with open("config.json", "w") as f:
         json.dump(_config, f, indent=4)
 

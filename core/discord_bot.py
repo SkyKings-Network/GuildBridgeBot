@@ -3,7 +3,7 @@ import os
 import re
 import threading
 import traceback
-from typing import Callable, Coroutine, Union
+from typing import Any, Callable, Coroutine, Union
 
 import aiohttp
 import discord
@@ -50,6 +50,18 @@ class DiscordBridgeBot(commands.Bot):
         self.webhook: discord.Webhook | None = None
         self.officer_webhook: discord.Webhook | None = None
         self.debug_webhook: discord.Webhook | None = None
+
+    def get_intents(self) -> discord.Intents:
+        """Returns a mutable intents class for the bot."""
+        return self._connection._intents
+
+    async def on_error(self, event_method: str, /, *args: Any, **kwargs: Any) -> None:
+        await self.send_debug_message(
+            f"An error occurred in {event_method} with args {args} and kwargs {kwargs}\n\n"
+            f"```py\n"
+            f"{traceback.format_exc()}\n"
+            f"```"
+        )
 
     async def send_invite(self, username):
         fut = asyncio.Future()
@@ -414,7 +426,8 @@ class DiscordBridgeBot(commands.Bot):
         # Someone was kicked
         elif " was kicked from the guild!" in message:
             message = message.split()
-            if "[VIP]" in message[0] or "[VIP+]" in message[0] or "[MVP]" in message[0] or "[MVP+]" in message[0] or "[MVP++]" in message[0]:
+            if "[VIP]" in message[0] or "[VIP+]" in message[0] or "[MVP]" in message[0] or "[MVP+]" in message[
+                0] or "[MVP++]" in message[0]:
                 playername = message[1]
             else:
                 playername = message[0]
@@ -428,7 +441,8 @@ class DiscordBridgeBot(commands.Bot):
             await self.send_message(embed=embed)
         elif " was kicked from the guild by " in message:
             message = message.split()
-            if "[VIP]" in message[0] or "[VIP+]" in message[0] or "[MVP]" in message[0] or "[MVP+]" in message[0] or "[MVP++]" in message[0]:
+            if "[VIP]" in message[0] or "[VIP+]" in message[0] or "[MVP]" in message[0] or "[MVP+]" in message[
+                0] or "[MVP++]" in message[0]:
                 playername = message[1]
             else:
                 playername = message[0]
@@ -608,6 +622,16 @@ class DiscordBridgeBot(commands.Bot):
             await self.debug_webhook.send("guild-member-unmute")
             await self.send_message(embed=embed, officer=True)
 
+        elif "You're currently guild muted for" in message:
+            duration_remaining = message.split()[-1][:-1]
+            self.dispatch("hypixel_guild_message_send_failed")
+            embed = Embed(colour=0x1ABC9C)
+            embed.set_author(
+                name=f"The bot is currently guild muted for {duration_remaining}.",
+            )
+            await self.debug_webhook.send("bot-guild-muted")
+            await self.send_message(embed=embed)
+
         # /g list command response
         elif "Total Members:" in message:
             message = re.split("--", message)
@@ -627,6 +651,6 @@ class DiscordBridgeBot(commands.Bot):
         else:
             if message.strip() == "":
                 return
-            await self.debug_webhook.send("normal-message: `"+message+"`")
+            await self.debug_webhook.send("normal-message: `" + message + "`")
             embed = Embed(colour=0x1ABC9C).set_author(name=message)
             await self.send_message(embed=embed)
