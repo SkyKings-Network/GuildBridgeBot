@@ -68,4 +68,4 @@ pm2 start main.py --name <NAME_OF_GUILD>-BridgeBot --interpreter ./venv/bin/pyth
 
 ## More Information
 
-For more information on the bot, please refer to the [documentation](https://docs.skykings.dev/bridge).
+For more information on the bot, please refer to the [documentation](https://docs.skykings.net/bridge).
