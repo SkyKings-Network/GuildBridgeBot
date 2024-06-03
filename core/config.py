@@ -9,6 +9,7 @@ __all__ = (
     "DiscordConfig",
     "RedisConfig",
     "SettingsConfig",
+    "ConfigKey",
     "ExtensionConfig",
 )
 
