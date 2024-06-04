@@ -3,7 +3,7 @@ import json
 import traceback
 import uuid
 import redis.asyncio as redis
-from core.config import redis as config
+from core.config import RedisConfig
 
 
 class RedisManager:
@@ -11,10 +11,10 @@ class RedisManager:
         self.read_task: asyncio.Task = None  # type: ignore
         self.bot = bot
         self.mineflayer_bot = mineflayer_bot
-        self.config = config
-        self.client_name = config.clientName
-        self.recieve_channel = config.recieveChannel
-        self.send_channel = config.sendChannel
+        self.config = RedisConfig
+        self.client_name = RedisConfig.clientName
+        self.recieve_channel = RedisConfig.recieveChannel
+        self.send_channel = RedisConfig.sendChannel
         self._response_waiters: dict[str, asyncio.Future] = {}
         self.redis: redis.Redis = None
         self._restart: bool = True

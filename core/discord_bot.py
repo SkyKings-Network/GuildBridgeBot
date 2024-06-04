@@ -3,14 +3,14 @@ import os
 import re
 import threading
 import traceback
-from typing import Union
+from typing import Any, Callable, Coroutine, Union
 
 import aiohttp
 import discord
 from discord import Embed
 from discord.ext import commands
 
-from core.config import discord as discord_config, redis as redis_config
+from core.config import DiscordConfig, RedisConfig
 from core.minecraft_bot import MinecraftBotManager
 from core.redis_handler import RedisManager
 
@@ -35,7 +35,7 @@ def slash_mention_repl(match):
 class DiscordBridgeBot(commands.Bot):
     def __init__(self):
         super().__init__(
-            command_prefix=commands.when_mentioned_or(discord_config.prefix), case_insensitive=True,
+            command_prefix=commands.when_mentioned_or(DiscordConfig.prefix), case_insensitive=True,
             allowed_mentions=discord.AllowedMentions(everyone=False), intents=discord.Intents(
                 guild_messages=True, message_content=True, guilds=True,
             ),
@@ -51,6 +51,18 @@ class DiscordBridgeBot(commands.Bot):
         self.officer_webhook: discord.Webhook | None = None
         self.debug_webhook: discord.Webhook | None = None
 
+    def get_intents(self) -> discord.Intents:
+        """Returns a mutable intents class for the bot."""
+        return self._connection._intents
+
+    async def on_error(self, event_method: str, /, *args: Any, **kwargs: Any) -> None:
+        await self.send_debug_message(
+            f"An error occurred in {event_method} with args {args} and kwargs {kwargs}\n\n"
+            f"```py\n"
+            f"{traceback.format_exc()}\n"
+            f"```"
+        )
+
     async def send_invite(self, username):
         fut = asyncio.Future()
         self.invite_queue.put_nowait([username, fut])
@@ -59,13 +71,13 @@ class DiscordBridgeBot(commands.Bot):
         return await fut
 
     def init_webhooks(self):
-        if discord_config.webhookURL:
-            self.webhook = discord.Webhook.from_url(discord_config.webhookURL, client=self)
-        if discord_config.officerWebhookURL:
-            self.officer_webhook = discord.Webhook.from_url(discord_config.officerWebhookURL, client=self)
-        if discord_config.debugWebhookURL:
+        if DiscordConfig.webhookURL:
+            self.webhook = discord.Webhook.from_url(DiscordConfig.webhookURL, client=self)
+        if DiscordConfig.officerWebhookURL:
+            self.officer_webhook = discord.Webhook.from_url(DiscordConfig.officerWebhookURL, client=self)
+        if DiscordConfig.debugWebhookURL:
             print("Discord > WARNING: Debug webhook is enabled!")
-            self.debug_webhook = discord.Webhook.from_url(discord_config.debugWebhookURL, client=self)
+            self.debug_webhook = discord.Webhook.from_url(DiscordConfig.debugWebhookURL, client=self)
 
     async def send_debug_message(self, *args, **kwargs) -> None:
         if self.debug_webhook:
@@ -78,15 +90,15 @@ class DiscordBridgeBot(commands.Bot):
 
     async def on_ready(self):
         print(f"Discord > Bot Running as {self.user}")
-        channel = self.get_channel(discord_config.channel)
+        channel = self.get_channel(DiscordConfig.channel)
         if channel is None:
-            print(f"Discord > Channel {discord_config.channel} not found! Please set the correct channel ID!")
+            print(f"Discord > Channel {DiscordConfig.channel} not found! Please set the correct channel ID!")
             await self.close()
         self.init_webhooks()
         if self.mineflayer_bot is None:
             print("Discord > Starting the Minecraft bot...")
             self.mineflayer_bot = MinecraftBotManager.createbot(self)
-        if self.redis_manager is None and redis_config.host:
+        if self.redis_manager is None and RedisConfig.host:
             print("Discord > Starting the Redis manager...")
             self.redis_manager = await RedisManager.create(self, self.mineflayer_bot)
         if self._proc_inv_task is None or self._proc_inv_task.done():
@@ -95,11 +107,11 @@ class DiscordBridgeBot(commands.Bot):
 
     async def on_message(self, message: discord.Message):
         if not message.author.bot:
-            if str(message.content).startswith(discord_config.prefix):
+            if str(message.content).startswith(DiscordConfig.prefix):
                 pass
-            elif message.channel.id == int(discord_config.channel):
+            elif message.channel.id == int(DiscordConfig.channel):
                 await self.send_minecraft_user_message(message.author.display_name, message)
-            elif message.channel.id == int(discord_config.officerChannel):
+            elif message.channel.id == int(DiscordConfig.officerChannel):
                 await self.send_minecraft_user_message(message.author.display_name, message, officer=True)
         await self.process_commands(message)
 
@@ -156,7 +168,7 @@ class DiscordBridgeBot(commands.Bot):
                     print(f"Discord > Failed to send message to officer webhook: {e}")
                     await self.debug_webhook.send(traceback.format_exc())
             else:
-                channel = self.get_channel(discord_config.officerChannel)
+                channel = self.get_channel(DiscordConfig.officerChannel)
                 if channel is None:
                     return
                 try:
@@ -173,9 +185,9 @@ class DiscordBridgeBot(commands.Bot):
                     print(f"Discord > Failed to send message to webhook: {e}")
                     await self.debug_webhook.send(traceback.format_exc())
             else:
-                channel = self.get_channel(discord_config.channel)
+                channel = self.get_channel(DiscordConfig.channel)
                 if channel is None:
-                    print(f"Discord > Channel {discord_config.channel} not found! Please set the correct channel ID!")
+                    print(f"Discord > Channel {DiscordConfig.channel} not found! Please set the correct channel ID!")
                     return
                 try:
                     return await channel.send(*args, **kwargs)
@@ -319,7 +331,7 @@ class DiscordBridgeBot(commands.Bot):
                 await self.send_user_message(username, message)
 
         elif message.startswith("Officer >"):
-            channel = self.get_channel(discord_config.officerChannel)
+            channel = self.get_channel(DiscordConfig.officerChannel)
             if channel is None:
                 return
             username, message = regex_officer.match(message).groups()
@@ -414,7 +426,8 @@ class DiscordBridgeBot(commands.Bot):
         # Someone was kicked
         elif " was kicked from the guild!" in message:
             message = message.split()
-            if "[VIP]" in message[0] or "[VIP+]" in message[0] or "[MVP]" in message[0] or "[MVP+]" in message[0] or "[MVP++]" in message[0]:
+            if "[VIP]" in message[0] or "[VIP+]" in message[0] or "[MVP]" in message[0] or "[MVP+]" in message[
+                0] or "[MVP++]" in message[0]:
                 playername = message[1]
             else:
                 playername = message[0]
@@ -428,7 +441,8 @@ class DiscordBridgeBot(commands.Bot):
             await self.send_message(embed=embed)
         elif " was kicked from the guild by " in message:
             message = message.split()
-            if "[VIP]" in message[0] or "[VIP+]" in message[0] or "[MVP]" in message[0] or "[MVP+]" in message[0] or "[MVP++]" in message[0]:
+            if "[VIP]" in message[0] or "[VIP+]" in message[0] or "[MVP]" in message[0] or "[MVP+]" in message[
+                0] or "[MVP++]" in message[0]:
                 playername = message[1]
             else:
                 playername = message[0]
@@ -546,6 +560,78 @@ class DiscordBridgeBot(commands.Bot):
             await self.debug_webhook.send("guild-full")
             await self.send_message(embed=embed)
 
+        # mute stuff
+        elif "has muted the guild chat" in message:
+            splitmsg = message.split()
+            playername = splitmsg[0]
+            if ("[VIP]" in splitmsg or "[VIP+]" in splitmsg or
+                    "[MVP]" in splitmsg or "[MVP+]" in splitmsg or "[MVP++]" in splitmsg):
+                playername = splitmsg[1]
+            duration = splitmsg[-1]
+            embed = Embed(colour=0x1ABC9C)
+            embed.set_author(
+                name=f"The guild chat has been muted by {playername} for {duration}.",
+                icon_url="https://www.mc-heads.net/avatar/" + playername
+            )
+            self.dispatch("hypixel_guild_chat_muted", playername, duration)
+            await self.debug_webhook.send("guild-muted")
+            await self.send_message(embed=embed)
+
+        elif "has unmuted the guild chat" in message:
+            splitmsg = message.split()
+            playername = splitmsg[0]
+            if ("[VIP]" in splitmsg or "[VIP+]" in splitmsg or
+                    "[MVP]" in splitmsg or "[MVP+]" in splitmsg or "[MVP++]" in splitmsg):
+                playername = splitmsg[1]
+            embed = Embed(colour=0x1ABC9C)
+            embed.set_author(
+                name=f"The guild chat has been unmuted by {playername}.",
+                icon_url="https://www.mc-heads.net/avatar/" + playername
+            )
+            self.dispatch("hypixel_guild_chat_unmuted", playername)
+            await self.debug_webhook.send("guild-unmuted")
+            await self.send_message(embed=embed)
+
+        # personal mutes
+        elif "has muted" in message:
+            _regex = r"(?:\[[A-Z+]+\] )?([a-zA-Z0-9_]+) has muted (?:\[[A-Z+]+\] )?([a-zA-Z0-9_]+) for ([a-zA-Z0-9_]+)"
+            matches = re.match(_regex, message)
+            muter = matches.group(1)
+            muted = matches.group(2)
+            duration = matches.group(3)
+            self.dispatch("hypixel_guild_member_muted", muter, muted, duration)
+            embed = Embed(colour=0x1ABC9C)
+            embed.set_author(
+                name=f"{muter} has muted {muted} for {duration}.",
+                icon_url="https://www.mc-heads.net/avatar/" + muter
+            )
+            await self.debug_webhook.send("guild-member-mute")
+            await self.send_message(embed=embed, officer=True)
+
+        elif "has unmuted" in message:
+            _regex = r"(?:\[[A-Z+]+\] )?([a-zA-Z0-9_]+) has unmuted (?:\[[A-Z+]+\] )?([a-zA-Z0-9_]+)"
+            matches = re.match(_regex, message)
+            muter = matches.group(1)
+            muted = matches.group(2)
+            self.dispatch("hypixel_guild_member_unmuted", muter, muted)
+            embed = Embed(colour=0x1ABC9C)
+            embed.set_author(
+                name=f"{muter} has unmuted {muted}.",
+                icon_url="https://www.mc-heads.net/avatar/" + muter
+            )
+            await self.debug_webhook.send("guild-member-unmute")
+            await self.send_message(embed=embed, officer=True)
+
+        elif "You're currently guild muted for" in message:
+            duration_remaining = message.split()[-1][:-1]
+            self.dispatch("hypixel_guild_message_send_failed")
+            embed = Embed(colour=0x1ABC9C)
+            embed.set_author(
+                name=f"The bot is currently guild muted for {duration_remaining}.",
+            )
+            await self.debug_webhook.send("bot-guild-muted")
+            await self.send_message(embed=embed)
+
         # /g list command response
         elif "Total Members:" in message:
             message = re.split("--", message)
@@ -565,6 +651,6 @@ class DiscordBridgeBot(commands.Bot):
         else:
             if message.strip() == "":
                 return
-            await self.debug_webhook.send("normal-message: `"+message+"`")
+            await self.debug_webhook.send("normal-message: `" + message + "`")
             embed = Embed(colour=0x1ABC9C).set_author(name=message)
             await self.send_message(embed=embed)
