@@ -11,7 +11,6 @@ class RedisManager:
         self.read_task: asyncio.Task = None  # type: ignore
         self.bot = bot
         self.mineflayer_bot = mineflayer_bot
-        self.config = RedisConfig
         self.client_name = RedisConfig.clientName
         self.recieve_channel = RedisConfig.recieveChannel
         self.send_channel = RedisConfig.sendChannel
@@ -126,7 +125,7 @@ class RedisManager:
 
     async def reader(self):
         try:
-            self.redis = redis.Redis(host=self.config["host"], password=self.config["password"], port=self.config["port"])
+            self.redis = redis.Redis(host=RedisConfig.host, password=RedisConfig.password, port=RedisConfig.port)
             async with self.redis.pubsub() as pubsub:
                 channel = self.recieve_channel + ":" + self.client_name
                 await pubsub.subscribe(channel)
