@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 from core.errors import InvalidConfig
 
@@ -173,23 +173,23 @@ class AccountConfig(ConfigObject, base_key="account"):
 class DiscordConfig(ConfigObject, base_key="discord"):
     token: str = ConfigKey(str)
     channel: int = ConfigKey(int)
-    officerChannel: int | None = ConfigKey(int, None)
-    commandRole: int | None = ConfigKey(int, None)
-    overrideRole: int | None = ConfigKey(int, None)
-    ownerId: int | None = ConfigKey(int, None)
+    officerChannel: Union[int, None] = ConfigKey(int, None)
+    commandRole: Union[int, None] = ConfigKey(int, None)
+    overrideRole: Union[int, None] = ConfigKey(int, None)
+    ownerId: Union[int, None] = ConfigKey(int, None)
     prefix: str = ConfigKey(str, "!")
-    webhookURL: str | None = ConfigKey(str, None)
-    officerWebhookURL: str | None = ConfigKey(str, None)
-    debugWebhookURL: str | None = ConfigKey(str, None)
+    webhookURL: Union[str, None] = ConfigKey(str, None)
+    officerWebhookURL: Union[str, None] = ConfigKey(str, None)
+    debugWebhookURL: Union[str, None] = ConfigKey(str, None)
 
 
 class RedisConfig(ConfigObject, base_key="redis"):
-    host: str | None = ConfigKey(str, None)
+    host: Union[str, None] = ConfigKey(str, None)
     port: int = ConfigKey(int, 6379)
-    password: str | None = ConfigKey(str, None)
-    clientName: str | None = ConfigKey(str, None)
-    recieveChannel: str | None = ConfigKey(str, None)
-    sendChannel: str | None = ConfigKey(str, None)
+    password: Union[str, None] = ConfigKey(str, None)
+    clientName: Union[str, None] = ConfigKey(str, None)
+    recieveChannel: Union[str, None] = ConfigKey(str, None)
+    sendChannel: Union[str, None] = ConfigKey(str, None)
 
 
 class SettingsConfig(ConfigObject, base_key="settings"):
