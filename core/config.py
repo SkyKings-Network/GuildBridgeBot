@@ -1,5 +1,5 @@
 import json
-from typing import Any
+from typing import Any, Dict
 
 from core.errors import InvalidConfig
 
@@ -109,12 +109,12 @@ class _ConfigObject(type):
         raise NotImplementedError
 
     @classmethod
-    def validate(cls, _config: dict) -> None:
+    def validate(cls, _config: Dict) -> None:
         raise NotImplementedError
 
 
 class ConfigObject(metaclass=_ConfigObject, base_key=""):
-    keys: dict[str, ConfigKey]
+    keys: Dict[str, ConfigKey]
     BASE_KEY: str
 
     @classmethod
@@ -200,7 +200,7 @@ class SettingsConfig(ConfigObject, base_key="settings"):
 _config_objects = [ServerConfig, AccountConfig, DiscordConfig, RedisConfig, SettingsConfig]
 
 
-def validate_config(_config: dict):
+def validate_config(_config: Dict):
     for section in _config_objects:
         section.validate(_config)
     return _config
