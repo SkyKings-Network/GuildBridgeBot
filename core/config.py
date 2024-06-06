@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Union
+from typing import Any, Dict, Union, List
 
 from core.errors import InvalidConfig
 
@@ -194,7 +194,7 @@ class RedisConfig(ConfigObject, base_key="redis"):
 
 class SettingsConfig(ConfigObject, base_key="settings"):
     autoaccept: bool = ConfigKey(bool, False)
-    extensions: list[str] = ConfigKey(list, [])
+    extensions: List[str] = ConfigKey(list, [])
 
 
 _config_objects = [ServerConfig, AccountConfig, DiscordConfig, RedisConfig, SettingsConfig]
