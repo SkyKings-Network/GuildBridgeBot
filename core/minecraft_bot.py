@@ -1,10 +1,11 @@
 import asyncio
-import sys
+import json
 import time
 
 from javascript import require, On, config
 
 from core.config import ServerConfig, SettingsConfig, AccountConfig
+from core.authenticator import authenticate
 
 mineflayer = require("mineflayer")
 
@@ -60,16 +61,17 @@ class MinecraftBotManager:
                 thread.terminate()
             config.event_loop.threads = []
             config.event_loop.stop()
-        
+
         @On(self.bot, "kicked")
         def kicked(this, reason, loggedIn):
+            reason = json.loads(reason)
+            reason = "".join([e["text"] for e in reason.get('extra', "")]) + reason['text']
             print(f"Mineflayer > Bot kicked: {reason}")
             self.client.dispatch("minecraft_disconnected")
             if loggedIn:
                 self.send_to_discord(f"Bot kicked: {reason}")
             else:
                 self.send_to_discord(f"Bot kicked before logging in: {reason}")
-            
 
         @On(self.bot, "error")
         def error(this, reason):
@@ -91,7 +93,7 @@ class MinecraftBotManager:
             else:
                 if message.startswith("Guild > " + self.bot.username) or message.startswith(
                         "Officer > " + self.bot.username
-                        ):
+                ):
                     pass
                 else:
                     if message.startswith("Guild >") or message.startswith("Officer >"):
@@ -166,7 +168,8 @@ class MinecraftBotManager:
                 "port": ServerConfig.port,
                 "version": "1.8.9",
                 "username": AccountConfig.email,
-                "auth": "microsoft",
+                "auth": authenticate,
+                # "auth": "microsoft",
                 "viewDistance": "tiny",
             }
         )
