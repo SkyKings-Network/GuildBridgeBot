@@ -37,7 +37,7 @@ class Admin(commands.Cog):
     @commands.has_role(DiscordConfig.overrideRole)
     async def override(self, ctx, *, command):
         await self.bot.mineflayer_bot.chat("/" + command)
-        embedVar = discord.Embed(color=0x1ABC9C).set_author(name=f"`/{command}` has been sent!")
+        embedVar = discord.Embed(color=0x1ABC9C, description=f"`/{command}` has been sent!")
         await ctx.send(embed=embedVar)
 
     @commands.command()
