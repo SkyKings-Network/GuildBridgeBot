@@ -224,7 +224,6 @@ if _fnf:
 validate_config(config)
 _completed_init = True
 
-
 class ExtensionConfig(ConfigObject, base_key=""):
     """
     This class is used for extensions to store their config data.
