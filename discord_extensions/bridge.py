@@ -49,7 +49,7 @@ class Bridge(commands.Cog):
         except asyncio.TimeoutError:
             await message.edit(
                 embed=discord.Embed(
-                    description=f"Could not confirm if {username} was unmuted.",
+                    description=f"Could not confirm if {username} was muted.",
                     color=discord.Color.red()
                 )
             )
