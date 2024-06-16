@@ -80,6 +80,7 @@ class DiscordBridgeBot(commands.Bot):
             self.debug_webhook = discord.Webhook.from_url(DiscordConfig.debugWebhookURL, client=self)
 
     async def send_debug_message(self, *args, **kwargs) -> None:
+        print(*args)
         if self.debug_webhook:
             kwargs["username"] = self.user.display_name
             kwargs["avatar_url"] = self.user.display_avatar.url
