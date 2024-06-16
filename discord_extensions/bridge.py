@@ -33,36 +33,33 @@ class Bridge(commands.Cog):
     @commands.command()
     @commands.has_role(DiscordConfig.commandRole)
     async def mute(self, ctx, username, time):
+        message = await ctx.send(
+            embed=discord.Embed(
+                description="Sending mute command...",
+                color=discord.Color.gold()
+            )
+        )
+        await self.bot.mineflayer_bot.chat("/g mute " + username + " " + time)
         try:
-            message = await ctx.send(
+            await self.bot.wait_for(
+                "hypixel_guild_member_muted",
+                check=lambda p, m, d: m.lower() == username.lower(),
+                timeout=5
+            )
+        except asyncio.TimeoutError:
+            await message.edit(
                 embed=discord.Embed(
-                    description="Sending mute command...",
-                    color=discord.Color.gold()
+                    description=f"Could not confirm if {username} was unmuted.",
+                    color=discord.Color.red()
                 )
             )
-            await self.bot.mineflayer_bot.chat("/g mute " + username + " " + time)
-            try:
-                await self.bot.wait_for(
-                    "hypixel_guild_member_muted",
-                    check=lambda p, m: m.lower() == username.lower(),
-                    timeout=5
+        else:
+            await message.edit(
+                embed=discord.Embed(
+                    description=f"Unmuted {username}.",
+                    color=discord.Color.green()
                 )
-            except asyncio.TimeoutError:
-                await message.edit(
-                    embed=discord.Embed(
-                        description=f"Could not confirm if {username} was unmuted.",
-                        color=discord.Color.red()
-                    )
-                )
-            else:
-                await message.edit(
-                    embed=discord.Embed(
-                        description=f"Unmuted {username}.",
-                        color=discord.Color.green()
-                    )
-                )
-        except Exception as e:
-            print(e)
+            )
 
     @commands.command()
     @commands.has_role(DiscordConfig.commandRole)
