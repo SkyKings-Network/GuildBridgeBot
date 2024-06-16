@@ -14,11 +14,11 @@ class Bridge(commands.Cog):
     async def invite(self, ctx, username):
         result = await self.bot.send_invite(username)
         if not result[0] and result[1] == "timeout":
-            embedVar = discord.Embed(
+            embed = discord.Embed(
                 description="Something went wrong trying to send an invite. Try again later.",
                 color=discord.Color.red()
             )
-            await ctx.send(embed=embedVar)
+            await ctx.send(embed=embed)
 
     @commands.command()
     @commands.has_role(DiscordConfig.commandRole)
@@ -91,7 +91,6 @@ class Bridge(commands.Cog):
                     color=discord.Color.green()
                 )
             )
-
 
     @commands.command()
     @commands.has_role(DiscordConfig.commandRole)

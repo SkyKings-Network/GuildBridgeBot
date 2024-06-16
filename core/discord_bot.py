@@ -110,9 +110,9 @@ class DiscordBridgeBot(commands.Bot):
         if not message.author.bot:
             if str(message.content).startswith(DiscordConfig.prefix):
                 pass
-            elif message.channel.id == int(DiscordConfig.channel):
+            elif message.channel.id == DiscordConfig.channel:
                 await self.send_minecraft_user_message(message.author.display_name, message)
-            elif message.channel.id == int(DiscordConfig.officerChannel):
+            elif message.channel.id == DiscordConfig.officerChannel:
                 await self.send_minecraft_user_message(message.author.display_name, message, officer=True)
         await self.process_commands(message)
 
