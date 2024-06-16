@@ -1,3 +1,5 @@
+import asyncio
+
 import discord
 from discord.ext import commands
 from core.config import DiscordConfig
@@ -31,13 +33,65 @@ class Bridge(commands.Cog):
     @commands.command()
     @commands.has_role(DiscordConfig.commandRole)
     async def mute(self, ctx, username, time):
+        message = await ctx.send(
+            embed=discord.Embed(
+                description="Sending mute command...",
+                color=discord.Color.gold()
+            )
+        )
         await self.bot.mineflayer_bot.chat("/g mute " + username + " " + time)
-        await self.bot.wait_for("message", check=lambda m: m.content == f"Successfully muted {username} for {time}.")
+        try:
+            await self.bot.wait_for(
+                "hypixel_guild_member_muted",
+                check=lambda p, m: m.lower() == username.lower(),
+                timeout=5
+            )
+        except asyncio.TimeoutError:
+            await message.edit(
+                embed=discord.Embed(
+                    description=f"Could not confirm if {username} was unmuted.",
+                    color=discord.Color.red()
+                )
+            )
+        else:
+            await message.edit(
+                embed=discord.Embed(
+                    description=f"Unmuted {username}.",
+                    color=discord.Color.green()
+                )
+            )
 
     @commands.command()
     @commands.has_role(DiscordConfig.commandRole)
     async def unmute(self, ctx, username):
+        message = await ctx.send(
+            embed=discord.Embed(
+                description="Sending unmute command...",
+                color=discord.Color.gold()
+            )
+        )
         await self.bot.mineflayer_bot.chat("/g unmute " + username)
+        try:
+            await self.bot.wait_for(
+                "hypixel_guild_member_unmuted",
+                check=lambda p, m: m.lower() == username.lower(),
+                timeout=5
+            )
+        except asyncio.TimeoutError:
+            await message.edit(
+                embed=discord.Embed(
+                    description=f"Could not confirm if {username} was unmuted.",
+                    color=discord.Color.red()
+                )
+            )
+        else:
+            await message.edit(
+                embed=discord.Embed(
+                    description=f"Unmuted {username}.",
+                    color=discord.Color.green()
+                )
+            )
+
 
     @commands.command()
     @commands.has_role(DiscordConfig.commandRole)
