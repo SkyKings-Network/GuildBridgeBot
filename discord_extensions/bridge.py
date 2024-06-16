@@ -41,7 +41,7 @@ class Bridge(commands.Cog):
         )
         await self.bot.mineflayer_bot.chat("/g mute " + username + " " + time)
         try:
-            await self.bot.wait_for(
+            res = await self.bot.wait_for(
                 "hypixel_guild_member_muted",
                 check=lambda p, m, d: m.lower() == username.lower(),
                 timeout=5
@@ -56,7 +56,7 @@ class Bridge(commands.Cog):
         else:
             await message.edit(
                 embed=discord.Embed(
-                    description=f"Unmuted {username}.",
+                    description=f"Muted {username} for {res[2]}.",
                     color=discord.Color.green()
                 )
             )
