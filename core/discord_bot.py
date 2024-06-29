@@ -483,7 +483,7 @@ class DiscordBridgeBot(commands.Bot):
         # Bot invited someone
         elif (
                 ("You invited" in message and "to your guild. They have 5 minutes to accept." in message)
-                or "You sent an offline invite to" in message
+                or ("You sent an offline invite to" in message)
         ):
             message = message.split()
             if "You sent an offline invite to" in message:
