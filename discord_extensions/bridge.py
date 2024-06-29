@@ -13,6 +13,7 @@ class Bridge(commands.Cog):
     @commands.has_role(DiscordConfig.commandRole)
     async def invite(self, ctx, username):
         result = await self.bot.send_invite(username)
+        await self.bot.send_debug_message(f"Invite to {username}: {result}")
         if not result[0] and result[1] == "timeout":
             embed = discord.Embed(
                 description="Something went wrong trying to send an invite. Try again later.",
