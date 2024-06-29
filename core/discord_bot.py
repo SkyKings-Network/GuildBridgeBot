@@ -63,6 +63,15 @@ class DiscordBridgeBot(commands.Bot):
             f"```"
         )
 
+    async def on_command_error(self, ctx, error) -> None:
+        error = getattr(error, "original", error)
+        await self.send_debug_message(
+            f"An error occurred in {ctx.command.name}\n\n"
+            f"```py\n"
+            f"{traceback.format_exception(error)}\n"
+            f"```"
+        )
+
     async def send_invite(self, username):
         fut = asyncio.Future()
         self.invite_queue.put_nowait([username, fut])
