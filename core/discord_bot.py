@@ -551,6 +551,22 @@ class DiscordBridgeBot(commands.Bot):
             await self.send_debug_message("Sending invites disabled message")
             await self.send_message(embed=embed)
 
+        # Person bot invited has already been invited
+        elif "You've already invited" in message and "to your guild! Wait for them to accept!" in message:
+            message = message.split()
+            if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
+                playername = message[4]
+            else:
+                playername = message[3]
+            embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+            embed.set_author(
+                name=f"{playername} has already been invited! Wait for them to accept!",
+            )
+            self._current_invite_future.set_result((False, 'alreadyInvited'))
+            self.dispatch("hypixel_guild_member_invite_failed", None)
+            await self.send_debug_message("Sending invites disabled message")
+            await self.send_message(embed=embed)
+
         elif "Your guild is full!" in message:
             embed = Embed(colour=0x1ABC9C)
             embed.set_author(
@@ -558,7 +574,7 @@ class DiscordBridgeBot(commands.Bot):
             )
             self._current_invite_future.set_result((False, 'guildFull'))
             self.dispatch("hypixel_guild_member_invite_failed", None)
-            await self.send_debug_message("Sending guild fu;; message")
+            await self.send_debug_message("Sending guild full message")
             await self.send_message(embed=embed)
 
         # mute stuff
