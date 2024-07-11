@@ -64,7 +64,9 @@ class DiscordBridgeBot(commands.Bot):
         )
 
     async def on_command_error(self, ctx, error) -> None:
+        print(error)
         error = getattr(error, "original", error)
+        print(error)
         await self.send_debug_message(
             f"An error occurred in {ctx.command.name}\n\n"
             f"```py\n"
