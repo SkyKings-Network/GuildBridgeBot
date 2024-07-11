@@ -1,6 +1,7 @@
 import asyncio
 import sys
 import time
+import logging
 
 from javascript import require, On, config
 
@@ -23,9 +24,14 @@ class MinecraftBotManager:
 
     def stop(self, restart: bool = True):
         self.auto_restart = restart
-        self.bot.quit()
-        while self._online:
-            time.sleep(0.2)
+        try:
+            self.bot.quit()
+        except Exception as e:
+            logging.error(f"Failed to quit bot gracefully: {e}")
+        finally:
+            self._online = False
+            while self._online:
+                time.sleep(0.2)
 
     def send_to_discord(self, message):
         asyncio.run_coroutine_threadsafe(self.client.send_discord_message(message), self.client.loop)
