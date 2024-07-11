@@ -23,6 +23,7 @@ class MinecraftBotManager:
         await self.client.loop.run_in_executor(None, self.bot.chat, message)
 
     def stop(self, restart: bool = True):
+        print("Stopping bot.....")
         self.auto_restart = restart
         try:
             self.bot.quit()
