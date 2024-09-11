@@ -41,6 +41,7 @@ class MinecraftBotManager:
     async def reconnect(self):
         await asyncio.sleep(3)
         await self.bot.close()
+        await asyncio.sleep(10)
 
     def oncommands(self):
         message_buffer = []
