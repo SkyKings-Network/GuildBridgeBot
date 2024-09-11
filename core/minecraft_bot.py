@@ -2,6 +2,7 @@ import asyncio
 import sys
 import time
 import logging
+import os
 
 from javascript import require, On, config
 
@@ -60,9 +61,10 @@ class MinecraftBotManager:
                 time.sleep(120)
                 if self.auto_restart:
                     print("Mineflayer > Restarting...")
-                    new_bot = self.createbot(self.client)
-                    self.client.mineflayer_bot = new_bot
-                    return
+                    self.send_to_discord("Updating the bot...")
+                    self.bot.close()
+                    time.sleep(30)
+
             for state, handler, thread in config.event_loop.threads:
                 thread.terminate()
             config.event_loop.threads = []
