@@ -286,6 +286,7 @@ class DiscordBridgeBot(commands.Bot):
         else:
             content = f"/gc {username}: {content}"
         content = content.encode("utf-8").decode("unicode-escape")
+        content = content.encode("ascii", "ignore").decode("ascii")
         if len(content) > 256:
             content = content[:253] + "..."
         await self.mineflayer_bot.chat(content)
