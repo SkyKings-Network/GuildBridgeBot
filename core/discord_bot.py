@@ -285,6 +285,7 @@ class DiscordBridgeBot(commands.Bot):
             content = f"/oc {username}: {content}"
         else:
             content = f"/gc {username}: {content}"
+        content = content.replace("‍", "") # Removes all emojis from messages
         if len(content) > 256:
             content = content[:253] + "..."
         await self.mineflayer_bot.chat(content)
