@@ -51,27 +51,23 @@ class MinecraftBotManager:
             self._online = True
             self.client.dispatch("minecraft_ready")
 
+        @On(self.bot, "end")
         def end(this, reason):
             print(f"Mineflayer > Bot offline: {reason}")
             self.send_to_discord("Bot Offline")
             self.client.dispatch("minecraft_disconnected")
             self._online = False
-            # time.sleep(10)
             if self.auto_restart:
                 print("Mineflayer > Restarting...")
                 self.send_to_discord("Updating the bot...")
-                os.system("git pull")
-                asyncio.run(self.restart_bot())
+                self.bot.close()
+                time.sleep(30)
 
             for state, handler, thread in config.event_loop.threads:
                 thread.terminate()
             config.event_loop.threads = []
             config.event_loop.stop()
-
-        async def restart_bot(self):
-            await asyncio.sleep(10)
-            await self.bot.close()
-            
+        
         @On(self.bot, "kicked")
         def kicked(this, reason, loggedIn):
             print(f"Mineflayer > Bot kicked: {reason}")
@@ -80,7 +76,6 @@ class MinecraftBotManager:
                 self.send_to_discord(f"Bot kicked: {reason}")
             else:
                 self.send_to_discord(f"Bot kicked before logging in: {reason}")
-            asyncio.run(self.restart_bot())
             
 
         @On(self.bot, "error")
