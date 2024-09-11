@@ -3,7 +3,6 @@ import sys
 import time
 import logging
 import os
-import threading
 
 from javascript import require, On, config
 
@@ -39,6 +38,10 @@ class MinecraftBotManager:
     def send_to_discord(self, message):
         asyncio.run_coroutine_threadsafe(self.client.send_discord_message(message), self.client.loop)
 
+    async def reconnect(self):
+        await asyncio.sleep(3)
+        await self.bot.close()
+
     def oncommands(self):
         message_buffer = []
 
@@ -59,13 +62,16 @@ class MinecraftBotManager:
             self.client.dispatch("minecraft_disconnected")
             self._online = False
             if self.auto_restart:
-                print("Mineflayer > Restarting...")
-                self.send_to_discord("Updating the bot...")
-                # # delete current bot
-                # self.client.mineflayer_bot.disconnect()
-                # # Use createbot function to make the bot again
-                # bot = MinecraftBotManager.createbot(self.client)
-                time.sleep(30)
+                time.sleep(120)
+                if self.auto_restart:
+                    print("Mineflayer > Restarting...")
+                    # new_bot = self.createbot(self.client)
+                    # self.client.mineflayer_bot = new_bot
+                    # return
+                    self.send_to_discord("Updating the bot...")
+                    os.system("git pull")
+                    
+                    asyncio.run(self.reconnect(self))
 
             for state, handler, thread in config.event_loop.threads:
                 thread.terminate()
@@ -186,10 +192,4 @@ class MinecraftBotManager:
         client.mineflayer_bot = botcls
         botcls.oncommands()
         print("Mineflayer > Events registered")
-
-        def restart_bot():
-            print("Mineflayer > Bot disconnected, attempting to restart...")
-            client.mineflayer_bot = cls.createbot(client)
-
-        bot.on('end', lambda reason: threading.Timer(restart_bot, 5000))
         return botcls
