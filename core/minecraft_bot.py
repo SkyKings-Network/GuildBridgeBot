@@ -57,13 +57,12 @@ class MinecraftBotManager:
             self.send_to_discord("Bot Offline")
             self.client.dispatch("minecraft_disconnected")
             self._online = False
+            time.sleep(10)
             if self.auto_restart:
-                time.sleep(120)
-                if self.auto_restart:
-                    print("Mineflayer > Restarting...")
-                    self.send_to_discord("Updating the bot...")
-                    self.bot.close()
-                    time.sleep(30)
+                print("Mineflayer > Restarting...")
+                self.send_to_discord("Updating the bot...")
+                self.bot.close()
+                
 
             for state, handler, thread in config.event_loop.threads:
                 thread.terminate()
