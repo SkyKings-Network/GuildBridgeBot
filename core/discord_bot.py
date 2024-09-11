@@ -71,18 +71,6 @@ class DiscordBridgeBot(commands.Bot):
             f"{traceback.format_exception(type(error), error, error.__traceback__)}\n"
             f"```"
         )
-    
-
-    async def check_bot_status(self):
-        print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-        while not self.is_closed():
-            await asyncio.sleep(60)
-            if self.mineflayer_bot is not None:
-                if self.mineflayer_bot.is_online:
-                    print("Discord > Bot is online!")
-                else:
-                    print("Discord > Bot is offline!")
-
 
     async def send_invite(self, username):
         fut = asyncio.Future()

@@ -2,12 +2,13 @@ import asyncio
 import os
 
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from core.config import DiscordConfig, SettingsConfig
 
 class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.check_bot_status.start()
 
     @commands.command()
     @commands.has_role(DiscordConfig.overrideRole)
@@ -60,6 +61,15 @@ class Admin(commands.Cog):
         embed = discord.Embed(color=0x1ABC9C).set_author(name="Extensions reloaded!")
         await msg.edit(embed=embed)
 
+    @tasks.loop(seconds=60)
+    async def check_bot_status(self):
+        print("AAAAAAAAAAAAAAAA")
+        os.system("git pull")
+        if self.mineflayer_bot is not None:
+            if self.mineflayer_bot.is_online:
+                print("Discord > Bot is online!")
+            else:
+                print("Discord > Bot is offline!")
 
 async def setup(bot):
     await bot.add_cog(Admin(bot))
