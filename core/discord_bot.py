@@ -112,7 +112,6 @@ class DiscordBridgeBot(commands.Bot):
 
     async def on_ready(self):
         print(f"Discord > Bot Running as {self.user}")
-        await self.check_bot_status()
         channel = self.get_channel(DiscordConfig.channel)
         if channel is None:
             print(f"Discord > Channel {DiscordConfig.channel} not found! Please set the correct channel ID!")
