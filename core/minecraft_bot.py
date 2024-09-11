@@ -40,8 +40,7 @@ class MinecraftBotManager:
 
     async def reconnect(self):
         await asyncio.sleep(3)
-        await self.bot.close()
-        await asyncio.sleep(10)
+        asyncio.run_coroutine_threadsafe(self.discord_bot.close(), self.client.loop)
 
     def oncommands(self):
         message_buffer = []
