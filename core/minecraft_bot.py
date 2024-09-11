@@ -3,6 +3,7 @@ import sys
 import time
 import logging
 import os
+import threading
 
 from javascript import require, On, config
 
@@ -60,7 +61,10 @@ class MinecraftBotManager:
             if self.auto_restart:
                 print("Mineflayer > Restarting...")
                 self.send_to_discord("Updating the bot...")
-                self.bot.close()
+                # # delete current bot
+                # self.client.mineflayer_bot.disconnect()
+                # # Use createbot function to make the bot again
+                # bot = MinecraftBotManager.createbot(self.client)
                 time.sleep(30)
 
             for state, handler, thread in config.event_loop.threads:
@@ -182,4 +186,10 @@ class MinecraftBotManager:
         client.mineflayer_bot = botcls
         botcls.oncommands()
         print("Mineflayer > Events registered")
+
+        def restart_bot():
+            print("Mineflayer > Bot disconnected, attempting to restart...")
+            client.mineflayer_bot = cls.createbot(client)
+
+        bot.on('end', lambda reason: threading.Timer(restart_bot, 5000))
         return botcls
