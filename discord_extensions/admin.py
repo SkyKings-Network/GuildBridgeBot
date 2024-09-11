@@ -63,13 +63,17 @@ class Admin(commands.Cog):
 
     @tasks.loop(seconds=60)
     async def check_bot_status(self):
-        print("AAAAAAAAAAAAAAAA")
-        os.system("git pull")
-        if self.mineflayer_bot is not None:
-            if self.mineflayer_bot.is_online:
-                print("Discord > Bot is online!")
-            else:
-                print("Discord > Bot is offline!")
+        try:
+            print("AAAAAAAAAAAAAAAA")
+            print(self.mineflayer_bot)
+            if self.mineflayer_bot is not None:
+                print("no")
+                if self.mineflayer_bot.is_online:
+                    print("Discord > Bot is online!")
+                else:
+                    print("Discord > Bot is offline!")
+        except Exception as e:
+            print(e)
 
 async def setup(bot):
     await bot.add_cog(Admin(bot))
