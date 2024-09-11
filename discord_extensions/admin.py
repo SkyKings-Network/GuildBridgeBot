@@ -73,6 +73,8 @@ class Admin(commands.Cog):
                     print("Discord > Bot is online!")
                 else:
                     print("Discord > Bot is offline!")
+                    await self.bot.close()
+                    await asyncio.sleep(10)
         except Exception as e:
             print(e)
 
