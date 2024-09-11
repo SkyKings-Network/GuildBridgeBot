@@ -68,6 +68,7 @@ class Admin(commands.Cog):
             print(self.bot.mineflayer_bot)
             if self.bot.mineflayer_bot is not None:
                 print("no")
+                print(self.bot.mineflayer_bot.is_online)
                 if self.bot.mineflayer_bot.is_online:
                     print("Discord > Bot is online!")
                 else:
