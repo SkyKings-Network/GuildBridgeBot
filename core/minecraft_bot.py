@@ -62,16 +62,14 @@ class MinecraftBotManager:
             self.client.dispatch("minecraft_disconnected")
             self._online = False
             if self.auto_restart:
-                time.sleep(120)
-                if self.auto_restart:
-                    print("Mineflayer > Restarting...")
-                    # new_bot = self.createbot(self.client)
-                    # self.client.mineflayer_bot = new_bot
-                    # return
-                    self.send_to_discord("Updating the bot...")
-                    os.system("git pull")
-                    
-                    asyncio.run(self.reconnect(self))
+                print("Mineflayer > Restarting...")
+                # new_bot = self.createbot(self.client)
+                # self.client.mineflayer_bot = new_bot
+                # return
+                self.send_to_discord("Updating the bot...")
+                os.system("git pull")
+                
+                asyncio.run(self.reconnect(self))
 
             for state, handler, thread in config.event_loop.threads:
                 thread.terminate()
