@@ -72,7 +72,9 @@ class DiscordBridgeBot(commands.Bot):
             f"```"
         )
     
+
     async def check_bot_status(self):
+        print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
         while not self.is_closed():
             await asyncio.sleep(60)
             if self.mineflayer_bot is not None:
@@ -80,6 +82,7 @@ class DiscordBridgeBot(commands.Bot):
                     print("Discord > Bot is online!")
                 else:
                     print("Discord > Bot is offline!")
+
 
     async def send_invite(self, username):
         fut = asyncio.Future()
@@ -109,6 +112,7 @@ class DiscordBridgeBot(commands.Bot):
 
     async def on_ready(self):
         print(f"Discord > Bot Running as {self.user}")
+        await self.check_bot_status()
         channel = self.get_channel(DiscordConfig.channel)
         if channel is None:
             print(f"Discord > Channel {DiscordConfig.channel} not found! Please set the correct channel ID!")
