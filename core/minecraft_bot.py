@@ -80,6 +80,7 @@ class MinecraftBotManager:
                 self.send_to_discord(f"Bot kicked: {reason}")
             else:
                 self.send_to_discord(f"Bot kicked before logging in: {reason}")
+            asyncio.run(self.restart_bot())
             
 
         @On(self.bot, "error")
