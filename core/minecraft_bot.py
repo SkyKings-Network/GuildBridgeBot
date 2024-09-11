@@ -70,7 +70,7 @@ class MinecraftBotManager:
                 self.send_to_discord("Updating the bot...")
                 os.system("git pull")
                 
-                asyncio.run(self.reconnect(self))
+                asyncio.run(self.reconnect())
 
             for state, handler, thread in config.event_loop.threads:
                 thread.terminate()
