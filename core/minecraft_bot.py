@@ -52,7 +52,7 @@ class MinecraftBotManager:
             self.client.dispatch("minecraft_ready")
 
         @On(self.bot, "end")
-        def end(this, reason):
+        async def end(this, reason):
             print(f"Mineflayer > Bot offline: {reason}")
             self.send_to_discord("Bot Offline")
             self.client.dispatch("minecraft_disconnected")
@@ -61,8 +61,9 @@ class MinecraftBotManager:
             if self.auto_restart:
                 print("Mineflayer > Restarting...")
                 self.send_to_discord("Updating the bot...")
-                self.bot.close()
-                
+                os.system("git pull")
+                await asyncio.sleep(10)
+                await self.bot.close()
 
             for state, handler, thread in config.event_loop.threads:
                 thread.terminate()
