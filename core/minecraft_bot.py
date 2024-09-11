@@ -19,6 +19,9 @@ class MinecraftBotManager:
         self.message_buffer = []
         self.auto_restart = True
         self._online = False
+    
+    def is_online(self):
+        return self._online
 
     async def chat(self, message):
         await self.client.loop.run_in_executor(None, self.bot.chat, message)
