@@ -528,7 +528,7 @@ class DiscordBridgeBot(commands.Bot):
                     or ("You sent an offline invite to" in message)
             ):
                 message = message.split()
-                if "You sent an offline invite to" in message:
+                if message[2] == "an" and message[3] == "offline":
                     if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
                         playername = message[7]
                     else:
