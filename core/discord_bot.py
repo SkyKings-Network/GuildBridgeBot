@@ -22,7 +22,7 @@ mention_regex = re.compile(r"<@!?(\d+)>")
 role_mention_regex = re.compile(r"<@&(\d+)>")
 channel_mention_regex = re.compile(r"<#(\d+)>")
 slash_mention_regex = re.compile(r"</([\w\- ]+):\d+>")
-link_regex = re.compile(r"https?://.+\..+/\S*")
+link_regex = re.compile(r"https?://.+\..+/?\S*")
 
 
 def emoji_repl(match):
