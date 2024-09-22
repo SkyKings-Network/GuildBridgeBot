@@ -22,6 +22,7 @@ mention_regex = re.compile(r"<@!?(\d+)>")
 role_mention_regex = re.compile(r"<@&(\d+)>")
 channel_mention_regex = re.compile(r"<#(\d+)>")
 slash_mention_regex = re.compile(r"</([\w\- ]+):\d+>")
+link_regex = re.compile(r"https?://.+\..+/\S*")
 
 
 def emoji_repl(match):
@@ -286,6 +287,8 @@ class DiscordBridgeBot(commands.Bot):
                 content = content.replace(f"<#{mention}>", f"#{channel.name}")
             else:
                 content = content.replace(f"<#{mention}>", f"#unknown-channel")
+        # filter links
+        content = link_regex.sub("<link>", content)
         if message.reference:
             if message.reference.cached_message:
                 reply = message.reference.cached_message
