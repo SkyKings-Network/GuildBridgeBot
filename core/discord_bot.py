@@ -299,10 +299,13 @@ class DiscordBridgeBot(commands.Bot):
                 if reply.author != self.user:
                     reply_to = "@" + reply.author.name
                 else:
-                    try:
-                        reply_to = reply.embeds[0].author.name
-                    except AttributeError:
-                        reply_to = None
+                    reply_to = None
+                    # if there is no content it was a system message
+                    if reply.embeds[0].description.strip() != "":
+                        try:
+                            reply_to = reply.embeds[0].author.name
+                        except AttributeError:  # still wasn't a valid user message
+                            pass
                 if reply_to:
                     username += f" replied to {reply_to}"
         if officer:
