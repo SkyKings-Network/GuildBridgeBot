@@ -301,7 +301,7 @@ class DiscordBridgeBot(commands.Bot):
                 else:
                     reply_to = None
                     # if there is no content it was a system message
-                    if reply.embeds[0].description.strip() != "":
+                    if reply.embeds[0].description:
                         try:
                             reply_to = reply.embeds[0].author.name
                         except AttributeError:  # still wasn't a valid user message
