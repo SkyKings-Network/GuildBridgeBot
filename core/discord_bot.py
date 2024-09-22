@@ -289,6 +289,13 @@ class DiscordBridgeBot(commands.Bot):
         if message.reference:
             if message.reference.cached_message:
                 reply = message.reference.cached_message
+            else:
+                reply = None
+                try:
+                    reply = await message.channel.fetch_message(message.reference.message_id)
+                except discord.HTTPException:
+                    pass
+            if reply:
                 if reply.author != self.bot.user:
                     reply_to = "@" + reply.author.name
                 else:
