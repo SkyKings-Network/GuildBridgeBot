@@ -133,6 +133,7 @@ class MinecraftBotManager:
                         self.send_minecraft_message(None, message, "invite")
                     elif " is already in another guild!" in message or \
                             ("You invited" in message and "to your guild. They have 5 minutes to accept." in message) or \
+                            "You sent an offline invite to " in message or \
                             " joined the guild!" in message or \
                             " left the guild!" in message or \
                             " was promoted from " in message or \
