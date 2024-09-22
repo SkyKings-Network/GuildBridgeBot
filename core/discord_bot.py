@@ -296,7 +296,7 @@ class DiscordBridgeBot(commands.Bot):
                 except discord.HTTPException:
                     pass
             if reply:
-                if reply.author != self.bot.user:
+                if reply.author != self.user:
                     reply_to = "@" + reply.author.name
                 else:
                     try:
