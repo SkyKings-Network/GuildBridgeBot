@@ -232,6 +232,17 @@ class DiscordBridgeBot(commands.Bot):
 
     async def send_minecraft_user_message(self, username, message: discord.Message, *, officer: bool = False):
         content = message.content
+        if content.strip() == "":
+            # Send number of attachments if no message content
+            if message.attachments:
+                count = len(message.attachments)
+                await self.mineflayer_bot.chat(f"{username} attached {'a' if count == 1 else count} file{'s' if count > 1 else ''}")
+            else:
+                try:
+                    await message.add_reaction("❌")
+                except discord.HTTPException:
+                    pass
+            return
         # replace emojis
         content = emoji_regex.sub(emoji_repl, content)
         # replace member mentions
@@ -275,12 +286,18 @@ class DiscordBridgeBot(commands.Bot):
                 content = content.replace(f"<#{mention}>", f"#{channel.name}")
             else:
                 content = content.replace(f"<#{mention}>", f"#unknown-channel")
-        if content.strip() == "":
-            try:
-                await message.add_reaction("❌")
-            except discord.HTTPException:
-                pass
-            return
+        if message.reference:
+            if message.reference.cached_message:
+                reply = message.reference.cached_message
+                if reply.author != self.bot.user:
+                    reply_to = "@" + reply.author.name
+                else:
+                    try:
+                        reply_to = reply.embeds[0].author.name
+                    except AttributeError:
+                        reply_to = None
+                if reply_to:
+                    username += f" replied to {reply_to}"
         if officer:
             content = f"/oc {username}: {content}"
         else:
