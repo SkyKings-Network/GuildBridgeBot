@@ -236,7 +236,7 @@ class DiscordBridgeBot(commands.Bot):
             # Send number of attachments if no message content
             if message.attachments:
                 count = len(message.attachments)
-                await self.mineflayer_bot.chat(f"{username} attached {'a' if count == 1 else count} file{'s' if count > 1 else ''}")
+                await self.mineflayer_bot.chat(f"/gc {username} attached {'a' if count == 1 else count} file{'s' if count > 1 else ''}")
             else:
                 try:
                     await message.add_reaction("❌")
