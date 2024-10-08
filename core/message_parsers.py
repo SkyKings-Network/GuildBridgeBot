@@ -198,8 +198,8 @@ class GuildMessageParser:
         if embed_description == "NaN":
             return []
 
-        embeds = []
         pages = self._split_into_pages(embed_description)
+        embeds = []
 
         for i, page in enumerate(pages, 1):
             embed = discord.Embed(
@@ -218,20 +218,31 @@ class GuildMessageParser:
         current_section = ""
 
         for line in lines:
-            if line.startswith('# ') or line.startswith('## '):  # New main section or role
+            if line.startswith('# '):  # Main header
                 if current_page:
                     pages.append(current_page.strip())
-                    current_page = ""
-                current_section = line + '\n'
-            elif len(current_page) + len(current_section) + len(line) + 1 > MAX_EMBED_DESCRIPTION_LENGTH:
-                if current_page:
+                current_page = line + '\n'
+                current_section = line
+            elif line.startswith('## '):  # Subheader (role)
+                if len(current_page) + len(line) > self.MAX_EMBED_DESCRIPTION_LENGTH:
                     pages.append(current_page.strip())
-                current_page = current_section + line + '\n'
-                current_section = ""
-            else:
-                current_page += line + '\n'
+                    current_page = current_section + '\n' + line + '\n'
+                else:
+                    current_page += line + '\n'
+            else:  # Regular content
+                if len(current_page) + len(line) + 1 > self.MAX_EMBED_DESCRIPTION_LENGTH:
+                    pages.append(current_page.strip())
+                    current_page = current_section + '\n' + line + '\n'
+                else:
+                    current_page += line + '\n'
 
         if current_page:
             pages.append(current_page.strip())
+
+        stats = "\n".join(lines[-2:])  
+        if len(pages[-1]) + len(stats) + 2 <= self.MAX_EMBED_DESCRIPTION_LENGTH:
+            pages[-1] += '\n\n' + stats
+        else:
+            pages.append(stats)
 
         return pages
