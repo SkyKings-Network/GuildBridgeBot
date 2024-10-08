@@ -3,6 +3,10 @@ from typing import List, Optional
 from datetime import datetime
 import re
 
+import discord
+
+MAX_EMBED_DESCRIPTION_LENGTH = 4096
+
 class HypixelRank:
     # Using emojis or special characters to represent different ranks
     RANK_FORMATS = {
@@ -188,3 +192,37 @@ class GuildMessageParser:
             )
         
         return "\n".join(description)
+
+    def parse_and_paginate(self) -> List[discord.Embed]:
+        embed_description = self.parse()
+        if embed_description == "NaN":
+            return []
+
+        embeds = []
+        pages = self._split_into_pages(embed_description)
+
+        for i, page in enumerate(pages, 1):
+            embed = discord.Embed(
+                title=f"Guild Stats (Page {i}/{len(pages)})",
+                description=page,
+                colour=0x1ABC9C
+            )
+            embeds.append(embed)
+
+        return embeds
+
+    def _split_into_pages(self, content: str) -> List[str]:
+        pages = []
+        current_page = ""
+
+        for line in content.split('\n'):
+            if len(current_page) + len(line) + 1 > self.MAX_EMBED_DESCRIPTION_LENGTH:
+                pages.append(current_page.strip())
+                current_page = line + '\n'
+            else:
+                current_page += line + '\n'
+
+        if current_page:
+            pages.append(current_page.strip())
+
+        return pages
