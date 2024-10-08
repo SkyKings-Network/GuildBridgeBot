@@ -14,7 +14,7 @@ class Generic(commands.Cog):
             description="``< >`` = Required arguments\n``[ ]`` = Optional arguments",
             colour=0x1ABC9C, timestamp=ctx.message.created_at
         )
-        ember.add_field(
+        embed.add_field(
             name="Command Prefix",
             value=f"Prefix: ``{DiscordConfig.prefix}``"
         )
