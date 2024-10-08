@@ -160,11 +160,6 @@ Note: Some commands may require appropriate permissions in both Discord and the 
 
 3. **Slow Sync Issues:** 
    - For message sync delays, review the server and network speed.
-   - Consider enabling Redis for better synchronization.
-
-4. **Bot Disconnecting Frequently:**
-   - Check the `config.json` file and ensure auto-reconnection settings are enabled.
-   - Use Redis to prevent disconnections.
 
 If you need further assistance, please open an issue on the GitHub repository.
 
