@@ -3,6 +3,8 @@ from typing import List, Optional
 from datetime import datetime
 import re
 
+import discord
+
 class HypixelRank:
     # Using emojis or special characters to represent different ranks
     RANK_FORMATS = {
@@ -49,6 +51,7 @@ class GuildMessageParser:
         self.roles = []
         self.top_entries = []
         self.date = None
+        self.pages = []
         
     def parse(self) -> str:
         # Determine message type and parse accordingly
@@ -147,33 +150,52 @@ class GuildMessageParser:
 
         return self._format_top_embed()
 
-    def _format_list_embed(self) -> str:
-        description = []
-        description.append(f"# {self.guild_name}\n")
-    
+    def _format_list_embed(self) -> List[discord.Embed]:
+        self.pages = []
+        current_page = [f"# {self.guild_name}\n"]
+        member_count = 0
+
         for role in self.roles:
-            # Medium text for roles
-            description.append(f"## **__{role.name}__**")
-            member_texts = []
+            role_content = [f"## **__{role.name}__**"]
             for member in role.members:
                 text = f"**[{member.rank}]** *{member.name}*" if member.rank else f"*{member.name}*"
-                member_texts.append(text)
-            description.append(", ".join(member_texts))
-            description.append("")  # Empty line for spacing
+                role_content.append(text)
+                member_count += 1
 
-        # Stats in medium text
-        description.append("## Guild Statistics")
-        description.append(f"**Total Members:** {self.total_members}")
-        description.append(f"**Online Members:** {self.online_members}")
+                if member_count == 40:
+                    current_page.extend(role_content)
+                    self.pages.append("\n".join(current_page))
+                    current_page = [f"# {self.guild_name}\n"]
+                    role_content = [f"## **__{role.name}__**"]
+                    member_count = 0
 
-        return "\n".join(description)
-    
-    def _format_online_embed(self) -> str:
-        description = self._format_list_embed()
-        return f"{description}\n**Offline Members:** {self.offline_members}"
+            if member_count + len(role_content) > 40:
+                self.pages.append("\n".join(current_page))
+                current_page = [f"# {self.guild_name}\n"]
+                member_count = 0
 
-    def _format_top_embed(self) -> str:
-        # Large text for header
+            current_page.extend(role_content)
+            current_page.append("")  # Empty line for spacing
+
+        if current_page:
+            self.pages.append("\n".join(current_page))
+
+        # Add statistics as a separate page
+        stats_page = [
+            f"# {self.guild_name}",
+            "## Guild Statistics",
+            f"**Total Members:** {self.total_members}",
+            f"**Online Members:** {self.online_members}",
+            f"**Offline Members:** {self.offline_members}"
+        ]
+        self.pages.append("\n".join(stats_page))
+
+        return [discord.Embed(description=page, colour=0x1ABC9C) for page in self.pages]
+
+    def _format_online_embed(self) -> List[discord.Embed]:
+        return self._format_list_embed()
+
+    def _format_top_embed(self) -> discord.Embed:
         description = [f"# Top Guild Experience\n## {self.date.strftime('%m/%d/%Y')} (today)\n"]
 
         for entry in self.top_entries:
@@ -181,10 +203,9 @@ class GuildMessageParser:
             rank_format = HypixelRank.format_rank(member.rank)
             member_text = f"{rank_format} *{member.name}*" if rank_format else f"*{member.name}*"
 
-            # Medium text for entries
             description.append(
                 f"### **{entry.position}.** {member_text}\n" +
                 f"**{entry.experience:,}** Guild Experience"
             )
         
-        return "\n".join(description)
+        return discord.Embed(description="\n".join(description), colour=0x1ABC9C)

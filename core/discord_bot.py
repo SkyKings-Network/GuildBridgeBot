@@ -3,7 +3,7 @@ import os
 import re
 import threading
 import traceback
-from typing import Any, Callable, Coroutine, Union
+from typing import Any, Callable, Coroutine, Union, List
 
 import aiohttp
 import discord
@@ -32,6 +32,36 @@ def emoji_repl(match):
 
 def slash_mention_repl(match):
     return f"/{match.group(1)}"
+
+async def send_paginated_embeds(self, embeds: List[discord.Embed]):
+    if len(embeds) == 1:
+        await self.send_message(embed=embeds[0])
+    else:
+        current_page = 0
+        message = await self.send_message(embed=embeds[0])
+
+        await message.add_reaction("⬅️")
+        await message.add_reaction("➡️")
+
+        def check(reaction, user):
+            return user == self.message.author and str(reaction.emoji) in ["⬅️", "➡️"]
+
+        while True:
+            try:
+                reaction, user = await self.bot.wait_for("reaction_add", timeout=60.0, check=check)
+
+                if str(reaction.emoji) == "➡️" and current_page < len(embeds) - 1:
+                    current_page += 1
+                    await message.edit(embed=embeds[current_page])
+                elif str(reaction.emoji) == "⬅️" and current_page > 0:
+                    current_page -= 1
+                    await message.edit(embed=embeds[current_page])
+
+                await message.remove_reaction(reaction, user)
+
+            except asyncio.TimeoutError:
+                await message.clear_reactions()
+                break
 
 class DiscordBridgeBot(commands.Bot):
     def __init__(self):
@@ -767,15 +797,14 @@ class DiscordBridgeBot(commands.Bot):
                 if message.strip() == "":
                     return
                 parser = GuildMessageParser(message)
-                embed_description = parser.parse()
-                if not embed_description == "NaN":
-                    embed = discord.Embed(
-                        title="Guild Stats",
-                        description=embed_description,
-                        colour=0x1ABC9C
-                    )
-                    await self.send_debug_message("Sending guild command response message")
-                    await self.send_message(embed=embed)
+                result = parser.parse()
+                if result != "NaN":
+                    if isinstance(result, list):
+                        await self.send_debug_message("Sending paginated guild command response")
+                        await send_paginated_embeds(self, result)
+                    else:
+                        await self.send_debug_message("Sending top guild experience response")
+                        await self.send_message(embed=result)
                 else:
                     await self.send_debug_message(f"Normal message: `{ message }`")
                     embed = Embed(colour=0x1ABC9C).set_author(name=message)
