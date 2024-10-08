@@ -216,7 +216,7 @@ class GuildMessageParser:
         current_page = ""
 
         for line in content.split('\n'):
-            if len(current_page) + len(line) + 1 > self.MAX_EMBED_DESCRIPTION_LENGTH:
+            if len(current_page) + len(line) + 1 > MAX_EMBED_DESCRIPTION_LENGTH:
                 pages.append(current_page.strip())
                 current_page = line + '\n'
             else:
