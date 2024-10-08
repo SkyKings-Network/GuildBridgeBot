@@ -33,36 +33,6 @@ def emoji_repl(match):
 def slash_mention_repl(match):
     return f"/{match.group(1)}"
 
-async def send_paginated_embeds(self, embeds: List[discord.Embed]):
-    if len(embeds) == 1:
-        await self.send_message(embed=embeds[0])
-    else:
-        current_page = 0
-        message = await self.send_message(embed=embeds[0])
-
-        await message.add_reaction("⬅️")
-        await message.add_reaction("➡️")
-
-        def check(reaction, user):
-            return user == self.message.author and str(reaction.emoji) in ["⬅️", "➡️"]
-
-        while True:
-            try:
-                reaction, user = await self.bot.wait_for("reaction_add", timeout=60.0, check=check)
-
-                if str(reaction.emoji) == "➡️" and current_page < len(embeds) - 1:
-                    current_page += 1
-                    await message.edit(embed=embeds[current_page])
-                elif str(reaction.emoji) == "⬅️" and current_page > 0:
-                    current_page -= 1
-                    await message.edit(embed=embeds[current_page])
-
-                await message.remove_reaction(reaction, user)
-
-            except asyncio.TimeoutError:
-                await message.clear_reactions()
-                break
-
 class DiscordBridgeBot(commands.Bot):
     def __init__(self):
         super().__init__(
@@ -93,6 +63,36 @@ class DiscordBridgeBot(commands.Bot):
             f"{traceback.format_exc()}\n"
             f"```"
         )
+    
+    async def send_paginated_embeds(self, embeds: List[discord.Embed]):
+        if len(embeds) == 1:
+            await self.send_message(embed=embeds[0])
+        else:
+            current_page = 0
+            message = await self.send_message(embed=embeds[0])
+
+            await message.add_reaction("⬅️")
+            await message.add_reaction("➡️")
+
+            def check(reaction, user):
+                return user == self.message.author and str(reaction.emoji) in ["⬅️", "➡️"]
+
+            while True:
+                try:
+                    reaction, user = await self.bot.wait_for("reaction_add", timeout=60.0, check=check)
+
+                    if str(reaction.emoji) == "➡️" and current_page < len(embeds) - 1:
+                        current_page += 1
+                        await message.edit(embed=embeds[current_page])
+                    elif str(reaction.emoji) == "⬅️" and current_page > 0:
+                        current_page -= 1
+                        await message.edit(embed=embeds[current_page])
+
+                    await message.remove_reaction(reaction, user)
+
+                except asyncio.TimeoutError:
+                    await message.clear_reactions()
+                    break
 
     async def on_command_error(self, ctx, error) -> None:
         error = getattr(error, "original", error)
@@ -801,7 +801,7 @@ class DiscordBridgeBot(commands.Bot):
                 if result != "NaN":
                     if isinstance(result, list):
                         await self.send_debug_message("Sending paginated guild command response")
-                        await send_paginated_embeds(self, result)
+                        await self.send_paginated_embeds(self, result)
                     else:
                         await self.send_debug_message("Sending top guild experience response")
                         await self.send_message(embed=result)
