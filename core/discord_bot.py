@@ -336,6 +336,7 @@ class DiscordBridgeBot(commands.Bot):
     # hypixel_guild_message_send_failed
     async def send_discord_message(self, message):
         try:
+            message = message.strip()
             if "Unknown command" in message:
                 self.dispatch("minecraft_pong")
             if message.startswith("Guild >"):
