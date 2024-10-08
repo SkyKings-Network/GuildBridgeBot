@@ -770,7 +770,7 @@ class DiscordBridgeBot(commands.Bot):
                 embed_description = parser.parse()
                 if not embed_description == "NaN":
                     embed = discord.Embed(
-                        title=parser.guild_name if parser.guild_name else "Guild Stats",
+                        title="Guild Stats",
                         description=embed_description,
                         colour=0x1ABC9C
                     )

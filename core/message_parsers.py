@@ -4,25 +4,23 @@ from datetime import datetime
 import re
 
 class HypixelRank:
-    # Colors match official Hypixel rank colors
-    COLORS = {
-        'VIP': 0x55FF55,      # Light green
-        'VIP+': 0x55FF55,     # Light green
-        'MVP': 0x55FFFF,      # Aqua
-        'MVP+': 0x55FFFF,     # Aqua
-        'MVP++': 0xFFAA00,    # Gold
-        'ADMIN': 0xFF5555,    # Red
-        'HELPER': 0x5555FF,   # Blue
-        'MODERATOR': 0x00AA00 # Dark green
+    # Using emojis or special characters to represent different ranks
+    RANK_FORMATS = {
+        'VIP': '🟢',      # Green circle for VIP
+        'VIP+': '🟢⭐',    # Green circle with star for VIP+
+        'MVP': '🔷',      # Blue diamond for MVP
+        'MVP+': '🔷⭐',    # Blue diamond with star for MVP+
+        'MVP++': '🟡⭐',   # Gold circle with star for MVP++
+        'ADMIN': '🔴',    # Red circle for ADMIN
+        'HELPER': '💙',   # Blue heart for HELPER
+        'MODERATOR': '💚' # Green heart for MODERATOR
     }
 
     @staticmethod
-    def get_color(rank: str) -> str:
+    def format_rank(rank: str) -> str:
         rank = rank.upper() if rank else ''
-        if rank in HypixelRank.COLORS:
-            # Convert hex color to Discord color format
-            return f'#{HypixelRank.COLORS[rank]:06x}'
-        return None
+        emoji = HypixelRank.RANK_FORMATS.get(rank, '')
+        return f'{emoji}**[{rank}]**' if rank else ''
 
 @dataclass
 class GuildMember:
@@ -158,12 +156,8 @@ class GuildMessageParser:
             description.append(f"## **__{role.name}__**")
             member_texts = []
             for member in role.members:
-                rank_color = HypixelRank.get_color(member.rank) if member.rank else None
-                if rank_color and member.rank:
-                    # Color the rank, italic name
-                    text = f"<font color='{rank_color}'>**[{member.rank}]**</font> *{member.name}*"
-                else:
-                    text = f"*{member.name}*"
+                rank_format = HypixelRank.format_rank(member.rank)
+                text = f"{rank_format} *{member.name}*" if rank_format else f"*{member.name}*"
                 member_texts.append(text)
             description.append(", ".join(member_texts))
             description.append("")  # Empty line for spacing
@@ -185,13 +179,8 @@ class GuildMessageParser:
 
         for entry in self.top_entries:
             member = entry.member
-            rank_color = HypixelRank.get_color(member.rank) if member.rank else None
-
-            if rank_color and member.rank:
-                # Color the rank, italic name
-                member_text = f"<font color='{rank_color}'>**[{member.rank}]**</font> *{member.name}*"
-            else:
-                member_text = f"*{member.name}*"
+            rank_format = HypixelRank.format_rank(member.rank)
+            member_text = f"{rank_format} *{member.name}*" if rank_format else f"*{member.name}*"
 
             # Medium text for entries
             description.append(
