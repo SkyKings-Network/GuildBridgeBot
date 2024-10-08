@@ -240,7 +240,7 @@ class GuildMessageParser:
             pages.append(current_page.strip())
 
         stats = "\n".join(lines[-2:])  
-        if len(pages[-1]) + len(stats) + 2 <= self.MAX_EMBED_DESCRIPTION_LENGTH:
+        if len(pages[-1]) + len(stats) + 2 <= MAX_EMBED_DESCRIPTION_LENGTH:
             pages[-1] += '\n\n' + stats
         else:
             pages.append(stats)
