@@ -3,8 +3,6 @@ from typing import List, Optional
 from datetime import datetime
 import re
 
-import discord
-
 class HypixelRank:
     # Using emojis or special characters to represent different ranks
     RANK_FORMATS = {
@@ -154,6 +152,7 @@ class GuildMessageParser:
         description.append(f"# {self.guild_name}\n")
     
         for role in self.roles:
+            # Medium text for roles
             description.append(f"## **__{role.name}__**")
             member_texts = []
             for member in role.members:
@@ -162,6 +161,7 @@ class GuildMessageParser:
             description.append(", ".join(member_texts))
             description.append("")  # Empty line for spacing
 
+        # Stats in medium text
         description.append("## Guild Statistics")
         description.append(f"**Total Members:** {self.total_members}")
         description.append(f"**Online Members:** {self.online_members}")
@@ -173,6 +173,7 @@ class GuildMessageParser:
         return f"{description}\n**Offline Members:** {self.offline_members}"
 
     def _format_top_embed(self) -> str:
+        # Large text for header
         description = [f"# Top Guild Experience\n## {self.date.strftime('%m/%d/%Y')} (today)\n"]
 
         for entry in self.top_entries:
@@ -180,63 +181,10 @@ class GuildMessageParser:
             rank_format = HypixelRank.format_rank(member.rank)
             member_text = f"{rank_format} *{member.name}*" if rank_format else f"*{member.name}*"
 
+            # Medium text for entries
             description.append(
                 f"### **{entry.position}.** {member_text}\n" +
                 f"**{entry.experience:,}** Guild Experience"
             )
         
         return "\n".join(description)
-
-    def parse_and_paginate(self) -> List[discord.Embed]:
-        embed_description = self.parse()
-        if embed_description == "NaN":
-            return []
-
-        pages = self._split_into_pages(embed_description)
-        embeds = []
-
-        for i, page in enumerate(pages, 1):
-            embed = discord.Embed(
-                title=f"Guild Stats (Page {i}/{len(pages)})",
-                description=page,
-                colour=0x1ABC9C
-            )
-            embeds.append(embed)
-
-        return embeds
-
-    def _split_into_pages(self, content: str) -> List[str]:
-        MAX_PAGE_LENGTH = 4000
-        pages = []
-        current_page = ""
-        lines = content.split('\n')
-        
-        for line in lines:
-            if len(current_page) + len(line) + 1 > MAX_PAGE_LENGTH:
-                if current_page:
-                    pages.append(current_page.strip())
-                current_page = ""
-            
-            if line.startswith('# '):  # Main title
-                if current_page:
-                    pages.append(current_page.strip())
-                current_page = line + '\n'
-            elif line.startswith('## '):  # Section title
-                if current_page and not current_page.endswith('\n\n'):
-                    current_page += '\n'
-                current_page += line + '\n'
-            else:
-                current_page += line + '\n'
-        
-        if current_page:
-            pages.append(current_page.strip())
-        
-        # Ensure guild statistics are on the last page
-        if "Guild Statistics" in pages[-1]:
-            stats = pages[-1].split("## Guild Statistics")
-            if len(stats) > 1:
-                if len(stats[0].strip()) > 0:
-                    pages[-1] = stats[0].strip()
-                    pages.append("## Guild Statistics" + stats[1])
-        
-        return pages

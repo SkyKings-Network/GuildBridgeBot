@@ -769,10 +769,13 @@ class DiscordBridgeBot(commands.Bot):
                 parser = GuildMessageParser(message)
                 embed_description = parser.parse()
                 if not embed_description == "NaN":
-                    embeds = parser.parse_and_paginate()
-                    await self.send_debug_message("Sending guild command response message(s)")
-                    for embed in embeds:
-                        await self.send_message(embed=embed)
+                    embed = discord.Embed(
+                        title="Guild Stats",
+                        description=embed_description,
+                        colour=0x1ABC9C
+                    )
+                    await self.send_debug_message("Sending guild command response message")
+                    await self.send_message(embed=embed)
                 else:
                     await self.send_debug_message(f"Normal message: `{ message }`")
                     embed = Embed(colour=0x1ABC9C).set_author(name=message)
