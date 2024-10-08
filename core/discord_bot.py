@@ -763,26 +763,13 @@ class DiscordBridgeBot(commands.Bot):
                 )
                 await self.debug_webhook.send("bot-guild-muted")
                 await self.send_message(embed=embed)
-            
-            # command responses
-            elif "Guild Experience" in message or "Total Members:" in message:
-                print("check1")
-                parser = GuildMessageParser(message)
-                embed_description = parser.parse()
-                embed = discord.Embed(
-                    title=parser.guild_name if parser.guild_name else "Guild Stats",
-                    description=embed_description,
-                    colour=0x1ABC9C
-                )
-                await self.send_debug_message("Sending guild command response message")
-                await self.send_message(embed=embed)
     
-            # Everything else is sent as a normal message
             else:
                 if message.strip() == "":
                     return
                 parser = GuildMessageParser(message)
                 embed_description = parser.parse()
+                print(embed_description)
                 if not embed_description == "NaN":
                     embed = discord.Embed(
                         title=parser.guild_name if parser.guild_name else "Guild Stats",
