@@ -51,7 +51,6 @@ class GuildMessageParser:
         self.roles = []
         self.top_entries = []
         self.date = None
-        self.pages = []
         
     def parse(self) -> str:
         # Determine message type and parse accordingly
@@ -151,61 +150,62 @@ class GuildMessageParser:
         return self._format_top_embed()
 
     def _format_list_embed(self) -> List[discord.Embed]:
-        self.pages = []
-        current_page = [f"# {self.guild_name}\n"]
-        member_count = 0
+        embeds = []
+        current_embed = None
+        current_field = ""
+        current_field_name = ""
+        page_number = 1
 
         for role in self.roles:
-            role_content = [f"## **__{role.name}__**"]
-            for member in role.members:
-                text = f"**[{member.rank}]** *{member.name}*" if member.rank else f"*{member.name}*"
-                role_content.append(text)
-                member_count += 1
+            member_texts = [f"{HypixelRank.format_rank(m.rank)}{m.name}" for m in role.members]
+            role_text = f"**__{role.name}__**\n{', '.join(member_texts)}\n\n"
+            
+            if len(current_field) + len(role_text) > 1024 or not current_embed:
+                if current_embed:
+                    current_embed.add_field(name=current_field_name, value=current_field, inline=False)
+                    embeds.append(current_embed)
+                    page_number += 1
 
-                if member_count == 40:
-                    current_page.extend(role_content)
-                    self.pages.append("\n".join(current_page))
-                    current_page = [f"# {self.guild_name}\n"]
-                    role_content = [f"## **__{role.name}__**"]
-                    member_count = 0
+                current_embed = discord.Embed(title=f"{self.guild_name}", colour=0x1ABC9C)
+                current_field = role_text
+                current_field_name = "Members"
+            else:
+                current_field += role_text
 
-            if member_count + len(role_content) > 40:
-                self.pages.append("\n".join(current_page))
-                current_page = [f"# {self.guild_name}\n"]
-                member_count = 0
+        if current_field:
+            current_embed.add_field(name=current_field_name, value=current_field, inline=False)
 
-            current_page.extend(role_content)
-            current_page.append("")  # Empty line for spacing
-
-        if current_page:
-            self.pages.append("\n".join(current_page))
-
-        # Add statistics as a separate page
-        stats_page = [
-            f"# {self.guild_name}",
-            "## Guild Statistics",
-            f"**Total Members:** {self.total_members}",
-            f"**Online Members:** {self.online_members}",
+        # Add statistics to the last embed
+        stats_field = (
+            f"**Total Members:** {self.total_members}\n"
+            f"**Online Members:** {self.online_members}\n"
             f"**Offline Members:** {self.offline_members}"
-        ]
-        self.pages.append("\n".join(stats_page))
+        )
+        current_embed.add_field(name="Guild Statistics", value=stats_field, inline=False)
+        
+        embeds.append(current_embed)
 
-        return [discord.Embed(description=page, colour=0x1ABC9C) for page in self.pages]
+        # Update titles with page numbers
+        total_pages = len(embeds)
+        for i, embed in enumerate(embeds, 1):
+            embed.title = f"{self.guild_name} - Page {i}/{total_pages}"
+
+        return embeds
 
     def _format_online_embed(self) -> List[discord.Embed]:
         return self._format_list_embed()
 
-    def _format_top_embed(self) -> discord.Embed:
-        description = [f"# Top Guild Experience\n## {self.date.strftime('%m/%d/%Y')} (today)\n"]
-
+    def _format_top_embed(self) -> List[discord.Embed]:
+        embed = discord.Embed(title=f"Top Guild Experience - {self.date.strftime('%m/%d/%Y')} (today)", colour=0x1ABC9C)
+        
         for entry in self.top_entries:
             member = entry.member
             rank_format = HypixelRank.format_rank(member.rank)
-            member_text = f"{rank_format} *{member.name}*" if rank_format else f"*{member.name}*"
-
-            description.append(
-                f"### **{entry.position}.** {member_text}\n" +
-                f"**{entry.experience:,}** Guild Experience"
+            member_text = f"{rank_format}{member.name}" if rank_format else member.name
+            embed.add_field(
+                name=f"{entry.position}. {member_text}",
+                value=f"**{entry.experience:,}** Guild Experience",
+                inline=False
             )
         
-        return discord.Embed(description="\n".join(description), colour=0x1ABC9C)
+        return [embed]
