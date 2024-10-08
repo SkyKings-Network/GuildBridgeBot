@@ -765,6 +765,7 @@ class DiscordBridgeBot(commands.Bot):
             
             # command responses
             elif "Top Guild Experience" in message or "Total Members:" in message:
+                print("check1")
                 parser = GuildMessageParser(message)
                 embed_description = parser.parse()
                 embed = discord.Embed(
@@ -772,7 +773,7 @@ class DiscordBridgeBot(commands.Bot):
                     description=embed_description,
                     colour=0x1ABC9C
                 )
-                await self.send_debug_message("Sending top guild exp message")
+                await self.send_debug_message("Sending guild command response message")
                 await self.send_message(embed=embed)
     
             # Everything else is sent as a normal message

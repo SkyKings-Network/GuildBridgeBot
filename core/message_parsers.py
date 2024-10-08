@@ -34,21 +34,27 @@ class GuildMessageParser:
     def parse(self) -> str:
         # Determine message type and parse accordingly
         if "Top Guild Experience" in self.raw_message:
+            print("check2")
             return self._parse_top_message()
         elif "Total Members:" in self.raw_message:
             if "Offline Members:" in self.raw_message:
                 return self._parse_online_message()
             else:
                 return self._parse_list_message()
+            
+    def _clean_rank(self, rank: str) -> str:
+        rank = rank.strip('[]').strip()
+        rank = rank.rstrip(']')
+        return rank
 
     def _extract_member_info(self, member_text: str) -> GuildMember:
         # Remove the bullet point
         member_text = member_text.replace('●', '').strip()
         
         # Extract rank if present
-        rank_match = re.match(r'\[(MVP\+?+?|VIP\+?)\]\s+', member_text)
+        rank_match = re.match(r'\[(MVP\+?|VIP\+?)\]\s+', member_text)
         if rank_match:
-            rank = rank_match.group(0).strip('[]')
+            rank = self._clean_rank(rank_match.group(0))
             name = member_text[rank_match.end():].strip()
             return GuildMember(name=name, rank=rank)
         return GuildMember(name=member_text)
@@ -102,11 +108,7 @@ class GuildMessageParser:
     def _parse_top_message(self) -> str:
         lines = self.raw_message.split('\n')
         
-        # Extract date
-        date_line = lines[0]
-        date_match = re.search(r'\d{2}/\d{2}/\d{4}', date_line)
-        if date_match:
-            self.date = datetime.strptime(date_match.group(), '%m/%d/%Y')
+        self.date = datetime.now().date()
 
         # Parse top entries
         for line in lines[1:]:  # Skip header
@@ -128,7 +130,7 @@ class GuildMessageParser:
     def _format_list_embed(self) -> str:
         description = []
         for role in self.roles:
-            description.append(f"**{role.name}**")
+            description.append(f"** {role.name} **")
             member_texts = []
             for member in role.members:
                 text = f"[{member.rank}] {member.name}" if member.rank else member.name
@@ -156,3 +158,23 @@ class GuildMessageParser:
             )
             
         return "\n".join(description).replace("*", "\\*")
+
+
+d = """-----------------------------------------------------
+                           Top Guild Experience                            10/08/2024 (today)
+1. [VIP] HilFing_Real 37,219 Guild Experience
+2. [MVP] Novas_cookies 31,508 Guild Experience
+3. [MVP+] HamManGaming 16,274 Guild Experience
+4. [MVP+] gorillabones 14,035 Guild Experience
+5. [MVP+] spockie777 8,312 Guild Experience
+6. Justinious_Wang 5,755 Guild Experience
+7. [VIP] Lagerhaus 5,222 Guild Experience
+8. [MVP+] Q7DA 4,977 Guild Experience
+9. [MVP+] zozodeking 4,878 Guild Experience
+10. [VIP] VanishingPlayer 3,576 Guild Experience
+-----------------------------------------------------
+"""
+
+parser = GuildMessageParser(d)
+embed_description = parser.parse()
+print(embed_description)
