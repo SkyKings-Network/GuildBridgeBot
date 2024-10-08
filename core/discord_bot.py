@@ -13,7 +13,7 @@ from discord.ext import commands
 from core.config import DiscordConfig, RedisConfig
 from core.minecraft_bot import MinecraftBotManager
 from core.redis_handler import RedisManager
-from message_parsers import GuildMessageParser
+from core.message_parsers import GuildMessageParser
 
 regex = re.compile(r"Guild > ([\[\]+ a-zA-Z0-9_]+): (.+)")
 regex_officer = re.compile(r"Officer > ([\[\]+ a-zA-Z0-9_]+): (.+)")
