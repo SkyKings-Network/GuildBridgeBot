@@ -75,11 +75,11 @@ class DiscordBridgeBot(commands.Bot):
             await message.add_reaction("➡️")
 
             def check(reaction, user):
-                return user == self.message.author and str(reaction.emoji) in ["⬅️", "➡️"]
+                return user != self.user and str(reaction.emoji) in ["⬅️", "➡️"]
 
             while True:
                 try:
-                    reaction, user = await self.bot.wait_for("reaction_add", timeout=60.0, check=check)
+                    reaction, user = await self.wait_for("reaction_add", timeout=60.0, check=check)
 
                     if str(reaction.emoji) == "➡️" and current_page < len(embeds) - 1:
                         current_page += 1
@@ -801,7 +801,7 @@ class DiscordBridgeBot(commands.Bot):
                 if result != "NaN":
                     if isinstance(result, list):
                         await self.send_debug_message("Sending paginated guild command response")
-                        await self.send_paginated_embeds(self, result)
+                        await self.send_paginated_embeds(result)
                     else:
                         await self.send_debug_message("Sending top guild experience response")
                         await self.send_message(embed=result)
