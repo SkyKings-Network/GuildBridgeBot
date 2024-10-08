@@ -34,7 +34,6 @@ class GuildMessageParser:
     def parse(self) -> str:
         # Determine message type and parse accordingly
         if "Top Guild Experience" in self.raw_message:
-            print("check2")
             return self._parse_top_message()
         elif "Total Members:" in self.raw_message:
             if "Offline Members:" in self.raw_message:
@@ -132,31 +131,31 @@ class GuildMessageParser:
     def _format_list_embed(self) -> str:
         description = []
         for role in self.roles:
-            description.append(f"** {role.name} **")
+            description.append(f"**__{role.name}__**")  # Bold and underline for roles
             member_texts = []
             for member in role.members:
-                text = f"[{member.rank}] {member.name}" if member.rank else member.name
+                text = f"[{member.rank}] *{member.name}*" if member.rank else f"*{member.name}*"  # Italicize member names, show rank
                 member_texts.append(text)
             description.append(", ".join(member_texts))
             description.append("")  # Empty line for spacing
         
-        description.append(f"Total Members: {self.total_members}")
-        description.append(f"Online Members: {self.online_members}")
+        description.append(f"**Total Members:** {self.total_members}")
+        description.append(f"**Online Members:** {self.online_members}")
         
-        return "\n".join(description).replace("*", "\\*")
+        return "\n".join(description).replace("*", "\\*")  # Escaping asterisks for special characters
 
     def _format_online_embed(self) -> str:
         description = self._format_list_embed()
-        return f"{description}\nOffline Members: {self.offline_members}"
+        return f"{description}\n**Offline Members:** {self.offline_members}"
 
     def _format_top_embed(self) -> str:
-        description = [f"Top Guild Experience - {self.date.strftime('%m/%d/%Y')} (today)\n"]
+        description = [f"**Top Guild Experience - {self.date.strftime('%m/%d/%Y')} (today)**\n"]
         
         for entry in self.top_entries:
             member = entry.member
-            member_text = f"[{member.rank}] {member.name}" if member.rank else member.name
+            member_text = f"[{member.rank}] *{member.name}*" if member.rank else f"*{member.name}*"
             description.append(
-                f"{entry.position}. {member_text} - {entry.experience:,} Guild Experience"
+                f"**{entry.position}. {member_text} - {entry.experience:,} Guild Experience**"
             )
             
         return "\n".join(description).replace("*", "\\*")

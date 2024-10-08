@@ -336,7 +336,6 @@ class DiscordBridgeBot(commands.Bot):
     # hypixel_guild_message_send_failed
     async def send_discord_message(self, message):
         try:
-            await self.send_debug_message(message)
             if "Unknown command" in message:
                 self.dispatch("minecraft_pong")
             if message.startswith("Guild >"):
@@ -769,7 +768,6 @@ class DiscordBridgeBot(commands.Bot):
                     return
                 parser = GuildMessageParser(message)
                 embed_description = parser.parse()
-                print(embed_description)
                 if not embed_description == "NaN":
                     embed = discord.Embed(
                         title=parser.guild_name if parser.guild_name else "Guild Stats",
