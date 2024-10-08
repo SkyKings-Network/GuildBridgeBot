@@ -14,6 +14,10 @@ class Generic(commands.Cog):
             description="``< >`` = Required arguments\n``[ ]`` = Optional arguments",
             colour=0x1ABC9C, timestamp=ctx.message.created_at
         )
+        ember.add_field(
+            name="Command Prefix",
+            value=f"Prefix: ``{DiscordConfig.prefix}``"
+        )
         embed.add_field(
             name="Discord Commands",
             value=f"``{DiscordConfig.prefix}invite <username>``: Invites the user to the guild\n"
@@ -23,6 +27,7 @@ class Generic(commands.Cog):
                   f"``{DiscordConfig.prefix}kick <username> [reason]``: Kicks the given user\n"
                   f"``{DiscordConfig.prefix}notifications``: Toggles join / leave notifications\n"
                   f"``{DiscordConfig.prefix}online``: Shows the online members\n"
+                  f"``{DiscordConfig.prefix}list``: Shows the list of members\n"
                   f"``{DiscordConfig.prefix}override <command>``: Forces the bot to use a given command\n"
                   f"``{DiscordConfig.prefix}toggleaccept``: Toggles auto accepting members joining the guild\n"
                   f"``{DiscordConfig.prefix}mute <username> <time>`` - Mutes the user for a specific time\n"
