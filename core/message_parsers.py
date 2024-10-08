@@ -3,6 +3,27 @@ from typing import List, Optional
 from datetime import datetime
 import re
 
+class HypixelRank:
+    # Colors match official Hypixel rank colors
+    COLORS = {
+        'VIP': 0x55FF55,      # Light green
+        'VIP+': 0x55FF55,     # Light green
+        'MVP': 0x55FFFF,      # Aqua
+        'MVP+': 0x55FFFF,     # Aqua
+        'MVP++': 0xFFAA00,    # Gold
+        'ADMIN': 0xFF5555,    # Red
+        'HELPER': 0x5555FF,   # Blue
+        'MODERATOR': 0x00AA00 # Dark green
+    }
+
+    @staticmethod
+    def get_color(rank: str) -> str:
+        rank = rank.upper() if rank else ''
+        if rank in HypixelRank.COLORS:
+            # Convert hex color to Discord color format
+            return f'#{HypixelRank.COLORS[rank]:06x}'
+        return None
+
 @dataclass
 class GuildMember:
     name: str
@@ -130,53 +151,52 @@ class GuildMessageParser:
 
     def _format_list_embed(self) -> str:
         description = []
+        description.append(f"# {self.guild_name}\n")
+    
         for role in self.roles:
-            description.append(f"**__{role.name}__**")  # Bold and underline for roles
+            # Medium text for roles
+            description.append(f"## **__{role.name}__**")
             member_texts = []
             for member in role.members:
-                # Bold rank, italic name
-                text = f"**[{member.rank}]** *{member.name}*" if member.rank else f"*{member.name}*"
+                rank_color = HypixelRank.get_color(member.rank) if member.rank else None
+                if rank_color and member.rank:
+                    # Color the rank, italic name
+                    text = f"<font color='{rank_color}'>**[{member.rank}]**</font> *{member.name}*"
+                else:
+                    text = f"*{member.name}*"
                 member_texts.append(text)
             description.append(", ".join(member_texts))
             description.append("")  # Empty line for spacing
-    
+
+        # Stats in medium text
+        description.append("## Guild Statistics")
         description.append(f"**Total Members:** {self.total_members}")
         description.append(f"**Online Members:** {self.online_members}")
-    
-        return "\n".join(description)
 
+        return "\n".join(description)
+    
     def _format_online_embed(self) -> str:
         description = self._format_list_embed()
         return f"{description}\n**Offline Members:** {self.offline_members}"
 
     def _format_top_embed(self) -> str:
-        description = [f"**Top Guild Experience - {self.date.strftime('%m/%d/%Y')} (today)**\n"]
-    
+        # Large text for header
+        description = [f"# Top Guild Experience\n## {self.date.strftime('%m/%d/%Y')} (today)\n"]
+
         for entry in self.top_entries:
             member = entry.member
-            # Bold rank, italic name
-            member_text = f"**[{member.rank}]** *{member.name}*" if member.rank else f"*{member.name}*"
+            rank_color = HypixelRank.get_color(member.rank) if member.rank else None
+
+            if rank_color and member.rank:
+                # Color the rank, italic name
+                member_text = f"<font color='{rank_color}'>**[{member.rank}]**</font> *{member.name}*"
+            else:
+                member_text = f"*{member.name}*"
+
+            # Medium text for entries
             description.append(
-                f"**{entry.position}.** {member_text} - **{entry.experience:,}** Guild Experience"
+                f"### **{entry.position}.** {member_text}\n" +
+                f"**{entry.experience:,}** Guild Experience"
             )
         
         return "\n".join(description)
-
-d = """-----------------------------------------------------
-                           Top Guild Experience                            10/08/2024 (today)
-1. [VIP] HilFing_Real 37,219 Guild Experience
-2. [MVP] Novas_cookies 31,508 Guild Experience
-3. [MVP+] HamManGaming 16,274 Guild Experience
-4. [MVP+] gorillabones 14,035 Guild Experience
-5. [MVP+] spockie777 8,312 Guild Experience
-6. Justinious_Wang 5,755 Guild Experience
-7. [VIP] Lagerhaus 5,222 Guild Experience
-8. [MVP+] Q7DA 4,977 Guild Experience
-9. [MVP+] zozodeking 4,878 Guild Experience
-10. [VIP] VanishingPlayer 3,576 Guild Experience
------------------------------------------------------
-"""
-
-parser = GuildMessageParser(d)
-embed_description = parser.parse()
-print(embed_description)
