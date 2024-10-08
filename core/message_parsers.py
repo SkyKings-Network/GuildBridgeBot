@@ -213,12 +213,21 @@ class GuildMessageParser:
 
     def _split_into_pages(self, content: str) -> List[str]:
         pages = []
+        lines = content.split('\n')
         current_page = ""
+        current_section = ""
 
-        for line in content.split('\n'):
-            if len(current_page) + len(line) + 1 > MAX_EMBED_DESCRIPTION_LENGTH:
-                pages.append(current_page.strip())
-                current_page = line + '\n'
+        for line in lines:
+            if line.startswith('# ') or line.startswith('## '):  # New main section or role
+                if current_page:
+                    pages.append(current_page.strip())
+                    current_page = ""
+                current_section = line + '\n'
+            elif len(current_page) + len(current_section) + len(line) + 1 > MAX_EMBED_DESCRIPTION_LENGTH:
+                if current_page:
+                    pages.append(current_page.strip())
+                current_page = current_section + line + '\n'
+                current_section = ""
             else:
                 current_page += line + '\n'
 
