@@ -126,7 +126,7 @@ class GuildMessageParser:
                 member.experience = experience
                 self.top_entries.append(TopEntry(member, experience, position))
 
-        return self._format_top_embed().replace("_", "\\_").replace("*", "\\*")
+        return self._format_top_embed()
 
     def _format_list_embed(self) -> str:
         description = []
@@ -134,15 +134,16 @@ class GuildMessageParser:
             description.append(f"**__{role.name}__**")  # Bold and underline for roles
             member_texts = []
             for member in role.members:
-                text = f"[{member.rank}] *{member.name}*" if member.rank else f"*{member.name}*"  # Italicize member names, show rank
+                # Bold rank, italic name
+                text = f"**[{member.rank}]** *{member.name}*" if member.rank else f"*{member.name}*"
                 member_texts.append(text)
             description.append(", ".join(member_texts))
             description.append("")  # Empty line for spacing
-        
+    
         description.append(f"**Total Members:** {self.total_members}")
         description.append(f"**Online Members:** {self.online_members}")
-        
-        return "\n".join(description).replace("*", "\\*")  # Escaping asterisks for special characters
+    
+        return "\n".join(description)
 
     def _format_online_embed(self) -> str:
         description = self._format_list_embed()
@@ -150,16 +151,16 @@ class GuildMessageParser:
 
     def _format_top_embed(self) -> str:
         description = [f"**Top Guild Experience - {self.date.strftime('%m/%d/%Y')} (today)**\n"]
-        
+    
         for entry in self.top_entries:
             member = entry.member
-            member_text = f"[{member.rank}] *{member.name}*" if member.rank else f"*{member.name}*"
+            # Bold rank, italic name
+            member_text = f"**[{member.rank}]** *{member.name}*" if member.rank else f"*{member.name}*"
             description.append(
-                f"**{entry.position}. {member_text} - {entry.experience:,} Guild Experience**"
+                f"**{entry.position}.** {member_text} - **{entry.experience:,}** Guild Experience"
             )
-            
-        return "\n".join(description).replace("*", "\\*")
-
+        
+        return "\n".join(description)
 
 d = """-----------------------------------------------------
                            Top Guild Experience                            10/08/2024 (today)
