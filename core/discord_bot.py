@@ -13,6 +13,7 @@ from discord.ext import commands
 from core.config import DiscordConfig, RedisConfig
 from core.minecraft_bot import MinecraftBotManager
 from core.redis_handler import RedisManager
+from message_parsers import GuildMessageParser
 
 regex = re.compile(r"Guild > ([\[\]+ a-zA-Z0-9_]+): (.+)")
 regex_officer = re.compile(r"Officer > ([\[\]+ a-zA-Z0-9_]+): (.+)")
@@ -31,7 +32,6 @@ def emoji_repl(match):
 
 def slash_mention_repl(match):
     return f"/{match.group(1)}"
-
 
 class DiscordBridgeBot(commands.Bot):
     def __init__(self):
@@ -762,20 +762,17 @@ class DiscordBridgeBot(commands.Bot):
                 )
                 await self.debug_webhook.send("bot-guild-muted")
                 await self.send_message(embed=embed)
-    
-            # /g list command response
-            elif "Total Members:" in message:
-                message = re.split("--", message)
-                embed = ""
-                length = len(message)
-                for i in range(length):
-                    if i == 0:
-                        pass
-                    elif i % 2 == 0:
-                        ii = i - 1
-                        embed += "**" + message[ii] + "** " + message[i]
-                embed = Embed(description=embed.replace("_", "\\_"), colour=0x1ABC9C)
-                await self.send_debug_message("Sending player list message")
+            
+            # command responses
+            elif "Top Guild Experience" in message or "Total Members:" in message:
+                parser = GuildMessageParser(message)
+                embed_description = parser.parse()
+                embed = discord.Embed(
+                    title=parser.guild_name if parser.guild_name else "Guild Stats",
+                    description=embed_description,
+                    colour=0x1ABC9C
+                )
+                await self.send_debug_message("Sending top guild exp message")
                 await self.send_message(embed=embed)
     
             # Everything else is sent as a normal message

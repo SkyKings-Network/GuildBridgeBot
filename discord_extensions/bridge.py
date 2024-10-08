@@ -113,6 +113,10 @@ class Bridge(commands.Cog):
     async def _list(self, ctx):
         await self.bot.mineflayer_bot.chat("/g list")
 
+    @commands.command()
+    @commands.cooldown(1, 5, commands.BucketType.channel)
+    async def top(self, ctx):
+        await self.bot.mineflayer_bot.chat("/g top")
 
 async def setup(bot):
     await bot.add_cog(Bridge(bot))
