@@ -156,8 +156,7 @@ class GuildMessageParser:
             description.append(f"## **__{role.name}__**")
             member_texts = []
             for member in role.members:
-                rank_format = HypixelRank.format_rank(member.rank)
-                text = f"{rank_format} *{member.name}*" if rank_format else f"*{member.name}*"
+                text = f"**[{member.rank}]** *{member.name}*" if member.rank else f"*{member.name}*"
                 member_texts.append(text)
             description.append(", ".join(member_texts))
             description.append("")  # Empty line for spacing
