@@ -765,7 +765,7 @@ class DiscordBridgeBot(commands.Bot):
                 await self.send_message(embed=embed)
             
             # command responses
-            elif "Top Guild Experience" in message or "Total Members:" in message:
+            elif "Guild Experience" in message or "Total Members:" in message:
                 print("check1")
                 parser = GuildMessageParser(message)
                 embed_description = parser.parse()
