@@ -126,7 +126,7 @@ class GuildMessageParser:
                 member.experience = experience
                 self.top_entries.append(TopEntry(member, experience, position))
 
-        return self._format_top_embed()
+        return self._format_top_embed().replace("_", "\\_").replace("*", "\\*")
 
     def _format_list_embed(self) -> str:
         description = []
