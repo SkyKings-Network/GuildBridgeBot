@@ -781,8 +781,19 @@ class DiscordBridgeBot(commands.Bot):
             else:
                 if message.strip() == "":
                     return
-                await self.send_debug_message(f"Normal message: `{ message }`")
-                embed = Embed(colour=0x1ABC9C).set_author(name=message)
-                await self.send_message(embed=embed)
+                parser = GuildMessageParser(message)
+                embed_description = parser.parse()
+                if not embed_description == "NaN":
+                    embed = discord.Embed(
+                        title=parser.guild_name if parser.guild_name else "Guild Stats",
+                        description=embed_description,
+                        colour=0x1ABC9C
+                    )
+                    await self.send_debug_message("Sending guild command response message")
+                    await self.send_message(embed=embed)
+                else:
+                    await self.send_debug_message(f"Normal message: `{ message }`")
+                    embed = Embed(colour=0x1ABC9C).set_author(name=message)
+                    await self.send_message(embed=embed)
         except Exception as e:
             await self.on_error("minecraft_message", message, e)

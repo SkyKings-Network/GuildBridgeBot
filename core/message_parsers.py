@@ -41,6 +41,8 @@ class GuildMessageParser:
                 return self._parse_online_message()
             else:
                 return self._parse_list_message()
+        else:
+            return "NaN"
             
     def _clean_rank(self, rank: str) -> str:
         rank = rank.strip('[]').strip()
