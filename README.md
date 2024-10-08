@@ -1,6 +1,9 @@
 # GuildBridgeBot
 
-GuildBridgeBot is a powerful tool that bridges communication between Hypixel's Minecraft guilds and Discord, enabling seamless interaction between guild members and Discord users. This bot ensures real-time relay of all guild messages, notifications, and events, facilitating better communication and management.
+Guild Bridge Bot is a powerful tool that bridges communication between Hypixel's Minecraft guilds and Discord, 
+enabling seamless interaction between guild members and Discord users. 
+This bot ensures real-time relay of all guild messages, notifications, 
+and events, facilitating better communication and management.
 
 ## Table of Contents
 - [Features](#features)
@@ -43,7 +46,7 @@ GuildBridgeBot is a powerful tool that bridges communication between Hypixel's M
 
 ### Initial Setup
 
-Follow these instructions to set up the bot on a Linux/Ubuntu machine:
+Follow these instructions to copy the repository to a new server.
 
 1. **Install Node.js:**
     ```bash
