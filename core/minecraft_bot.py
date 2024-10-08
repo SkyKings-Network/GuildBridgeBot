@@ -125,7 +125,8 @@ class MinecraftBotManager:
                         message_buffer.clear()
                     if self.wait_response is True:
                         message_buffer.append(message)
-
+                    if "Top Guild Experience" in message:
+                        self.send_to_discord(message)
                     if "Unknown command" in message:
                         self.send_to_discord(message)
                     if "Click here to accept or type /guild accept " in message:
