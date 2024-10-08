@@ -31,8 +31,10 @@ GuildBridgeBot is a powerful tool that bridges communication between Hypixel's M
 ## Requirements
 
 - Python 3.10+
-- Discord.py library
-- Mineflayer (Node.js Minecraft client)
+    - discord.py
+    - javascript
+- node.js 
+    - mineflayer
 - Redis (optional, for additional features)
 
 ---
