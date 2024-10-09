@@ -116,7 +116,7 @@ class Bridge(commands.Cog):
     @commands.command()
     @commands.cooldown(1, 5, commands.BucketType.channel)
     async def top(self, ctx, date_int = 0):
-        if date_int <= 30:
+        if date_int <= 30 and date_int >= 0:
             await self.bot.mineflayer_bot.chat(f"/g top {date_int}")
         else:
             embed = discord.Embed(
