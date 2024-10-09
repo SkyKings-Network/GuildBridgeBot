@@ -170,7 +170,7 @@ class GuildMessageParser:
             role_description += ", ".join(member_texts) + "\n\n"
             
             # Check if adding this role would exceed the limit
-            if len(current_description) + len(role_description) > 4000:
+            if len(current_description) + len(role_description) > 3000:
                 embeds.append(discord.Embed(description=current_description.strip(), colour=0x1ABC9C))
                 current_description = f"# {self.guild_name} (Continued)\n\n" + role_description
                 page_number += 1
@@ -185,12 +185,9 @@ class GuildMessageParser:
             f"**Offline Members:** {self.offline_members}\n"
         )
 
-        if len(current_description) + len(stats_description) > 4000:
-            embeds.append(discord.Embed(description=current_description.strip(), colour=0x1ABC9C))
-            current_description = f"# {self.guild_name} (Statistics)\n\n" + stats_description
-            page_number += 1
-        else:
-            current_description += stats_description
+        embeds.append(discord.Embed(description=current_description.strip(), colour=0x1ABC9C))
+        current_description = f"# {self.guild_name} (Statistics)\n\n" + stats_description
+        page_number += 1
 
         embeds.append(discord.Embed(description=current_description.strip(), colour=0x1ABC9C))
 
@@ -213,7 +210,7 @@ class GuildMessageParser:
             rank_format = HypixelRank.format_rank(member.rank)
             member_text = f"{rank_format}{member.name}" if rank_format else member.name
             embed.add_field(
-                name=f"{entry.position}. {member_text}",
+                name=f"##{entry.position}. {member_text}",
                 value=f"**{entry.experience:,}** Guild Experience",
                 inline=False
             )
