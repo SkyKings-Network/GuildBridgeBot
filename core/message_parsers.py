@@ -211,7 +211,7 @@ class GuildMessageParser:
             rank_format = HypixelRank.format_rank(member.rank)
             member_text = f"{rank_format}{member.name}" if rank_format else member.name
             description.append(
-                f"## {entry.position}. {member_text}\n"
+                f"### {entry.position}. {member_text}\n"
                 f"**{entry.experience:,}** Guild Experience\n"
             )
         
