@@ -180,7 +180,7 @@ class DiscordBridgeBot(commands.Bot):
         webhook = self.officer_webhook if is_officer else self.webhook
 
         if webhook and not "username" in kwargs:
-            self.name = DiscordConfig.serverName if DiscordConfig.serverName is not "" else "Bridge Bot"
+            self.name = DiscordConfig.serverName if not DiscordConfig.serverName == "" else "Bridge Bot"
 
         if webhook:
             kwargs["wait"] = True

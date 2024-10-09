@@ -219,7 +219,10 @@ class GuildMessageParser:
         embed = discord.Embed(title=f"Guild Ranking List", colour=0x1ABC9C)
         
         description = []
-        description.append(f"# Top Guild Experience - {self.date.strftime('%m/%d/%Y')} (today)")
+        description.append(
+                f"#### {entry.position}. {member_text}\n"
+                f"**{entry.experience:,}** Guild Experience"
+            )
         for entry in self.top_entries:
             member = entry.member
             rank_format = HypixelRank.format_rank(member.rank)
@@ -235,37 +238,47 @@ class GuildMessageParser:
         # Reverse data to show oldest to newest
         dates, exp_values = zip(*reversed(exp_data))
         
-        # Create figure with transparent background
-        plt.style.use('default')
-        fig, ax = plt.subplots(figsize=(10, 5))
-        fig.patch.set_alpha(0)
-        ax.patch.set_alpha(0)
+        # Create figure with dark background
+        plt.style.use('dark_background')
+        fig, ax = plt.subplots(figsize=(12, 6))
         
         # Convert experience values to integers and plot
         exp_values = [int(str(val).replace(',', '').split()[0]) for val in exp_values]
-        ax.plot(range(len(dates)), exp_values, 'o-', color='#5865F2', linewidth=2, markersize=8)
+        ax.plot(range(len(dates)), exp_values, 'o-', color='#00FFFF', linewidth=3, markersize=8)
         
-        # Add grid with low opacity
-        ax.grid(True, linestyle='--', alpha=0.3, color='#888888')
+        # Fill area under the line
+        ax.fill_between(range(len(dates)), exp_values, color='#00FFFF', alpha=0.3)
+        
+        # Customize the plot
+        ax.set_facecolor('#1E1E1E')
+        fig.patch.set_facecolor('#1E1E1E')
+        
+        # Add grid with higher opacity
+        ax.grid(True, linestyle='--', alpha=0.4, color='#FFFFFF')
         
         # Format axes
         for spine in ax.spines.values():
-            spine.set_edgecolor('#888888')
+            spine.set_color('#FFFFFF')
         
         # Format ticks
-        plt.xticks(range(len(dates)), dates, rotation=45)
-        ax.tick_params(colors='#4A4A4A')
+        plt.xticks(range(len(dates)), dates, rotation=45, ha='right')
+        ax.tick_params(colors='#FFFFFF', labelsize=10)
         
         # Add labels
-        plt.ylabel('Experience', color='#2E7D32', fontweight='bold')
-        plt.title('Daily Guild Experience Trend', color='#1565C0', fontweight='bold', pad=20)
+        plt.ylabel('Experience', color='#FF00FF', fontweight='bold', fontsize=14)
+        plt.title('Daily Guild Experience Trend', color='#FFFF00', fontweight='bold', fontsize=16, pad=20)
+        
+        # Add value labels on the graph
+        for i, v in enumerate(exp_values):
+            ax.text(i, v, f'{v:,}', color='#FFFFFF', fontweight='bold', 
+                    ha='center', va='bottom', fontsize=8)
         
         # Adjust layout
         plt.tight_layout()
         
-        # Save to bytes buffer with transparent background
+        # Save to bytes buffer
         buf = io.BytesIO()
-        plt.savefig(buf, format='png', dpi=100, bbox_inches='tight', transparent=True)
+        plt.savefig(buf, format='png', dpi=100, bbox_inches='tight')
         buf.seek(0)
         plt.close()
         
