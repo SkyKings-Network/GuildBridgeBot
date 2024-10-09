@@ -353,4 +353,4 @@ class GuildMessageParser:
         embed.set_footer(text="Last Updated")
         embed.timestamp = datetime.utcnow()
         
-        return {"embed": [embed], "file": file}
+        return {"embed": embed, "file": file}
