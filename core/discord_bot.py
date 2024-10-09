@@ -171,7 +171,7 @@ class DiscordBridgeBot(commands.Bot):
         print("Discord > Invite processor has been stopped.")
 
     async def _send_message(self, *args, **kwargs) -> Union[discord.Message, discord.WebhookMessage, None]:
-        self.name = DiscordConfig.serverName | None = None
+        self.name = DiscordConfig.serverName if DiscordConfig.serverName is not None else "Bridge Bot"
         kwargs["allowed_mentions"] = discord.AllowedMentions.none()
         if not args and 'content' not in kwargs and 'embed' not in kwargs:
             print("Discord > Warning: Attempted to send an empty message")
@@ -184,10 +184,7 @@ class DiscordBridgeBot(commands.Bot):
         if webhook:
             kwargs["wait"] = True
             try:
-                if self.name:
-                    return await webhook.send(username = self.name, *args, **kwargs)
-                else:
-                    return await webhook.send(*args, **kwargs)
+                return await webhook.send(username = self.name, *args, **kwargs)
             except Exception as e:
                 print(f"Discord > Failed to send message to {'officer ' if is_officer else ''}webhook: {e}")
                 await self.send_debug_message(traceback.format_exc())
@@ -212,7 +209,7 @@ class DiscordBridgeBot(commands.Bot):
                 return await self.send_message(*args, **kwargs, retry=False)
 
     async def _send_image(self, image_url: str = None, image_file: discord.File = None, *args, **kwargs) -> Union[discord.Message, discord.WebhookMessage, None]:
-        self.name = DiscordConfig.serverName | None = None
+        self.name = DiscordConfig.serverName if DiscordConfig.serverName is not None else "Bridge Bot"
         kwargs["allowed_mentions"] = discord.AllowedMentions.none()
         
         # Ensure we have content or image to send
@@ -229,16 +226,11 @@ class DiscordBridgeBot(commands.Bot):
             kwargs["wait"] = True
             try:
                 if image_file:
-                    if self.name:
-                        return await webhook.send(username = self.name, file=image_file, *args, **kwargs)
-                    else:
-                        return await webhook.send(file=image_file, *args, **kwargs)
+                    return await webhook.send(username = self.name, file=image_file, *args, **kwargs)
                 elif image_url:
                     embed = discord.Embed().set_image(url=image_url)
-                    if self.name:
-                        return await webhook.send(username = self.name, embed=embed, *args, **kwargs)
-                    else:
-                        return await webhook.send(embed=embed, *args, **kwargs)
+                    return await webhook.send(username = self.name, embed=embed, *args, **kwargs)
+
             except Exception as e:
                 print(f"Discord > Failed to send image to {'officer ' if is_officer else ''}webhook: {e}")
                 await self.send_debug_message(traceback.format_exc())
