@@ -219,7 +219,9 @@ class GuildMessageParser:
         embed = discord.Embed(title=f"Guild Ranking List", colour=0x1ABC9C)
         
         description = []
-        description.append(f"# Top Guild Experience - {self.date.strftime('%m/%d/%Y')} (today)")
+        date_check = (self.date == datetime.now().date())
+        print(date_check)
+        description.append(f"# Top Guild Experience - {self.date.strftime('%m/%d/%Y')} ({"today" if date_check else ""})")
         for entry in self.top_entries:
             member = entry.member
             rank_format = HypixelRank.format_rank(member.rank)
