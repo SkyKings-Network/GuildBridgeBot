@@ -28,6 +28,8 @@ class Generic(commands.Cog):
                   f"``{DiscordConfig.prefix}notifications``: Toggles join / leave notifications\n"
                   f"``{DiscordConfig.prefix}online``: Shows the online members\n"
                   f"``{DiscordConfig.prefix}list``: Shows the list of members\n"
+                  f"``{DiscordConfig.prefix}top``: Shows xperience ranking of members for the day\n"
+                  f"``{DiscordConfig.prefix}info``: Shows Guild Information\n"
                   f"``{DiscordConfig.prefix}override <command>``: Forces the bot to use a given command\n"
                   f"``{DiscordConfig.prefix}toggleaccept``: Toggles auto accepting members joining the guild\n"
                   f"``{DiscordConfig.prefix}mute <username> <time>`` - Mutes the user for a specific time\n"

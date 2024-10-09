@@ -143,6 +143,8 @@ Follow these instructions to copy the repository to a new server.
 | `!help` | Display all available commands and bot information |
 | `!online` | Check online guild members |
 | `!list` | Show a list of all guild members |
+| `!top` | Shows xperience ranking of members for the day |
+| `!info` | Shows Guild Information |
 | `!override <command>` | Force the bot to use a given command |
 
 Note: Some commands may require appropriate permissions in both Discord and the Hypixel guild.
