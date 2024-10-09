@@ -309,7 +309,7 @@ class GuildMessageParser:
         
         return guild_data
 
-    async def create_guild_stats_embed(self):
+    def _create_guild_stats_embed(self):
         input_data = self.raw_message
         # Parse the input data
         guild_data = parse_guild_data(input_data)
