@@ -190,6 +190,8 @@ class GuildMessageParser:
         for i, embed in enumerate(embeds, 1):
             embed.title = f"{self.guild_name} - Page {i}/{total_pages}"
 
+        print(embeds)
+
         return embeds
 
     def _format_online_embed(self) -> List[discord.Embed]:
