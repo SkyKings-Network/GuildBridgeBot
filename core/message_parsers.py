@@ -2,6 +2,11 @@ from dataclasses import dataclass
 from typing import List, Optional
 from datetime import datetime
 import re
+import matplotlib.pyplot as plt
+import io
+import pandas as pd
+from tabulate import tabulate
+import numpy as np
 
 import discord
 
@@ -224,14 +229,55 @@ class GuildMessageParser:
         embed.description = "\n".join(description)
         return [embed]
 
+    def create_exp_graph(self, exp_data):
+        # Reverse data to show oldest to newest
+        dates, exp_values = zip(*reversed(exp_data))
+        
+        # Create figure with dark theme
+        plt.style.use('dark_background')
+        fig, ax = plt.subplots(figsize=(10, 5))
+        
+        # Convert experience values to integers and plot
+        exp_values = [int(str(val).replace(',', '').split()[0]) for val in exp_values]
+        ax.plot(range(len(dates)), exp_values, 'o-', color='#5865F2', linewidth=2, markersize=8)
+        
+        # Customize the plot
+        ax.set_facecolor('#2F3136')
+        fig.patch.set_facecolor('#2F3136')
+        
+        # Add grid with low opacity
+        ax.grid(True, linestyle='--', alpha=0.2)
+        
+        # Format axes
+        ax.spines['bottom'].set_color('#FFFFFF')
+        ax.spines['top'].set_color('#FFFFFF')
+        ax.spines['left'].set_color('#FFFFFF')
+        ax.spines['right'].set_color('#FFFFFF')
+        
+        # Format ticks
+        plt.xticks(range(len(dates)), dates, rotation=45)
+        ax.tick_params(colors='white')
+        
+        # Add labels
+        plt.ylabel('Experience', color='white')
+        plt.title('Daily Guild Experience Trend', color='white', pad=20)
+        
+        # Adjust layout
+        plt.tight_layout()
+        
+        # Save to bytes buffer
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+        buf.seek(0)
+        plt.close()
+        
+        return buf
+
     def _parse_guild_data(self, data_string):
-        # Initialize dictionary to store parsed data
         guild_data = {}
         
-        # Split into lines and process each line
         lines = data_string.strip().split('\n')
         
-        # Parse the rest of the data
         for line in lines[1:]:
             line = line.strip()
             if not line:
@@ -255,44 +301,56 @@ class GuildMessageParser:
                     guild_data['level'] = value
                 else:
                     # Parse daily experience entries
-                    if re.match(r'(Today|[A-Za-z]+ \d{2} \d{4}):', line):
-                        date, exp = line.split(':', 1)
+                    if any(x in key for x in ['Today', 'Oct']):
                         if 'daily_exp' not in guild_data:
                             guild_data['daily_exp'] = []
-                        guild_data['daily_exp'].append((date.strip(), exp.strip()))
+                        exp_value = int(value.split()[0].replace(',', ''))
+                        guild_data['daily_exp'].append((key.strip(), exp_value))
         
         return guild_data
 
-    def _create_guild_stats_embed(self):
+    async def create_guild_stats_embed(self):
         input_data = self.raw_message
-        guild_data = self._parse_guild_data(input_data)
+        # Parse the input data
+        guild_data = parse_guild_data(input_data)
         
+        # Format the daily experience data as a table
+        exp_table = []
+        headers = ["Date", "Experience"]
+        for date, exp in reversed(guild_data['daily_exp']):
+            exp_table.append([date, f"{exp:,}"])
+        
+        table = tabulate(exp_table, headers=headers, tablefmt="simple")
+        
+        # Create the main description
+        description = f"""
+    # Guild Stats and Experience History
+
+    ## Guild Information
+    • **Created:** {guild_data.get('created', 'Unknown')}
+    • **Members:** {guild_data.get('members', 'Unknown')}
+    • **Guild Level:** {guild_data.get('level', 'Unknown')}
+    • **Total Experience:** {guild_data.get('total_exp', 'Unknown')} {guild_data.get('rank', '')}
+
+    ## Experience History
+    ```
+    {table}
+    ```
+    """
+        
+        # Create the embed
         embed = discord.Embed(
-            title="Guild Statistics and Experience Report",
-            description="",
-            color=0x2F3136
+            description=description,
+            color=0x5865F2  # Discord blurple color
         )
         
-        # Add basic guild info
-        guild_info = (
-            f"**Created:** {guild_data.get('created', 'Unknown')}\n"
-            f"**Members:** {guild_data.get('members', 'Unknown')}\n"
-            f"**Guild Level:** {guild_data.get('level', 'Unknown')}\n"
-            f"**Total Experience:** {guild_data.get('total_exp', 'Unknown')} {guild_data.get('rank', '')}"
-        )
-        embed.add_field(name="Guild Info", value=guild_info, inline=False)
-        
-        # Add daily experience data
-        if 'daily_exp' in guild_data:
-            exp_data = '\n'.join(f"{date}: {exp}" for date, exp in guild_data['daily_exp'])
-            embed.add_field(
-                name="Daily Guild Experience",
-                value=f"```{exp_data}```",
-                inline=False
-            )
+        # Create and attach the graph
+        graph_buffer = create_exp_graph(guild_data['daily_exp'])
+        file = discord.File(graph_buffer, filename="exp_graph.png")
+        embed.set_image(url="attachment://exp_graph.png")
         
         # Set footer with timestamp
         embed.set_footer(text="Last Updated")
         embed.timestamp = datetime.utcnow()
         
-        return [embed]
+        return {"embed": [embed], "file": file}
