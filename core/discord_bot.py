@@ -171,7 +171,6 @@ class DiscordBridgeBot(commands.Bot):
         print("Discord > Invite processor has been stopped.")
 
     async def _send_message(self, *args, **kwargs) -> Union[discord.Message, discord.WebhookMessage, None]:
-        self.name = DiscordConfig.serverName if DiscordConfig.serverName is not "" else "Bridge Bot"
         kwargs["allowed_mentions"] = discord.AllowedMentions.none()
         if not args and 'content' not in kwargs and 'embed' not in kwargs:
             print("Discord > Warning: Attempted to send an empty message")
@@ -179,7 +178,9 @@ class DiscordBridgeBot(commands.Bot):
 
         is_officer = kwargs.pop("officer", False)
         webhook = self.officer_webhook if is_officer else self.webhook
-        channel_id = DiscordConfig.officerChannel if is_officer else DiscordConfig.channel
+
+        if webhook and not kwargs["username"]:
+            self.name = DiscordConfig.serverName if DiscordConfig.serverName is not "" else "Bridge Bot"
 
         if webhook:
             kwargs["wait"] = True
@@ -189,6 +190,7 @@ class DiscordBridgeBot(commands.Bot):
                 print(f"Discord > Failed to send message to {'officer ' if is_officer else ''}webhook: {e}")
                 await self.send_debug_message(traceback.format_exc())
         else:
+            channel_id = DiscordConfig.officerChannel if is_officer else DiscordConfig.channel
             channel = self.get_channel(channel_id)
             if channel is None:
                 print(f"Discord > Channel {channel_id} not found! Please set the correct channel ID!")
@@ -207,57 +209,6 @@ class DiscordBridgeBot(commands.Bot):
             if retry:
                 self.init_webhooks()
                 return await self.send_message(*args, **kwargs, retry=False)
-
-    async def _send_image(self, image_url: str = None, image_file: discord.File = None, *args, **kwargs) -> Union[discord.Message, discord.WebhookMessage, None]:
-        self.name = DiscordConfig.serverName if DiscordConfig.serverName is not "" else "Bridge Bot"
-        kwargs["allowed_mentions"] = discord.AllowedMentions.none()
-        
-        # Ensure we have content or image to send
-        if not args and 'content' not in kwargs and not image_url and not image_file:
-            print("Discord > Warning: Attempted to send an empty message or image")
-            return None
-
-        is_officer = kwargs.pop("officer", False)
-        webhook = self.officer_webhook if is_officer else self.webhook
-        channel_id = DiscordConfig.officerChannel if is_officer else DiscordConfig.channel
-
-        # Sending through webhook if available
-        if webhook:
-            kwargs["wait"] = True
-            try:
-                if image_file:
-                    return await webhook.send(username = self.name, file=image_file, *args, **kwargs)
-                elif image_url:
-                    embed = discord.Embed().set_image(url=image_url)
-                    return await webhook.send(username = self.name, embed=embed, *args, **kwargs)
-
-            except Exception as e:
-                print(f"Discord > Failed to send image to {'officer ' if is_officer else ''}webhook: {e}")
-                await self.send_debug_message(traceback.format_exc())
-        else:
-            # Sending through channel if webhook not available
-            channel = self.get_channel(channel_id)
-            if channel is None:
-                print(f"Discord > Channel {channel_id} not found! Please set the correct channel ID!")
-                return None
-            try:
-                if image_file:
-                    return await channel.send(file=image_file, *args, **kwargs)
-                elif image_url:
-                    embed = discord.Embed().set_image(url=image_url)
-                    return await channel.send(embed=embed, *args, **kwargs)
-            except Exception as e:
-                print(f"Discord > Failed to send image to {'officer ' if is_officer else ''}channel {channel}: {e}")
-                await self.send_debug_message(traceback.format_exc())
-
-    async def send_image(self, image_url: str = None, image_file: discord.File = None, *args, **kwargs) -> Union[discord.Message, discord.WebhookMessage, None]:
-        retry = kwargs.pop("retry", True)
-        try:
-            return await self._send_image(image_url=image_url, image_file=image_file, *args, **kwargs)
-        except aiohttp.ClientError as e:
-            if retry:
-                self.init_webhooks()
-                return await self.send_image(image_url=image_url, image_file=image_file, *args, **kwargs, retry=False)
                 
     async def send_user_message(
         self, username, message, *, officer: bool = False
@@ -818,8 +769,7 @@ class DiscordBridgeBot(commands.Bot):
                         await self.send_message(embed=embed)
                 elif isinstance(embeds, dict):
                     await self.send_debug_message("Sending guild command response")
-                    await self.send_message(embed=embeds["embed"])
-                    await self.send_image(image_file=embeds["file"])
+                    await self.send_message(embed=embeds["embed"], file=embeds["file"])
                 else:
                     await self.send_debug_message(f"Normal message: `{message}`")
                     embed = discord.Embed(colour=0x1ABC9C).set_author(name=message)

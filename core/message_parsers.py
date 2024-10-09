@@ -59,25 +59,19 @@ class GuildMessageParser:
     def parse(self) -> str:
         # Determine message type and parse accordingly
         if "Top" in self.raw_message:
-            print("Command: Top")
             return self._parse_top_message()
         elif "Total Members:" in self.raw_message:
             if "Offline Members:" in self.raw_message:
-                print("Command: Online")
                 return self._parse_online_message()
             else:
-                print("Command: List")
                 return self._parse_list_message()
         elif "MOTD" in self.raw_message:
-            print("Command: Info")
             return self._create_guild_stats_embed()
         else:
             return None
             
     def _clean_rank(self, rank: str) -> str:
-        rank = rank.strip('[]').strip()
-        rank = rank.rstrip(']')
-        return rank
+        return re.sub(r'[\[\]]', '', rank).strip()
 
     def _extract_member_info(self, member_text: str) -> GuildMember:
         # Remove the bullet point
@@ -343,6 +337,7 @@ class GuildMessageParser:
         file = discord.File(graph_buffer, filename="exp_graph.png")
         
         # Set footer with timestamp
+        embed.set_image(url="attachment://exp_graph.png")
         embed.set_footer(text="Last Updated")
         embed.timestamp = datetime.utcnow()
         
