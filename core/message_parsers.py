@@ -55,13 +55,17 @@ class GuildMessageParser:
     def parse(self) -> str:
         # Determine message type and parse accordingly
         if "Top Guild Experience" in self.raw_message:
+            print("Top")
             return self._parse_top_message()
         elif "Total Members:" in self.raw_message:
             if "Offline Members:" in self.raw_message:
+                print("Online")
                 return self._parse_online_message()
             else:
+                print("List")
                 return self._parse_list_message()
         elif "Created:" in self.raw_message:
+            print("Info")
             return self._create_guild_stats_embed()
         else:
             return "NaN"
