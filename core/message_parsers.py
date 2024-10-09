@@ -231,13 +231,7 @@ class GuildMessageParser:
         embed.description = "\n".join(description)
         return [embed]
 
-    async def _create_exp_graph(self, exp_data):
-        # Wrap the graph creation in an executor
-        return await asyncio.get_event_loop().run_in_executor(
-            self.executor, self._create_exp_graph_sync, exp_data
-        )
-
-    def _create_exp_graph_sync(self, exp_data):
+    def _create_exp_graph(self, exp_data):
         # Reverse data to show oldest to newest
         dates, exp_values = zip(*reversed(exp_data))
         
@@ -338,7 +332,7 @@ class GuildMessageParser:
         )
         
         # Create the graph
-        graph_buffer = await self._create_exp_graph(guild_data['daily_exp'])
+        graph_buffer = self._create_exp_graph(guild_data['daily_exp'])
         file = discord.File(graph_buffer, filename="exp_graph.png")
         
         # Set footer with timestamp
