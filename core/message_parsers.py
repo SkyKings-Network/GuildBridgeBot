@@ -5,7 +5,6 @@ import re
 import matplotlib.pyplot as plt
 import io
 import pandas as pd
-from tabulate import tabulate
 import numpy as np
 
 import discord
@@ -275,41 +274,40 @@ class GuildMessageParser:
 
     def _parse_guild_data(self, data_string):
         guild_data = {}
-        
+    
         lines = data_string.strip().split('\n')
         
-        for line in lines[1:]:
+        # Remove the first line if it's empty or a header
+        if lines and (not lines[0].strip() or ':' not in lines[0]):
+            lines = lines[1:]
+        
+        for line in lines:
             line = line.strip()
             if not line:
                 continue
-                
-            for line in lines:
-                line = line.strip()
-                if not line:
-                    continue
             
-                if ':' in line:
-                    key, value = line.split(':', 1)
-                    key = key.strip()
-                    value = value.strip()
-                    
-                    if key == 'Created':
-                        guild_data['created'] = value
-                    elif key == 'Members':
-                        guild_data['members'] = value
-                    elif key == 'Guild Exp':
-                        exp_rank = value.split()
-                        guild_data['total_exp'] = exp_rank[0]
-                        guild_data['rank'] = exp_rank[1].strip('()')
-                    elif key == 'Guild Level':
-                        guild_data['level'] = value
-                    else:
-                        # Parse daily experience entries
-                        if any(x in key for x in ['Today', 'Oct']):
-                            if 'daily_exp' not in guild_data:
-                                guild_data['daily_exp'] = []
-                            exp_value = int(value.split()[0].replace(',', ''))
-                            guild_data['daily_exp'].append((key.strip(), exp_value))
+            if ':' in line:
+                key, value = line.split(':', 1)
+                key = key.strip()
+                value = value.strip()
+                
+                if key == 'Created':
+                    guild_data['created'] = value
+                elif key == 'Members':
+                    guild_data['members'] = value
+                elif key == 'Guild Exp':
+                    exp_rank = value.split()
+                    guild_data['total_exp'] = exp_rank[0]
+                    guild_data['rank'] = exp_rank[1].strip('()')
+                elif key == 'Guild Level':
+                    guild_data['level'] = value
+                else:
+                    # Parse daily experience entries
+                    if any(x in key for x in ['Today', 'Oct']):
+                        if 'daily_exp' not in guild_data:
+                            guild_data['daily_exp'] = []
+                        exp_value = int(value.split()[0].replace(',', ''))
+                        guild_data['daily_exp'].append((key.strip(), exp_value))
         
         return guild_data
 
@@ -317,14 +315,6 @@ class GuildMessageParser:
         input_data = self.raw_message
         # Parse the input data
         guild_data = self._parse_guild_data(input_data)
-        
-        # Format the daily experience data as a table
-        exp_table = []
-        headers = ["Date", "Experience"]
-        for date, exp in reversed(guild_data['daily_exp']):
-            exp_table.append([date, f"{exp:,}"])
-        
-        table = tabulate(exp_table, headers=headers, tablefmt="simple")
         
         # Create the main description
         description = f"""

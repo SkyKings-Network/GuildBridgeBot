@@ -802,8 +802,7 @@ class DiscordBridgeBot(commands.Bot):
                 )
                 await self.debug_webhook.send("bot-guild-muted")
                 await self.send_message(embed=embed)
-    
-            # Everything else is sent as a normal message
+
             else:
                 if message.strip() == "":
                     return

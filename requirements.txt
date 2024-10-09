@@ -4,4 +4,3 @@ javascript
 requests
 pandas
 matplotlib
-tabulate
