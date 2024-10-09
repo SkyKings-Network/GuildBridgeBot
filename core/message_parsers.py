@@ -312,7 +312,7 @@ class GuildMessageParser:
     def _create_guild_stats_embed(self):
         input_data = self.raw_message
         # Parse the input data
-        guild_data = _parse_guild_data(input_data)
+        guild_data = self._parse_guild_data(input_data)
         
         # Format the daily experience data as a table
         exp_table = []
@@ -345,7 +345,7 @@ class GuildMessageParser:
         )
         
         # Create and attach the graph
-        graph_buffer = _create_exp_graph(guild_data['daily_exp'])
+        graph_buffer = self._create_exp_graph(guild_data['daily_exp'])
         file = discord.File(graph_buffer, filename="exp_graph.png")
         embed.set_image(url="attachment://exp_graph.png")
         
