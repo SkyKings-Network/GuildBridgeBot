@@ -61,6 +61,8 @@ class GuildMessageParser:
                 return self._parse_online_message()
             else:
                 return self._parse_list_message()
+        elif "Created:" in self.raw_message:
+            return self._create_guild_stats_embed()
         else:
             return "NaN"
             
@@ -216,4 +218,80 @@ class GuildMessageParser:
             )
         
         embed.description = "\n".join(description)
+        return [embed]
+
+    def _parse_guild_data(data_string):
+        # Initialize dictionary to store parsed data
+        guild_data = {}
+        
+        # Split into lines and process each line
+        lines = data_string.strip().split('\n')
+        
+        # Parse guild name (first line)
+        guild_data['name'] = lines[0].strip()
+        
+        # Parse the rest of the data
+        for line in lines[1:]:
+            line = line.strip()
+            if not line:
+                continue
+                
+            if ':' in line:
+                key, value = line.split(':', 1)
+                key = key.strip()
+                value = value.strip()
+                
+                if key == 'Created':
+                    guild_data['created'] = value
+                elif key == 'Members':
+                    guild_data['members'] = value
+                elif key == 'Guild Exp':
+                    # Extract experience and rank
+                    exp_rank = value.split()
+                    guild_data['total_exp'] = exp_rank[0]
+                    guild_data['rank'] = exp_rank[1].strip('()')
+                elif key == 'Guild Level':
+                    guild_data['level'] = value
+                else:
+                    # Parse daily experience entries
+                    if re.match(r'(Today|[A-Za-z]+ \d{2} \d{4}):', line):
+                        date, exp = line.split(':', 1)
+                        if 'daily_exp' not in guild_data:
+                            guild_data['daily_exp'] = []
+                        guild_data['daily_exp'].append((date.strip(), exp.strip()))
+        
+        return guild_data
+
+    async def _create_guild_stats_embed(self):
+        input_data = self.raw_message
+        guild_data = self._parse_guild_data(input_data)
+        
+        embed = discord.Embed(
+            title=guild_data['name'],
+            description="Guild Statistics and Experience Report",
+            color=0x2F3136
+        )
+        
+        # Add basic guild info
+        guild_info = (
+            f"**Created:** {guild_data.get('created', 'Unknown')}\n"
+            f"**Members:** {guild_data.get('members', 'Unknown')}\n"
+            f"**Guild Level:** {guild_data.get('level', 'Unknown')}\n"
+            f"**Total Experience:** {guild_data.get('total_exp', 'Unknown')} {guild_data.get('rank', '')}"
+        )
+        embed.add_field(name="Guild Info", value=guild_info, inline=False)
+        
+        # Add daily experience data
+        if 'daily_exp' in guild_data:
+            exp_data = '\n'.join(f"{date}: {exp}" for date, exp in guild_data['daily_exp'])
+            embed.add_field(
+                name="Daily Guild Experience",
+                value=f"```{exp_data}```",
+                inline=False
+            )
+        
+        # Set footer with timestamp
+        embed.set_footer(text="Last Updated")
+        embed.timestamp = datetime.utcnow()
+        
         return [embed]

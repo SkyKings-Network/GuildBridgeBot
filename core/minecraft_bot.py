@@ -116,7 +116,7 @@ class MinecraftBotManager:
                         self.send_to_discord(message)
 
                     # Online Command
-                    if message.startswith("Guild Name: ") or "Top Guild Experience" in message:
+                    if message.startswith("Guild Name: ") or "Guild Experience" in message:
                         message_buffer.clear()
                         self.wait_response = True
                     if message == "-----------------------------------------------------" and self.wait_response:
