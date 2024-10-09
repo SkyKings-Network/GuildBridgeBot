@@ -149,11 +149,13 @@ class GuildMessageParser:
 
         return self._format_top_embed()
 
+    def _format_rank(self, rank: str) -> str:
+        return f"**[{rank}]**" if rank else ""
+
     def _format_list_embed(self) -> List[discord.Embed]:
         embeds = []
         current_description = ""
         page_number = 1
-        total_pages = 1  # We'll update this later
 
         current_description += f"# {self.guild_name}\n\n"
 
@@ -161,14 +163,15 @@ class GuildMessageParser:
             role_description = f"## {role.name}\n"
             member_texts = []
             for m in role.members:
-                rank_format = HypixelRank.format_rank(m.rank)
+                rank_format = self._format_rank(m.rank)
                 member_text = f"{rank_format}{m.name}" if rank_format else m.name
                 member_texts.append(member_text)
             
             role_description += ", ".join(member_texts) + "\n\n"
             
-            if len(current_description) + len(role_description) > 4000:  # Discord's character limit
-                embeds.append(discord.Embed(description=current_description, colour=0x1ABC9C))
+            # Check if adding this role would exceed the limit
+            if len(current_description) + len(role_description) > 4000:
+                embeds.append(discord.Embed(description=current_description.strip(), colour=0x1ABC9C))
                 current_description = f"# {self.guild_name} (Continued)\n\n" + role_description
                 page_number += 1
             else:
@@ -183,13 +186,13 @@ class GuildMessageParser:
         )
 
         if len(current_description) + len(stats_description) > 4000:
-            embeds.append(discord.Embed(description=current_description, colour=0x1ABC9C))
+            embeds.append(discord.Embed(description=current_description.strip(), colour=0x1ABC9C))
             current_description = f"# {self.guild_name} (Statistics)\n\n" + stats_description
             page_number += 1
         else:
             current_description += stats_description
 
-        embeds.append(discord.Embed(description=current_description, colour=0x1ABC9C))
+        embeds.append(discord.Embed(description=current_description.strip(), colour=0x1ABC9C))
 
         # Update titles with page numbers
         total_pages = len(embeds)
@@ -197,6 +200,7 @@ class GuildMessageParser:
             embed.title = f"{self.guild_name} - Page {i}/{total_pages}"
 
         return embeds
+
 
     def _format_online_embed(self) -> List[discord.Embed]:
         return self._format_list_embed()
