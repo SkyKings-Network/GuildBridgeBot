@@ -1,4 +1,6 @@
 import asyncio
+import sys
+import traceback
 
 import discord
 from discord.ext import commands
@@ -127,12 +129,25 @@ class Bridge(commands.Cog):
                 description="Can only go upto 30 days history.",
                 color=discord.Color.red()
             )
-            await ctx.send(embed=embed)
+            await ctx.send(embed=embed, ephemeral=True)
 
     @commands.command()
     @commands.cooldown(1, 5, commands.BucketType.channel)
     async def info(self, ctx):
         await self.bot.mineflayer_bot.chat("/g info")
+
+    @commands.Cog.listener()
+    async def on_command_error(self, ctx, error):
+        if isinstance(error, commands.CommandOnCooldown):
+            embed = discord.Embed(
+                title="Cooldown",
+                description=f"This command is on cooldown. Try again in {error.retry_after:.2f} seconds.",
+                color=discord.Color.red()
+            )
+            await ctx.send(embed=embed, ephemeral=True)
+        else:
+            print(f"Ignoring exception in command {ctx.command}:", file=sys.stderr)
+            traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
 async def setup(bot):
     await bot.add_cog(Bridge(bot))
