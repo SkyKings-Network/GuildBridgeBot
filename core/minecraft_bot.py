@@ -116,8 +116,7 @@ class MinecraftBotManager:
                         self.send_to_discord(message)
 
                     # Online Command
-                    if message.startswith("Guild Name: ") or \
-                    "Top Guild Experience" in message:
+                    if message.startswith("Guild Name: ") or "Top Guild Experience" in message or message.startswith("Created: "):
                         message_buffer.clear()
                         self.wait_response = True
                     if message == "-----------------------------------------------------" and self.wait_response:
@@ -128,25 +127,6 @@ class MinecraftBotManager:
                     if self.wait_response is True:
                         message_buffer.append(message)
 
-                    line = 0
-                    # Online Command
-                    if message.startswith("----------"):
-                        message_buffer.clear()
-                        self.wait_response = True
-                        self.pause = True
-                        line = 0
-                    if message == "-----------------------------------------------------" and self.wait_response and not self.pause:
-                        self.wait_response = False
-                        print(message_buffer)
-                        self.send_to_discord("\n".join(message_buffer))
-                        message_buffer.clear()
-                    if self.wait_response is True:
-                        self.pause = False
-                        line += 1
-                        message_buffer.append(message)
-                    if line == 3 and not "Created at:" in message_buffer:
-                        print("Check failed")
-                        self.wait_response = False
 
                     if "Unknown command" in message:
                         self.send_to_discord(message)

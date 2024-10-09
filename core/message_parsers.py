@@ -64,7 +64,7 @@ class GuildMessageParser:
             else:
                 print("Command: List")
                 return self._parse_list_message()
-        elif "Created:" in self.raw_message:
+        elif "MOTD" in self.raw_message:
             print("Command: Info")
             return self._create_guild_stats_embed()
         else:
