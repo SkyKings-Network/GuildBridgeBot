@@ -219,16 +219,14 @@ class GuildMessageParser:
         embed = discord.Embed(title=f"Guild Ranking List", colour=0x1ABC9C)
         
         description = []
-        description.append(
-                f"#### {entry.position}. {member_text}\n"
-                f"**{entry.experience:,}** Guild Experience"
-            )
+        description.append(f"# Top Guild Experience - {self.date.strftime('%m/%d/%Y')} (today)")
         for entry in self.top_entries:
             member = entry.member
             rank_format = HypixelRank.format_rank(member.rank)
             member_text = f"{rank_format}{member.name}" if rank_format else member.name
             description.append(
-                f"**{entry.position}. {member_text}** ({entry.experience:,} GEXP)"
+                f"### {entry.position}. {member_text}\n"
+                f"**{entry.experience:,}** Guild Experience"
             )
         
         embed.description = "\n".join(description)
