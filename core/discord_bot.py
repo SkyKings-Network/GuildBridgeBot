@@ -774,18 +774,14 @@ class DiscordBridgeBot(commands.Bot):
                 if message.strip() == "":
                     return
                 parser = GuildMessageParser(message)
-                result = parser.parse()
-                if result != "NaN":
-                    if isinstance(result, list):
-                        await self.send_debug_message("Sending paginated guild command response")
-                        for embed in embeds:
-                            await self.send_message(embed=embed)
-                    else:
-                        await self.send_debug_message("Sending top guild experience response")
-                        await self.send_message(embed=result)
+                embeds = parser.parse()
+                if embeds:
+                    await self.send_debug_message("Sending guild command response")
+                    for embed in embeds:
+                        await self.send_message(embed=embed)
                 else:
                     await self.send_debug_message(f"Normal message: `{message}`")
-                    embed = Embed(colour=0x1ABC9C).set_author(name=message)
+                    embed = discord.Embed(colour=0x1ABC9C).set_author(name=message)
                     await self.send_message(embed=embed)
         except Exception as e:
             error_message = f"Error in send_discord_message: {str(e)}\n\n{traceback.format_exc()}"
