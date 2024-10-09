@@ -284,34 +284,32 @@ class GuildMessageParser:
                 continue
                 
             for line in lines:
-        line = line.strip()
-        if not line:
-            continue
+                line = line.strip()
+                if not line:
+                    continue
             
-        if ':' in line:
-            key, value = line.split(':', 1)
-            key = key.strip()
-            value = value.strip()
-            
-            if key == 'Created':
-                guild_data['created'] = value
-            elif key == 'Members':
-                guild_data['members'] = value
-            elif key == 'Guild Exp':
-                exp_rank = value.split()
-                guild_data['total_exp'] = exp_rank[0]
-                guild_data['rank'] = exp_rank[1].strip('()')
-            elif key == 'Guild Level':
-                guild_data['level'] = value
-            else:
-                # Parse daily experience entries
-                if any(x in key for x in ['Today', 'Oct']):
-                    if 'daily_exp' not in guild_data:
-                        guild_data['daily_exp'] = []
-                    exp_value = int(value.split()[0].replace(',', ''))
-                    guild_data['daily_exp'].append((key.strip(), exp_value))
-    
-    return guild_data
+                if ':' in line:
+                    key, value = line.split(':', 1)
+                    key = key.strip()
+                    value = value.strip()
+                    
+                    if key == 'Created':
+                        guild_data['created'] = value
+                    elif key == 'Members':
+                        guild_data['members'] = value
+                    elif key == 'Guild Exp':
+                        exp_rank = value.split()
+                        guild_data['total_exp'] = exp_rank[0]
+                        guild_data['rank'] = exp_rank[1].strip('()')
+                    elif key == 'Guild Level':
+                        guild_data['level'] = value
+                    else:
+                        # Parse daily experience entries
+                        if any(x in key for x in ['Today', 'Oct']):
+                            if 'daily_exp' not in guild_data:
+                                guild_data['daily_exp'] = []
+                            exp_value = int(value.split()[0].replace(',', ''))
+                            guild_data['daily_exp'].append((key.strip(), exp_value))
         
         return guild_data
 
