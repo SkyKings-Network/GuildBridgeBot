@@ -229,7 +229,7 @@ class GuildMessageParser:
         embed.description = "\n".join(description)
         return [embed]
 
-    def create_exp_graph(self, exp_data):
+    def _create_exp_graph(self, exp_data):
         # Reverse data to show oldest to newest
         dates, exp_values = zip(*reversed(exp_data))
         
@@ -312,7 +312,7 @@ class GuildMessageParser:
     def _create_guild_stats_embed(self):
         input_data = self.raw_message
         # Parse the input data
-        guild_data = parse_guild_data(input_data)
+        guild_data = _parse_guild_data(input_data)
         
         # Format the daily experience data as a table
         exp_table = []
@@ -345,7 +345,7 @@ class GuildMessageParser:
         )
         
         # Create and attach the graph
-        graph_buffer = create_exp_graph(guild_data['daily_exp'])
+        graph_buffer = _create_exp_graph(guild_data['daily_exp'])
         file = discord.File(graph_buffer, filename="exp_graph.png")
         embed.set_image(url="attachment://exp_graph.png")
         
