@@ -52,7 +52,7 @@ class DiscordBridgeBot(commands.Bot):
         self.webhook: discord.Webhook | None = None
         self.officer_webhook: discord.Webhook | None = None
         self.debug_webhook: discord.Webhook | None = None
-        self.name = DiscordConfig.serverName | None = None
+        self.name = None
 
     def get_intents(self) -> discord.Intents:
         """Returns a mutable intents class for the bot."""
@@ -171,6 +171,7 @@ class DiscordBridgeBot(commands.Bot):
         print("Discord > Invite processor has been stopped.")
 
     async def _send_message(self, *args, **kwargs) -> Union[discord.Message, discord.WebhookMessage, None]:
+        self.name = DiscordConfig.serverName | None = None
         kwargs["allowed_mentions"] = discord.AllowedMentions.none()
         if not args and 'content' not in kwargs and 'embed' not in kwargs:
             print("Discord > Warning: Attempted to send an empty message")
@@ -211,6 +212,7 @@ class DiscordBridgeBot(commands.Bot):
                 return await self.send_message(*args, **kwargs, retry=False)
 
     async def _send_image(self, image_url: str = None, image_file: discord.File = None, *args, **kwargs) -> Union[discord.Message, discord.WebhookMessage, None]:
+        self.name = DiscordConfig.serverName | None = None
         kwargs["allowed_mentions"] = discord.AllowedMentions.none()
         
         # Ensure we have content or image to send
