@@ -224,7 +224,7 @@ class GuildMessageParser:
         embed.description = "\n".join(description)
         return [embed]
 
-    def _parse_guild_data(data_string):
+    def _parse_guild_data(self, data_string):
         # Initialize dictionary to store parsed data
         guild_data = {}
         
