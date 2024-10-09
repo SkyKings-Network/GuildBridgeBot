@@ -17,7 +17,7 @@
         "webhookURL": "",
         "officerWebhookURL": "",
         "debugWebhookURL": "",
-        "serverName": "Skykings - Test"
+        "serverName": ""
     },
     "redis": {
         "host": "",

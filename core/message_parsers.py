@@ -140,7 +140,14 @@ class GuildMessageParser:
     def _parse_top_message(self) -> str:
         lines = self.raw_message.split('\n')
         
-        self.date = datetime.now().date()
+        date_pattern = r'\b(\d{2}/\d{2}/\d{4})\b'
+        match = re.search(date_pattern, self.raw_message)
+        if match:
+            date_str = match.group(1)
+            date_obj = datetime.strptime(date_str, '%m/%d/%Y')
+            self.date = date_obj.date()
+        else:
+            self.date = "bb"
 
         # Parse top entries
         for line in lines[1:]:  # Skip header
@@ -213,16 +220,17 @@ class GuildMessageParser:
         return self._format_list_embed()
 
     def _format_top_embed(self) -> List[discord.Embed]:
-        embed = discord.Embed(title=f"Top Guild Experience - {self.date.strftime('%m/%d/%Y')} (today)", colour=0x1ABC9C)
+        embed = discord.Embed(title=f"Guild Ranking List", colour=0x1ABC9C)
         
         description = []
+        description.append(f"# Top Guild Experience - {self.date.strftime('%m/%d/%Y')} (today)")
         for entry in self.top_entries:
             member = entry.member
             rank_format = HypixelRank.format_rank(member.rank)
             member_text = f"{rank_format}{member.name}" if rank_format else member.name
             description.append(
                 f"### {entry.position}. {member_text}\n"
-                f"**{entry.experience:,}** Guild Experience\n"
+                f"**{entry.experience:,}** Guild Experience"
             )
         
         embed.description = "\n".join(description)
