@@ -151,45 +151,45 @@ class GuildMessageParser:
 
     def _format_list_embed(self) -> List[discord.Embed]:
         embeds = []
-        current_embed = None
-        current_field = ""
-        current_field_name = ""
+        current_description = ""
         page_number = 1
+        total_pages = 1  # We'll update this later
+
+        current_description += f"# {self.guild_name}\n\n"
 
         for role in self.roles:
-            member_texts = [f"**[{m.rank}]**{m.name}" for m in role.members]
-            role_text = f"**__{role.name}__**\n{', '.join(member_texts)}\n\n"
+            role_description = f"## {role.name}\n"
+            member_texts = []
+            for m in role.members:
+                rank_format = HypixelRank.format_rank(m.rank)
+                member_text = f"{rank_format}{m.name}" if rank_format else m.name
+                member_texts.append(member_text)
             
-            if len(current_field) + len(role_text) > 1000 or not current_embed:  # Changed to 1000 for safety
-                if current_embed:
-                    current_embed.add_field(name=current_field_name, value=current_field, inline=False)
-                    embeds.append(current_embed)
-                    page_number += 1
-
-                current_embed = discord.Embed(title=f"{self.guild_name}", colour=0x1ABC9C)
-                current_field = role_text
-                current_field_name = "Members"
+            role_description += ", ".join(member_texts) + "\n\n"
+            
+            if len(current_description) + len(role_description) > 4000:  # Discord's character limit
+                embeds.append(discord.Embed(description=current_description, colour=0x1ABC9C))
+                current_description = f"# {self.guild_name} (Continued)\n\n" + role_description
+                page_number += 1
             else:
-                current_field += role_text
-
-            # Check if current_field is getting too long and split if necessary
-            if len(current_field) > 1000:
-                current_embed.add_field(name=current_field_name, value=current_field[:1000], inline=False)
-                current_field = current_field[1000:]
-                current_field_name = "Members (Continued)"
-
-        if current_field:
-            current_embed.add_field(name=current_field_name, value=current_field, inline=False)
+                current_description += role_description
 
         # Add statistics to the last embed
-        stats_field = (
+        stats_description = (
+            f"## Guild Statistics\n"
             f"**Total Members:** {self.total_members}\n"
             f"**Online Members:** {self.online_members}\n"
-            f"**Offline Members:** {self.offline_members}"
+            f"**Offline Members:** {self.offline_members}\n"
         )
-        current_embed.add_field(name="Guild Statistics", value=stats_field, inline=False)
-        
-        embeds.append(current_embed)
+
+        if len(current_description) + len(stats_description) > 4000:
+            embeds.append(discord.Embed(description=current_description, colour=0x1ABC9C))
+            current_description = f"# {self.guild_name} (Statistics)\n\n" + stats_description
+            page_number += 1
+        else:
+            current_description += stats_description
+
+        embeds.append(discord.Embed(description=current_description, colour=0x1ABC9C))
 
         # Update titles with page numbers
         total_pages = len(embeds)
@@ -216,7 +216,7 @@ class GuildMessageParser:
         
         return [embed]
     
-d = """
+"""
  Guild Name: SkyKings Shadows
                               -- Guild Master --
  [VIP+] Jackthetopg ●
@@ -254,9 +254,3 @@ d = """
  Online Members: 4
 
 """
-
-parser = GuildMessageParser(d)
-embeds = parser.parse()
-
-for embed in embeds:
-    print(embed.fields)
