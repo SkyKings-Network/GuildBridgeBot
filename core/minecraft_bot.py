@@ -121,6 +121,7 @@ class MinecraftBotManager:
                         self.wait_response = True
                     if message == "-----------------------------------------------------" and self.wait_response:
                         self.wait_response = False
+                        print(message_buffer)
                         self.send_to_discord("\n".join(message_buffer))
                         message_buffer.clear()
                     if self.wait_response is True:
