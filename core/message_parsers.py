@@ -157,10 +157,10 @@ class GuildMessageParser:
         page_number = 1
 
         for role in self.roles:
-            member_texts = [f"**[{m.rank}]**{m.name}" for m in role.members]
+            member_texts = [f"{HypixelRank.format_rank(m.rank)}{m.name}" for m in role.members]
             role_text = f"**__{role.name}__**\n{', '.join(member_texts)}\n\n"
             
-            if len(current_field) + len(role_text) > 1024 or not current_embed:
+            if len(current_field) + len(role_text) > 1000 or not current_embed:  # Changed to 1000 for safety
                 if current_embed:
                     current_embed.add_field(name=current_field_name, value=current_field, inline=False)
                     embeds.append(current_embed)
@@ -171,6 +171,12 @@ class GuildMessageParser:
                 current_field_name = "Members"
             else:
                 current_field += role_text
+
+            # Check if current_field is getting too long and split if necessary
+            if len(current_field) > 1000:
+                current_embed.add_field(name=current_field_name, value=current_field[:1000], inline=False)
+                current_field = current_field[1000:]
+                current_field_name = "Members (Continued)"
 
         if current_field:
             current_embed.add_field(name=current_field_name, value=current_field, inline=False)
@@ -189,8 +195,6 @@ class GuildMessageParser:
         total_pages = len(embeds)
         for i, embed in enumerate(embeds, 1):
             embed.title = f"{self.guild_name} - Page {i}/{total_pages}"
-
-        print(embeds)
 
         return embeds
 

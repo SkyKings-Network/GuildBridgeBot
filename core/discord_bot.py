@@ -212,12 +212,20 @@ class DiscordBridgeBot(commands.Bot):
     async def send_message(self, *args, **kwargs) -> Union[discord.Message, discord.WebhookMessage, None]:
         retry = kwargs.pop("retry", True)
         try:
+            if isinstance(args[0], discord.Embed):
+                kwargs['embed'] = args[0]
+                args = args[1:]
             return await self._send_message(*args, **kwargs)
         except aiohttp.ClientError as e:
             if retry:
                 self.init_webhooks()
                 return await self.send_message(*args, **kwargs, retry=False)
-
+        except discord.errors.HTTPException as e:
+            await self.send_debug_message(f"Failed to send message: {str(e)}")
+            if len(kwargs.get('embed').description) > 2000:
+                kwargs['embed'].description = kwargs['embed'].description[:1997] + "..."
+            return await self._send_message(*args, **kwargs)
+        
     async def send_user_message(
         self, username, message, *, officer: bool = False
     ) -> Union[discord.Message, discord.WebhookMessage, None]:
@@ -781,3 +789,4 @@ class DiscordBridgeBot(commands.Bot):
                     await self.send_message(embed=embed)
         except Exception as e:
             await self.on_error("minecraft_message", message, e)
+            
