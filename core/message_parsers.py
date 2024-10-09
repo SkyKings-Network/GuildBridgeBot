@@ -241,41 +241,37 @@ class GuildMessageParser:
         # Reverse data to show oldest to newest
         dates, exp_values = zip(*reversed(exp_data))
         
-        # Create figure with dark theme
-        plt.style.use('dark_background')
+        # Create figure with transparent background
+        plt.style.use('default')
         fig, ax = plt.subplots(figsize=(10, 5))
+        fig.patch.set_alpha(0)
+        ax.patch.set_alpha(0)
         
         # Convert experience values to integers and plot
         exp_values = [int(str(val).replace(',', '').split()[0]) for val in exp_values]
         ax.plot(range(len(dates)), exp_values, 'o-', color='#5865F2', linewidth=2, markersize=8)
         
-        # Customize the plot
-        ax.set_facecolor('#2F3136')
-        fig.patch.set_facecolor('#2F3136')
-        
         # Add grid with low opacity
-        ax.grid(True, linestyle='--', alpha=0.2)
+        ax.grid(True, linestyle='--', alpha=0.3, color='#888888')
         
         # Format axes
-        ax.spines['bottom'].set_color('#FFFFFF')
-        ax.spines['top'].set_color('#FFFFFF')
-        ax.spines['left'].set_color('#FFFFFF')
-        ax.spines['right'].set_color('#FFFFFF')
+        for spine in ax.spines.values():
+            spine.set_edgecolor('#888888')
         
         # Format ticks
         plt.xticks(range(len(dates)), dates, rotation=45)
-        ax.tick_params(colors='white')
+        ax.tick_params(colors='#4A4A4A')
         
         # Add labels
-        plt.ylabel('Experience', color='white')
-        plt.title('Daily Guild Experience Trend', color='white', pad=20)
+        plt.ylabel('Experience', color='#2E7D32', fontweight='bold')
+        plt.title('Daily Guild Experience Trend', color='#1565C0', fontweight='bold', pad=20)
         
         # Adjust layout
         plt.tight_layout()
         
-        # Save to bytes buffer
+        # Save to bytes buffer with transparent background
         buf = io.BytesIO()
-        plt.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+        plt.savefig(buf, format='png', dpi=100, bbox_inches='tight', transparent=True)
         buf.seek(0)
         plt.close()
         
