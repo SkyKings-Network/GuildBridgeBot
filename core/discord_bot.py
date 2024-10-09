@@ -171,7 +171,7 @@ class DiscordBridgeBot(commands.Bot):
         print("Discord > Invite processor has been stopped.")
 
     async def _send_message(self, *args, **kwargs) -> Union[discord.Message, discord.WebhookMessage, None]:
-        sself.name = DiscordConfig.serverName if DiscordConfig.serverName is not "" else "Bridge Bot"
+        self.name = DiscordConfig.serverName if DiscordConfig.serverName is not "" else "Bridge Bot"
         kwargs["allowed_mentions"] = discord.AllowedMentions.none()
         if not args and 'content' not in kwargs and 'embed' not in kwargs:
             print("Discord > Warning: Attempted to send an empty message")

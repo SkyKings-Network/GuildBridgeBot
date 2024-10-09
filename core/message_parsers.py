@@ -147,8 +147,7 @@ class GuildMessageParser:
             date_obj = datetime.strptime(date_str, '%m/%d/%Y')
             self.date = date_obj.date()
         else:
-            self.date = "bb"
-
+            self.date = "test"
         # Parse top entries
         for line in lines[1:]:  # Skip header
             if not line.strip():
