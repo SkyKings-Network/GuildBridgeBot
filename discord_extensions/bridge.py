@@ -2,12 +2,15 @@ import asyncio
 
 import discord
 from discord.ext import commands
-from core.config import DiscordConfig
+from core.config import DiscordConfig, SettingsConfig
 
 
 class Bridge(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.date_limit = SettingsConfig.dateLimit
+        if self.date_limit < 0:
+            self.date_limit = 30
 
     @commands.command()
     @commands.has_role(DiscordConfig.commandRole)
@@ -116,7 +119,7 @@ class Bridge(commands.Cog):
     @commands.command()
     @commands.cooldown(1, 5, commands.BucketType.channel)
     async def top(self, ctx, date_int = 0):
-        if date_int <= 30 and date_int >= 0:
+        if date_int <= date_limit and date_int >= 0:
             await self.bot.mineflayer_bot.chat(f"/g top {date_int}")
         else:
             embed = discord.Embed(

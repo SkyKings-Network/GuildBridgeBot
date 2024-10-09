@@ -29,6 +29,7 @@
     },
     "settings": {
         "autoaccept": false,
+        "dateLimit": 30,
         "extensions": []
     }
 }

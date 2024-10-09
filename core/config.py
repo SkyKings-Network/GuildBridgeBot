@@ -195,6 +195,7 @@ class RedisConfig(ConfigObject, base_key="redis"):
 
 class SettingsConfig(ConfigObject, base_key="settings"):
     autoaccept: bool = ConfigKey(bool, False)
+    dateLimit: int = ConfigKey(int, 30)
     extensions: List[str] = ConfigKey(list, [])
 
 
