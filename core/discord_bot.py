@@ -760,6 +760,8 @@ class DiscordBridgeBot(commands.Bot):
                     return
                 parser = GuildMessageParser(message)
                 embeds = parser.parse()
+                print(type(embeds))
+                print(embed)
                 if isinstance(embeds, list):
                     await self.send_debug_message("Sending guild command response")
                     for embed in embeds:

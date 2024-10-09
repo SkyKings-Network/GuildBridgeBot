@@ -231,9 +231,6 @@ class GuildMessageParser:
         # Split into lines and process each line
         lines = data_string.strip().split('\n')
         
-        # Parse guild name (first line)
-        guild_data['name'] = lines[0].strip()
-        
         # Parse the rest of the data
         for line in lines[1:]:
             line = line.strip()
@@ -271,8 +268,8 @@ class GuildMessageParser:
         guild_data = self._parse_guild_data(input_data)
         
         embed = discord.Embed(
-            title=guild_data['name'],
-            description="Guild Statistics and Experience Report",
+            title="Guild Statistics and Experience Report",
+            description="",
             color=0x2F3136
         )
         
