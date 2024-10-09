@@ -237,7 +237,7 @@ class GuildMessageParser:
         dates, exp_values = zip(*reversed(exp_data))
         
         # Create figure with dark background
-        plt.style.use('dark_background')
+        plt.style.use('default')
         fig, ax = plt.subplots(figsize=(12, 6))
         
         # Convert experience values to integers and plot
@@ -264,6 +264,7 @@ class GuildMessageParser:
         
         # Add labels
         plt.ylabel('Experience', color='#FF00FF', fontweight='bold', fontsize=14)
+        plt.xlabel('Dates', color='#FF00FF', fontweight='bold', fontsize=14)
         plt.title('Daily Guild Experience Trend', color='#FFFF00', fontweight='bold', fontsize=16, pad=20)
         
         # Add value labels on the graph
