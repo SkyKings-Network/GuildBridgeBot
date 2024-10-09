@@ -120,7 +120,7 @@ class Bridge(commands.Cog):
             await self.bot.mineflayer_bot.chat(f"/g top {date_int}")
         else:
             embed = discord.Embed(
-                title="ERROR"
+                title="ERROR",
                 description="Can only go upto 30 days history.",
                 color=discord.Color.red()
             )
