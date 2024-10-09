@@ -72,7 +72,7 @@ class GuildMessageParser:
             print("Command: Info")
             return self._create_guild_stats_embed()
         else:
-            return "NaN"
+            return None
             
     def _clean_rank(self, rank: str) -> str:
         rank = rank.strip('[]').strip()
@@ -228,8 +228,7 @@ class GuildMessageParser:
             rank_format = HypixelRank.format_rank(member.rank)
             member_text = f"{rank_format}{member.name}" if rank_format else member.name
             description.append(
-                f"### {entry.position}. {member_text}\n"
-                f"**{entry.experience:,}** Guild Experience"
+                f"**{entry.position}. {member_text}** ({entry.experience:,} GEXP)"
             )
         
         embed.description = "\n".join(description)

@@ -42,7 +42,6 @@ class Generic(commands.Cog):
                   f"Officer Channel: <#{DiscordConfig.officerChannel}>\n"
                   f"Command Role: <@&{DiscordConfig.commandRole}>\n"
                   f"Override Role: <@&{DiscordConfig.overrideRole}>\n"
-                  f"Version: ``1.0.0``",
             inline=False
         )
         embed.set_footer(text=f"Made by SkyKings")
