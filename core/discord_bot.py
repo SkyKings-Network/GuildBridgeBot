@@ -97,6 +97,10 @@ class DiscordBridgeBot(commands.Bot):
         if self.debug_webhook:
             kwargs["username"] = self.user.display_name
             kwargs["avatar_url"] = self.user.display_avatar.url
+            content = kwargs.get("content", "")
+            if isinstance(content, str) and len(content) > 1900:
+                content = content[:1900] + "..."
+                kwargs["content"] = content
             try:
                 await self.debug_webhook.send(*args, **kwargs)
             except Exception as e:
@@ -173,44 +177,35 @@ class DiscordBridgeBot(commands.Bot):
 
     async def _send_message(self, *args, **kwargs) -> Union[discord.Message, discord.WebhookMessage, None]:
         kwargs["allowed_mentions"] = discord.AllowedMentions.none()
-        if kwargs.pop("officer", False):
-            if self.officer_webhook:
-                kwargs["wait"] = True
-                try:
-                    return await self.officer_webhook.send(*args, **kwargs)
-                except Exception as e:
-                    print(f"Discord > Failed to send message to officer webhook: {e}")
-                    await self.send_debug_message(traceback.format_exc())
-            else:
-                channel = self.get_channel(DiscordConfig.officerChannel)
-                if channel is None:
-                    return
-                try:
-                    return await channel.send(*args, **kwargs)
-                except Exception as e:
-                    print(f"Discord > Failed to send message to officer channel {channel}: {e}")
-                    await self.send_debug_message(traceback.format_exc())
+        if not args and 'content' not in kwargs and 'embed' not in kwargs:
+            print("Discord > Warning: Attempted to send an empty message")
+            return None
+        is_officer = kwargs.pop("officer", False)
+        webhook = self.officer_webhook if is_officer else self.webhook
+        channel_id = DiscordConfig.officerChannel if is_officer else DiscordConfig.channel
+
+        if webhook:
+            kwargs["wait"] = True
+            try:
+                return await webhook.send(*args, **kwargs)
+            except Exception as e:
+                print(f"Discord > Failed to send message to {'officer ' if is_officer else ''}webhook: {e}")
+                await self.send_debug_message(traceback.format_exc())
         else:
-            if self.webhook:
-                kwargs["wait"] = True
-                try:
-                    return await self.webhook.send(*args, **kwargs)
-                except Exception as e:
-                    print(f"Discord > Failed to send message to webhook: {e}")
-                    await self.send_debug_message(traceback.format_exc())
-            else:
-                channel = self.get_channel(DiscordConfig.channel)
-                if channel is None:
-                    print(f"Discord > Channel {DiscordConfig.channel} not found! Please set the correct channel ID!")
-                    return
-                try:
-                    return await channel.send(*args, **kwargs)
-                except Exception as e:
-                    print(f"Discord > Failed to send message to channel {channel}: {e}")
-                    await self.send_debug_message(traceback.format_exc())
+            channel = self.get_channel(channel_id)
+            if channel is None:
+                print(f"Discord > Channel {channel_id} not found! Please set the correct channel ID!")
+                return None
+            try:
+                return await channel.send(*args, **kwargs)
+            except Exception as e:
+                print(f"Discord > Failed to send message to {'officer ' if is_officer else ''}channel {channel}: {e}")
+                await self.send_debug_message(traceback.format_exc())
 
     async def send_message(self, *args, **kwargs) -> Union[discord.Message, discord.WebhookMessage, None]:
         retry = kwargs.pop("retry", True)
+        print(args)
+        print(kwargs)
         try:
             if isinstance(args[0], discord.Embed):
                 kwargs['embed'] = args[0]
@@ -778,15 +773,19 @@ class DiscordBridgeBot(commands.Bot):
                 if message.strip() == "":
                     return
                 parser = GuildMessageParser(message)
-                embeds = parser.parse()
-                if embeds:
-                    await self.send_debug_message("Sending guild command response")
-                    for embed in embeds:
-                        await self.send_message(embed=embed)
+                result = parser.parse()
+                if result != "NaN":
+                    if isinstance(result, list):
+                        await self.send_debug_message("Sending paginated guild command response")
+                        await self.send_paginated_embeds(result)
+                    else:
+                        await self.send_debug_message("Sending top guild experience response")
+                        await self.send_message(embed=result)
                 else:
                     await self.send_debug_message(f"Normal message: `{message}`")
-                    embed = discord.Embed(colour=0x1ABC9C).set_author(name=message)
+                    embed = Embed(colour=0x1ABC9C).set_author(name=message)
                     await self.send_message(embed=embed)
         except Exception as e:
-            await self.on_error("minecraft_message", message, e)
-            
+            error_message = f"Error in send_discord_message: {str(e)}\n\n{traceback.format_exc()}"
+            await self.send_debug_message(error_message[:1900] + "..." if len(error_message) > 1900 else error_message)
+
