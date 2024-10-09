@@ -171,41 +171,31 @@ class DiscordBridgeBot(commands.Bot):
 
     async def _send_message(self, *args, **kwargs) -> Union[discord.Message, discord.WebhookMessage, None]:
         kwargs["allowed_mentions"] = discord.AllowedMentions.none()
-        if kwargs.pop("officer", False):
-            if self.officer_webhook:
-                kwargs["wait"] = True
-                try:
-                    return await self.officer_webhook.send(*args, **kwargs)
-                except Exception as e:
-                    print(f"Discord > Failed to send message to officer webhook: {e}")
-                    await self.send_debug_message(traceback.format_exc())
-            else:
-                channel = self.get_channel(DiscordConfig.officerChannel)
-                if channel is None:
-                    return
-                try:
-                    return await channel.send(*args, **kwargs)
-                except Exception as e:
-                    print(f"Discord > Failed to send message to officer channel {channel}: {e}")
-                    await self.send_debug_message(traceback.format_exc())
+        if not args and 'content' not in kwargs and 'embed' not in kwargs:
+            print("Discord > Warning: Attempted to send an empty message")
+            return None
+
+        is_officer = kwargs.pop("officer", False)
+        webhook = self.officer_webhook if is_officer else self.webhook
+        channel_id = DiscordConfig.officerChannel if is_officer else DiscordConfig.channel
+
+        if webhook:
+            kwargs["wait"] = True
+            try:
+                return await webhook.send(*args, **kwargs)
+            except Exception as e:
+                print(f"Discord > Failed to send message to {'officer ' if is_officer else ''}webhook: {e}")
+                await self.send_debug_message(traceback.format_exc())
         else:
-            if self.webhook:
-                kwargs["wait"] = True
-                try:
-                    return await self.webhook.send(*args, **kwargs)
-                except Exception as e:
-                    print(f"Discord > Failed to send message to webhook: {e}")
-                    await self.send_debug_message(traceback.format_exc())
-            else:
-                channel = self.get_channel(DiscordConfig.channel)
-                if channel is None:
-                    print(f"Discord > Channel {DiscordConfig.channel} not found! Please set the correct channel ID!")
-                    return
-                try:
-                    return await channel.send(*args, **kwargs)
-                except Exception as e:
-                    print(f"Discord > Failed to send message to channel {channel}: {e}")
-                    await self.send_debug_message(traceback.format_exc())
+            channel = self.get_channel(channel_id)
+            if channel is None:
+                print(f"Discord > Channel {channel_id} not found! Please set the correct channel ID!")
+                return None
+            try:
+                return await channel.send(*args, **kwargs)
+            except Exception as e:
+                print(f"Discord > Failed to send message to {'officer ' if is_officer else ''}channel {channel}: {e}")
+                await self.send_debug_message(traceback.format_exc())
 
     async def send_message(self, *args, **kwargs) -> Union[discord.Message, discord.WebhookMessage, None]:
         retry = kwargs.pop("retry", True)
