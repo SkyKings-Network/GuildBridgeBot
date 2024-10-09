@@ -179,8 +179,7 @@ class DiscordBridgeBot(commands.Bot):
         is_officer = kwargs.pop("officer", False)
         webhook = self.officer_webhook if is_officer else self.webhook
 
-        print(kwargs.keys())
-        if webhook and not "username" in kwargs:
+        if webhook and not 'username' in kwargs.keys():
             self.name = DiscordConfig.serverName if not DiscordConfig.serverName == "" else "Bridge Bot"
 
         if webhook:
