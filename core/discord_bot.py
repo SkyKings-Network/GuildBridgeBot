@@ -765,7 +765,6 @@ class DiscordBridgeBot(commands.Bot):
                     for embed in embeds:
                         await self.send_message(embed=embed)
                 else:
-                    await self.send_debug_message("TESTESTEST")
                     await self.send_debug_message(f"Normal message: `{message}`")
                     embed = discord.Embed(colour=0x1ABC9C).set_author(name=message)
                     await self.send_message(embed=embed)

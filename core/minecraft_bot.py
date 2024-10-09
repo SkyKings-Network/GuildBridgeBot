@@ -128,6 +128,7 @@ class MinecraftBotManager:
                     if self.wait_response is True:
                         message_buffer.append(message)
 
+                    line = 0
                     # Online Command
                     if message.startswith("----------"):
                         message_buffer.clear()
