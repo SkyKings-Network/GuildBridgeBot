@@ -205,53 +205,15 @@ class GuildMessageParser:
     def _format_top_embed(self) -> List[discord.Embed]:
         embed = discord.Embed(title=f"Top Guild Experience - {self.date.strftime('%m/%d/%Y')} (today)", colour=0x1ABC9C)
         
+        description = []
         for entry in self.top_entries:
             member = entry.member
             rank_format = HypixelRank.format_rank(member.rank)
             member_text = f"{rank_format}{member.name}" if rank_format else member.name
-            embed.add_field(
-                name=f"##{entry.position}. {member_text}",
-                value=f"**{entry.experience:,}** Guild Experience",
-                inline=False
+            description.append(
+                f"## {entry.position}. {member_text}\n"
+                f"**{entry.experience:,}** Guild Experience\n"
             )
         
+        embed.description = "\n".join(description)
         return [embed]
-    
-"""
- Guild Name: SkyKings Shadows
-                              -- Guild Master --
- [VIP+] Jackthetopg ●
-                                 -- Bridge --
- Jackthebwv ●
-                                  -- Staff --
- [MVP+] plun1331 ●
-                                   -- King --
- InfiniteWave_ ●  [MVP+] ooohhk ●  [VIP] Shadow_magic__ ●  506Edgar ●  [VIP] 5326ms ●  47_Mikki ●  [V
- IP] PBLOFIC ●  [MVP+] IGetNoRng ●  [VIP] L7x_ ●  [MVP+] GoggaM ●  [VIP] weldangb ●  [MVP+] Logieboy1
- 3 ●  [VIP+] NunzNotGunz ●  Justinious_Wang ●  [VIP] Nutmeg_2 ●  Skyineternity ●  [MVP+] TitaniumGem
- ●  [MVP+] Joggy135 ●  TwistyCape11632 ●  ShunSSJ ●  NolifeGameing ●  Bonus_duck000 ●  [VIP] Creeper5
- 17 ●  AtleeMC ●  APOTATOG0D ●  [MVP+] CreamyOPTT ●  C00lslash ●  [VIP] Bouser ●  dogklb ●  coopywoop
- y15 ●  DrobelGM ●  TheNicestLouis ●  DizzernBone ●  [MVP] Roto_Koto1029 ●  [MVP+] Nirz51 ●  [VIP+] f
- ifty784 ●  Lukwata ●  [VIP] Blushiiii ●  [VIP] mto0312 ●  [VIP+] Tanukididi ●  [MVP+] LoginMurpy ●
- [VIP] LeoooKebab ●  [VIP+] johan7 ●  [VIP+] jezza3737 ●  [MVP+] Bilbofy ●  [VIP] HilFing_Real ●  [VI
- P+] dezda3rb ●  [MVP] soda_flood ●  [MVP+] ChanceyCat ●  [MVP+] spockie777 ●  [MVP] Novas_cookies ●
-  [MVP+] Rusty_qt ●  [MVP] _ryzenx ●  GejminkCZ ●  ItzRobbyStyle ●  [VIP] lyzed ●  [VIP+] JackTheCook
-  ●  [MVP+] gorillabones ●  [VIP] VanishingPlayer ●  [MVP+] captinbloodbeard ●  [MVP+] Sanctiond ●  [
- MVP+] MrManThing ●  [MVP+] zozodeking ●  [MVP+] Drdisney1 ●  [VIP] TheMassacror ●  [VIP] CorruptedAu
- ra ●  [MVP+] StepBroHD1 ●  [VIP+] The1verge ●  [MVP+] Q7DA ●  [VIP] duperslayer69420 ●  [VIP] Spring
- Sky144669 ●  [MVP+] RedeemGift ●  [MVP+] PeanutsKeke ●  [MVP+] KingTyo11 ●  [VIP+] WideBeagel ●  [MV
- P+] KYSPT2 ●  [MVP+] zqbi ●  [MVP+] SkyblockSuchti ●  [MVP+] Thirft ●
-                                 -- Expert --
- [MVP+] sirFinFinFin ●  [MVP+] SEANISBAD ●  [VIP] KhoiVeryFat ●  [VIP] I_am_the_noob ●  [VIP] Samules
- lolXD ●  [VIP+] p33l ●  EnderMase7331 ●  WataChama ●  [VIP] patatA_sAIt ●  AsainTdog ●  [VIP+] capta
- incrxnch ●  SiReN4yK ●  [VIP] Meuko ●  [VIP] _flixy_ ●  [VIP+] C00kiekiller ●  [VIP] Unsexyslimshady
-  ●  [MVP+] like_peanut_alot ●  [VIP] Lagerhaus ●  [VIP] prest0nplayzfan ●  [MVP+] true_beginner ●
-                                 -- Member --
- [MVP+] M4aXim ●  FilipM1 ●  Ryan_yc ●  [MVP+] CheesLess ●  [VIP] St0rmBlessed00 ●  [MVP+] CourbeSage
- 86862 ●  [MVP] DarkDreamThief ●  [VIP+] Welcometoshadow ●  [VIP+] Tikizzz ●  [VIP] StopQuix ●  Heroi
- nsucht ●  [VIP] Kydronite ●  [MVP+] HamManGaming ●  [MVP+] ElixirWaifu ●  [VIP] Kolik4005 ●  TBNR_Ep
- ic_Gamer ●  LolzCrystal ●  CatPotato715_ ●  [MVP+] Goose45636 ●
- Total Members: 121
- Online Members: 4
-
-"""
