@@ -207,9 +207,10 @@ class DiscordBridgeBot(commands.Bot):
         print(args)
         print(kwargs)
         try:
-            if isinstance(args[0], discord.Embed):
-                kwargs['embed'] = args[0]
-                args = args[1:]
+            if args:
+                if isinstance(args[0], discord.Embed):
+                    kwargs['embed'] = args[0]
+                    args = args[1:]
             return await self._send_message(*args, **kwargs)
         except aiohttp.ClientError as e:
             if retry:
@@ -777,7 +778,8 @@ class DiscordBridgeBot(commands.Bot):
                 if result != "NaN":
                     if isinstance(result, list):
                         await self.send_debug_message("Sending paginated guild command response")
-                        await self.send_paginated_embeds(result)
+                        for embed in embeds:
+                            await self.send_message(embed=embed)
                     else:
                         await self.send_debug_message("Sending top guild experience response")
                         await self.send_message(embed=result)
