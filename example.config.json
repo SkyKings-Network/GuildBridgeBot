@@ -16,7 +16,8 @@
         "prefix": "!",
         "webhookURL": "",
         "officerWebhookURL": "",
-        "debugWebhookURL": ""
+        "debugWebhookURL": "",
+        "serverName": "Skykings - Test"
     },
     "redis": {
         "host": "",

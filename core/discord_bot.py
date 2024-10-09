@@ -52,6 +52,7 @@ class DiscordBridgeBot(commands.Bot):
         self.webhook: discord.Webhook | None = None
         self.officer_webhook: discord.Webhook | None = None
         self.debug_webhook: discord.Webhook | None = None
+        self.name = DiscordConfig.serverName | None = None
 
     def get_intents(self) -> discord.Intents:
         """Returns a mutable intents class for the bot."""
@@ -182,7 +183,10 @@ class DiscordBridgeBot(commands.Bot):
         if webhook:
             kwargs["wait"] = True
             try:
-                return await webhook.send(*args, **kwargs)
+                if self.name:
+                    return await webhook.send(username = self.name, *args, **kwargs)
+                else:
+                    return await webhook.send(*args, **kwargs)
             except Exception as e:
                 print(f"Discord > Failed to send message to {'officer ' if is_officer else ''}webhook: {e}")
                 await self.send_debug_message(traceback.format_exc())
@@ -223,10 +227,16 @@ class DiscordBridgeBot(commands.Bot):
             kwargs["wait"] = True
             try:
                 if image_file:
-                    return await webhook.send(file=image_file, *args, **kwargs)
+                    if self.name:
+                        return await webhook.send(username = self.name, file=image_file, *args, **kwargs)
+                    else:
+                        return await webhook.send(file=image_file, *args, **kwargs)
                 elif image_url:
                     embed = discord.Embed().set_image(url=image_url)
-                    return await webhook.send(embed=embed, *args, **kwargs)
+                    if self.name:
+                        return await webhook.send(username = self.name, embed=embed, *args, **kwargs)
+                    else:
+                        return await webhook.send(embed=embed, *args, **kwargs)
             except Exception as e:
                 print(f"Discord > Failed to send image to {'officer ' if is_officer else ''}webhook: {e}")
                 await self.send_debug_message(traceback.format_exc())

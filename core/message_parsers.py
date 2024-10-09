@@ -318,9 +318,8 @@ class GuildMessageParser:
         
         # Create the main description
         description = f"""
-    # Guild Stats and Experience History
+    ## Guild Stats and Experience History
 
-    ## Guild Information
     • **Created:** {guild_data.get('created', 'Unknown')}
     • **Members:** {guild_data.get('members', 'Unknown')}
     • **Guild Level:** {guild_data.get('level', 'Unknown')}
@@ -333,10 +332,9 @@ class GuildMessageParser:
             color=0x5865F2  # Discord blurple color
         )
         
-        # Create and attach the graph
+        # Create the graph
         graph_buffer = self._create_exp_graph(guild_data['daily_exp'])
         file = discord.File(graph_buffer, filename="exp_graph.png")
-        embed.set_image(url="attachment://exp_graph.png")
         
         # Set footer with timestamp
         embed.set_footer(text="Last Updated")
