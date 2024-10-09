@@ -183,7 +183,7 @@ class GuildMessageParser:
             role_description += ", ".join(member_texts) + "\n\n"
             
             # Check if adding this role would exceed the limit
-            if len(current_description) + len(role_description) > 3000:
+            if len(current_description) + len(role_description) > 4000:
                 embeds.append(discord.Embed(description=current_description.strip(), colour=0x1ABC9C))
                 current_description = f"# {self.guild_name} (Continued)\n\n" + role_description
                 page_number += 1
@@ -236,7 +236,7 @@ class GuildMessageParser:
         # Reverse data to show oldest to newest
         dates, exp_values = zip(*reversed(exp_data))
         
-        # Create figure with dark background
+        # Create figure with tansparent background
         plt.style.use('default')
         fig, ax = plt.subplots(figsize=(12, 6))
         
