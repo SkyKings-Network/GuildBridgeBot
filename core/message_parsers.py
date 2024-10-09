@@ -54,7 +54,7 @@ class GuildMessageParser:
         
     def parse(self) -> str:
         # Determine message type and parse accordingly
-        if "Top Guild Experience" in self.raw_message:
+        if "Top" in self.raw_message:
             print("Top")
             return self._parse_top_message()
         elif "Total Members:" in self.raw_message:
