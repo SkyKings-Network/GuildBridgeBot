@@ -157,7 +157,7 @@ class GuildMessageParser:
         page_number = 1
 
         for role in self.roles:
-            member_texts = [f"{HypixelRank.format_rank(m.rank)}{m.name}" for m in role.members]
+            member_texts = [f"**[{m.rank}]**{m.name}" for m in role.members]
             role_text = f"**__{role.name}__**\n{', '.join(member_texts)}\n\n"
             
             if len(current_field) + len(role_text) > 1024 or not current_embed:
