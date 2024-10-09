@@ -178,14 +178,15 @@ class DiscordBridgeBot(commands.Bot):
 
         is_officer = kwargs.pop("officer", False)
         webhook = self.officer_webhook if is_officer else self.webhook
-
-        if webhook and not 'username' in kwargs.keys():
-            self.name = DiscordConfig.serverName if not DiscordConfig.serverName == "" else "Bridge Bot"
-
+           
         if webhook:
             kwargs["wait"] = True
             try:
-                return await webhook.send(username = self.name, *args, **kwargs)
+                if not 'username' in kwargs.keys():
+                    self.name = DiscordConfig.serverName if not DiscordConfig.serverName == "" else "Bridge Bot"
+                    return await webhook.send(username = self.name, *args, **kwargs)
+                else:
+                    return await webhook.send(*args, **kwargs)
             except Exception as e:
                 print(f"Discord > Failed to send message to {'officer ' if is_officer else ''}webhook: {e}")
                 await self.send_debug_message(traceback.format_exc())
