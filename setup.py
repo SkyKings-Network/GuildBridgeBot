@@ -6,6 +6,7 @@ import shutil
 from datetime import datetime
 import uuid
 from cryptography.fernet import Fernet
+import getpass
 
 # ASCII art of SKYKINGS
 ascii_art = r"""
@@ -38,17 +39,12 @@ This setup will guide you through configuring your bot and installing dependenci
 Let's get started!
 """
 
-CONFIG_VERSION = "1.0"
+CONFIG_VERSION = "1.1"
 
 default_config = {
     "version": CONFIG_VERSION,
-    "server": {
-        "host": "mc.hypixel.net",
-        "port": 25565
-    },
-    "account": {
-        "email": ""
-    },
+    "server": {"host": "mc.hypixel.net", "port": 25565},
+    "account": {"email": ""},
     "discord": {
         "token": "",
         "channel": "",
@@ -71,20 +67,9 @@ default_config = {
         "receiveChannel": "",
         "sendChannel": ""
     },
-    "settings": {
-        "autoaccept": False,
-        "dateLimit": 30,
-        "extensions": []
-    },
-    "logging": {
-        "enabled": False,
-        "level": "INFO",
-        "file": "guildbridge.log"
-    },
-    "encryption": {
-        "enabled": False,
-        "key": ""
-    }
+    "settings": {"autoaccept": False, "dateLimit": 30, "extensions": []},
+    "logging": {"enabled": False, "level": "INFO", "file": "guildbridge.log"},
+    "encryption": {"enabled": False, "key": ""}
 }
 
 def install_modules():
@@ -140,11 +125,10 @@ def get_user_input(config):
         allow_empty=True
     ) or config['account']['email']
 
-    config['discord']['token'] = validate_input(
-        "Enter Discord bot token: ",
-        lambda x: len(x) > 50 and all(c.isalnum() or c in '.-_' for c in x),
-        "Invalid Discord bot token. It should be a long string of letters, numbers, and some special characters."
-    )
+    config['discord']['token'] = getpass.getpass("Enter Discord bot token: ")
+    while not (len(config['discord']['token']) > 50 and all(c.isalnum() or c in '.-_' for c in config['discord']['token'])):
+        print("Invalid Discord bot token. It should be a long string of letters, numbers, and some special characters.")
+        config['discord']['token'] = getpass.getpass("Enter Discord bot token: ")
 
     config['discord']['channel'] = validate_input(
         "Enter Discord channel ID: ",
@@ -235,10 +219,19 @@ def get_user_input(config):
             print("Invalid log level. Please try again.")
         config['logging']['file'] = input("Enter log file name (default: guildbridge.log): ") or "guildbridge.log"
 
+    encrypt_config = input("Do you want to encrypt sensitive information in the config? (yes/no, default: no): ").lower() == 'yes'
+    if encrypt_config:
+        config['encryption']['enabled'] = True
+        config['encryption']['key'] = generate_encryption_key().decode()
+        print("Encryption key generated. Please keep it safe!")
+        
     return config
 
 def write_config(config):
     try:
+        if config['encryption']['enabled']:
+            config = encrypt_config(config, config['encryption']['key'].encode())
+        
         with open("config.json", "w") as f:
             json.dump(config, f, indent=4)
         print("\nConfiguration successfully saved to config.json.")
@@ -279,10 +272,14 @@ def restore_config():
 
 def print_summary(config):
     print("\nConfiguration Summary:")
-    print(json.dumps(config, indent=2))
+    safe_config = config.copy()
+    safe_config['discord']['token'] = '********' if safe_config['discord']['token'] else ''
+    safe_config['redis']['password'] = '********' if safe_config['redis']['password'] else ''
+    print(json.dumps(safe_config, indent=2))
     print("\nPlease review the configuration above.")
     confirm = input("Is this configuration correct? (yes/no): ").lower()
     return confirm == 'yes'
+
 
 def is_config_valid(config):
     required_fields = [
@@ -306,7 +303,7 @@ def encrypt_config(config, key):
         ('redis', 'password')
     ]
     for section, field in sensitive_fields:
-        if section in config and field in config[section]:
+        if section in config and field in config[section] and config[section][field]:
             config[section][field] = f.encrypt(config[section][field].encode()).decode()
     return config
 
@@ -320,7 +317,7 @@ def decrypt_config(config, key):
         ('redis', 'password')
     ]
     for section, field in sensitive_fields:
-        if section in config and field in config[section]:
+        if section in config and field in config[section] and config[section][field]:
             try:
                 config[section][field] = f.decrypt(config[section][field].encode()).decode()
             except:
@@ -342,41 +339,23 @@ def migrate_config(old_config):
             new_config['version'] = '1.0'
             new_config['encryption'] = {'enabled': False, 'key': ''}
             
-            # Add any new fields from default_config that don't exist in old_config
-            for key, value in default_config.items():
-                if key not in new_config:
-                    new_config[key] = value
-
-        # Add more migration steps here for future versions
+        # Version 1.0 to 1.1 migration
+        if current_version == '1.0':
+            new_config['version'] = '1.1'
+            new_config['discord']['debugWebhookURL'] = ''
+            
+        # Add any new fields from default_config that don't exist in old_config
+        for key, value in default_config.items():
+            if key not in new_config:
+                new_config[key] = value
+            elif isinstance(value, dict):
+                for subkey, subvalue in value.items():
+                    if subkey not in new_config[key]:
+                        new_config[key][subkey] = subvalue
 
         print("Configuration migration completed.")
     
     return new_config
-
-def get_user_input(config):
-    print("\nPlease provide the following configuration details:\n")
-
-    # Existing input collection code remains here...
-
-    # Add encryption option
-    encrypt_config = input("Do you want to encrypt sensitive information in the config? (yes/no, default: no): ").lower() == 'yes'
-    if encrypt_config:
-        config['encryption']['enabled'] = True
-        config['encryption']['key'] = generate_encryption_key().decode()
-        print("Encryption key generated. Please keep it safe!")
-
-    return config
-
-def write_config(config):
-    try:
-        if config['encryption']['enabled']:
-            config = encrypt_config(config, config['encryption']['key'].encode())
-        
-        with open("config.json", "w") as f:
-            json.dump(config, f, indent=4)
-        print("\nConfiguration successfully saved to config.json.")
-    except IOError as e:
-        print(f"Failed to write config.json: {e}")
 
 def read_config():
     try:
@@ -384,7 +363,7 @@ def read_config():
             config = json.load(f)
         
         if config.get('encryption', {}).get('enabled', False):
-            key = input("Enter the encryption key to decrypt the configuration: ").encode()
+            key = getpass.getpass("Enter the encryption key to decrypt the configuration: ").encode()
             config = decrypt_config(config, key)
         
         return config
