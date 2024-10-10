@@ -8,6 +8,8 @@ import os
 from datetime import datetime, timedelta
 import logging
 
+from core.config import DiscordConfig
+
 class ConfigManagement(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -81,7 +83,7 @@ class ConfigManagement(commands.Cog):
         if any(sensitive_key in key for sensitive_key in sensitive_keys):
             embed.add_field(name="Warning", value="⚠️ You are modifying a sensitive setting. Please be cautious.", inline=False)
 
-        embed.set_footer(text="Use !saveconfig when you're ready to apply and save all queued changes.")
+        embed.set_footer(text=f"Use {DiscordConfig.prefix}saveconfig when you're ready to apply and save all queued changes.")
         await ctx.send(embed=embed)
 
     @commands.command(name="saveconfig")
