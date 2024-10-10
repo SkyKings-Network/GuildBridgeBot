@@ -6,13 +6,14 @@ import discord
 from core.config import DiscordConfig
 from utils.utils import send_temp_message
 
+owner = DiscordConfig.ownerId
+
+def owner_check(ctx):
+    return ctx.author.id == owner
+
 class Config(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.owner = DiscordConfig.ownerId
-
-    def owner_check(self, ctx):
-        return ctx.author.id == self.owner
     
     @commands.command()
     @commands.check(owner_check)
