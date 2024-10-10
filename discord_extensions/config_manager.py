@@ -32,9 +32,11 @@ class ConfigManagement(commands.Cog):
         if config:
             redacted_config = self.redact_sensitive_info(config)
             formatted_config = json.dumps(redacted_config, indent=2)
-            await ctx.send(f"```json\n{formatted_config}\n```")
+            embed = discord.Embed(title="Current Configuration", description="```json\n" + formatted_config + "\n```", color=discord.Color.blue())
+            await ctx.send(embed=embed)
         else:
-            await ctx.send("Failed to read configuration.")
+            embed = discord.Embed(title="Error", description="Failed to read configuration.", color=discord.Color.red())
+            await ctx.send(embed=embed)
 
     @commands.command(name="updateconfig")
     @commands.has_permissions(administrator=True)
@@ -43,36 +45,44 @@ class ConfigManagement(commands.Cog):
         """Queue a configuration update"""
         config = config_utils.read_config()
         if not config:
-            await ctx.send("Failed to read configuration.")
+            embed = discord.Embed(title="Error", description="Failed to read configuration.", color=discord.Color.red())
+            await ctx.send(embed=embed)
             return
 
         keys = key.split('.')
         current = config
         for k in keys[:-1]:
             if k not in current:
-                await ctx.send(f"Invalid key: {key}")
+                embed = discord.Embed(title="Error", description=f"Invalid key: {key}", color=discord.Color.red())
+                await ctx.send(embed=embed)
                 return
             current = current[k]
 
         if keys[-1] not in current:
-            await ctx.send(f"Invalid key: {key}")
+            embed = discord.Embed(title="Error", description=f"Invalid key: {key}", color=discord.Color.red())
+            await ctx.send(embed=embed)
             return
 
         # Validate the input using the appropriate validation function
         validator = getattr(config_utils, f"is_valid_{keys[-1]}", None)
         if validator and not validator(value):
-            await ctx.send(f"Invalid value for {key}. Please check the format and try again.")
+            embed = discord.Embed(title="Error", description=f"Invalid value for {key}. Please check the format and try again.", color=discord.Color.red())
+            await ctx.send(embed=embed)
             return
 
         old_value = current[keys[-1]]
         self.pending_changes.setdefault(ctx.author.id, {})[key] = (old_value, value)
 
+        embed = discord.Embed(title="Configuration Update Queued", color=discord.Color.green())
+        embed.add_field(name="Key", value=key, inline=True)
+        embed.add_field(name="New Value", value=value, inline=True)
+
         sensitive_keys = ['token', 'webhookURL', 'officerWebhookURL', 'debugWebhookURL', 'ownerId']
         if any(sensitive_key in key for sensitive_key in sensitive_keys):
-            await ctx.send(f"⚠️ Warning: You are modifying a sensitive setting ({key}). Please be cautious.")
+            embed.add_field(name="Warning", value="⚠️ You are modifying a sensitive setting. Please be cautious.", inline=False)
 
-        await ctx.send(f"Change queued: {key} = {value}")
-        await ctx.send("Use `!saveconfig` when you're ready to apply and save all queued changes.")
+        embed.set_footer(text="Use !saveconfig when you're ready to apply and save all queued changes.")
+        await ctx.send(embed=embed)
 
     @commands.command(name="saveconfig")
     @commands.has_permissions(administrator=True)
@@ -80,21 +90,26 @@ class ConfigManagement(commands.Cog):
     async def save_config(self, ctx):
         """Apply and save all queued configuration changes"""
         if ctx.author.id not in self.pending_changes or not self.pending_changes[ctx.author.id]:
-            await ctx.send("No pending changes to save.")
+            embed = discord.Embed(title="No Changes", description="No pending changes to save.", color=discord.Color.blue())
+            await ctx.send(embed=embed)
             return
 
         changes = self.pending_changes[ctx.author.id]
         formatted_changes = "\n".join([f"{k}: {v[0]} -> {v[1]}" for k, v in changes.items()])
-        await ctx.send(f"Pending changes:\n```\n{formatted_changes}\n```")
+        
+        embed = discord.Embed(title="Pending Changes", description=f"```\n{formatted_changes}\n```", color=discord.Color.gold())
+        await ctx.send(embed=embed)
 
         otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
         self.otp_cache[ctx.author.id] = otp
 
         try:
-            await ctx.author.send(f"Your OTP for confirming configuration changes is: {otp}")
-            await ctx.send("An OTP has been sent to your DMs. Please enter it here to confirm the changes.")
+            await ctx.author.send(f"Your OTP for confirming configuration changes is: **{otp}**")
+            embed = discord.Embed(title="OTP Sent", description="An OTP has been sent to your DMs. Please enter it here to confirm the changes.", color=discord.Color.blue())
+            await ctx.send(embed=embed)
         except discord.Forbidden:
-            await ctx.send("Failed to send OTP via DM. Please enable DMs from server members and try again.")
+            embed = discord.Embed(title="Error", description="Failed to send OTP via DM. Please enable DMs from server members and try again.", color=discord.Color.red())
+            await ctx.send(embed=embed)
             return
 
         def check(m):
@@ -103,11 +118,13 @@ class ConfigManagement(commands.Cog):
         try:
             msg = await self.bot.wait_for('message', check=check, timeout=60.0)
         except asyncio.TimeoutError:
-            await ctx.send("OTP confirmation timed out. Changes not saved.")
+            embed = discord.Embed(title="Timeout", description="OTP confirmation timed out. Changes not saved.", color=discord.Color.red())
+            await ctx.send(embed=embed)
             return
 
         if msg.content != otp:
-            await ctx.send("Invalid OTP. Changes not saved.")
+            embed = discord.Embed(title="Invalid OTP", description="Invalid OTP. Changes not saved.", color=discord.Color.red())
+            await ctx.send(embed=embed)
             return
 
         config = config_utils.read_config()
@@ -122,7 +139,8 @@ class ConfigManagement(commands.Cog):
         config = config_utils.migrate_config(config)
 
         config_utils.write_config(config)
-        await ctx.send("Configuration updated and saved successfully.")
+        embed = discord.Embed(title="Configuration Updated", description="Configuration updated and saved successfully.", color=discord.Color.green())
+        await ctx.send(embed=embed)
         self.log_changes(ctx.author, changes)
         self.pending_changes[ctx.author.id] = {}
 
@@ -137,9 +155,11 @@ class ConfigManagement(commands.Cog):
         """Cancel all queued configuration changes"""
         if ctx.author.id in self.pending_changes:
             self.pending_changes[ctx.author.id] = {}
-            await ctx.send("All pending changes have been cancelled.")
+            embed = discord.Embed(title="Changes Cancelled", description="All pending changes have been cancelled.", color=discord.Color.green())
+            await ctx.send(embed=embed)
         else:
-            await ctx.send("No pending changes to cancel.")
+            embed = discord.Embed(title="No Changes", description="No pending changes to cancel.", color=discord.Color.blue())
+            await ctx.send(embed=embed)
 
     @commands.command(name="showchanges")
     @commands.has_permissions(administrator=True)
@@ -149,9 +169,11 @@ class ConfigManagement(commands.Cog):
         if ctx.author.id in self.pending_changes and self.pending_changes[ctx.author.id]:
             changes = self.pending_changes[ctx.author.id]
             formatted_changes = "\n".join([f"{k}: {v[0]} -> {v[1]}" for k, v in changes.items()])
-            await ctx.send(f"Pending changes:\n```\n{formatted_changes}\n```")
+            embed = discord.Embed(title="Pending Changes", description=f"```\n{formatted_changes}\n```", color=discord.Color.gold())
+            await ctx.send(embed=embed)
         else:
-            await ctx.send("No pending changes.")
+            embed = discord.Embed(title="No Changes", description="No pending changes.", color=discord.Color.blue())
+            await ctx.send(embed=embed)
 
     @commands.command(name="backupconfig")
     @commands.has_permissions(administrator=True)
@@ -159,7 +181,8 @@ class ConfigManagement(commands.Cog):
     async def backup_config(self, ctx):
         """Create a backup of the current configuration"""
         backup_name = config_utils.backup_config()
-        await ctx.send(f"Configuration backup created: {backup_name}")
+        embed = discord.Embed(title="Backup Created", description=f"Configuration backup created: {backup_name}", color=discord.Color.green())
+        await ctx.send(embed=embed)
         await self.cleanup_old_backups()
 
     @commands.command(name="restoreconfig")
@@ -169,11 +192,13 @@ class ConfigManagement(commands.Cog):
         """Restore configuration from a backup"""
         backups = [f for f in os.listdir() if f.startswith("config_backup_") and f.endswith(".json")]
         if not backups:
-            await ctx.send("No backup files found.")
+            embed = discord.Embed(title="No Backups", description="No backup files found.", color=discord.Color.red())
+            await ctx.send(embed=embed)
             return
 
         backup_list = "\n".join([f"{i+1}. {backup}" for i, backup in enumerate(backups)])
-        await ctx.send(f"Available backups:\n```\n{backup_list}\n```\nEnter the number of the backup to restore:")
+        embed = discord.Embed(title="Available Backups", description=f"```\n{backup_list}\n```\nEnter the number of the backup to restore:", color=discord.Color.blue())
+        await ctx.send(embed=embed)
 
         def check(m):
             return m.author == ctx.author and m.channel == ctx.channel and m.content.isdigit()
@@ -182,18 +207,23 @@ class ConfigManagement(commands.Cog):
             msg = await self.bot.wait_for('message', check=check, timeout=60.0)
             choice = int(msg.content) - 1
             if 0 <= choice < len(backups):
-                restored_config = config_utils.restore_config(True, choice)
+                restored_config = config_utils.restore_config(choice)
                 if restored_config:
                     config_utils.write_config(restored_config)
-                    await ctx.send(f"Configuration restored from {backups[choice]}.")
+                    embed = discord.Embed(title="Config Restored", description=f"Configuration restored from {backups[choice]}.", color=discord.Color.green())
+                    await ctx.send(embed=embed)
                 else:
-                    await ctx.send("Failed to restore configuration.")
+                    embed = discord.Embed(title="Restore Failed", description="Failed to restore configuration.", color=discord.Color.red())
+                    await ctx.send(embed=embed)
             else:
-                await ctx.send("Invalid choice.")
+                embed = discord.Embed(title="Invalid Choice", description="Invalid choice.", color=discord.Color.red())
+                await ctx.send(embed=embed)
         except asyncio.TimeoutError:
-            await ctx.send("Restore operation timed out.")
+            embed = discord.Embed(title="Timeout", description="Restore operation timed out.", color=discord.Color.red())
+            await ctx.send(embed=embed)
         except ValueError:
-            await ctx.send("Invalid input.")
+            embed = discord.Embed(title="Invalid Input", description="Invalid input.", color=discord.Color.red())
+            await ctx.send(embed=embed)
 
     async def cleanup_old_backups(self):
         """Delete backups older than 30 days"""
@@ -215,12 +245,14 @@ class ConfigManagement(commands.Cog):
         if config:
             validation_results = self.validate_config_details(config)
             if all(validation_results.values()):
-                await ctx.send("Configuration is valid.")
+                embed = discord.Embed(title="Config Validation", description="Configuration is valid.", color=discord.Color.green())
             else:
                 invalid_fields = [f for f, valid in validation_results.items() if not valid]
-                await ctx.send(f"Configuration is invalid. Please check the following fields: {', '.join(invalid_fields)}")
+                embed = discord.Embed(title="Config Validation", description=f"Configuration is invalid. Please check the following fields: {', '.join(invalid_fields)}", color=discord.Color.red())
+            await ctx.send(embed=embed)
         else:
-            await ctx.send("Failed to read configuration.")
+            embed = discord.Embed(title="Error", description="Failed to read configuration.", color=discord.Color.red())
+            await ctx.send(embed=embed)
 
     def validate_config_details(self, config):
         validation_results = {}
