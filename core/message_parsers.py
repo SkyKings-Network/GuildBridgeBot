@@ -170,10 +170,10 @@ class GuildMessageParser:
         current_description = ""
         page_number = 1
 
-        current_description += f"# {self.guild_name}\n\n"
+        current_description += f"## {self.guild_name}\n\n"
 
         for role in self.roles:
-            role_description = f"**{role.name}**\n"
+            role_description = f"###{role.name}\n"
             member_texts = []
             for m in role.members:
                 rank_format = self._format_rank(m.rank)
@@ -192,7 +192,7 @@ class GuildMessageParser:
 
         # Add statistics to the last embed
         stats_description = (
-            f"\n\n**Guild Statistics**\n"
+            f"###**Guild Statistics**\n"
             f"**Total Members:** {self.total_members}\n"
             f"**Online Members:** {self.online_members}\n"
             f"**Offline Members:** {self.offline_members}\n"
