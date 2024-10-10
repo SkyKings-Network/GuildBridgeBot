@@ -181,7 +181,7 @@ class GuildMessageParser:
                 member_texts.append(member_text)
             
             # Remove any discord formatting characters by using \ behind them
-            member_texts = [re.sub(r'([*_~`|])', r'\1', text) for text in member_texts]
+            member_texts = [re.sub(r'([*_~`|])', r'\\\1', text) for text in member_texts]
             
             role_description += ", ".join(member_texts) + "\n\n"
             
