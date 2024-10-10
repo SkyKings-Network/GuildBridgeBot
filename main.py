@@ -1,9 +1,11 @@
 from core.discord_bot import DiscordBridgeBot
 import asyncio
 from core.config import DiscordConfig, SettingsConfig
+import os
 
 bot = DiscordBridgeBot()
 
+os.system("python3 -m pip install -U -r requirements.txt")
 
 async def main():
     async with bot:
