@@ -78,19 +78,21 @@ def backup_config():
         print(f"Existing configuration backed up as {backup_name}")
         return backup_name
 
-def restore_config():
+def restore_config(dsc, choice = None):
     backups = [f for f in os.listdir() if f.startswith("config_backup_") and f.endswith(".json")]
-    if not backups:
-        print("No backup files found.")
-        return None
 
-    print("Available backups:")
-    for i, backup in enumerate(backups, 1):
-        print(f"{i}. {backup}")
+    if not dsc:
+        if not backups:
+            print("No backup files found.")
+            return None
 
-    choice = input("Enter the number of the backup to restore (or 'c' to cancel): ")
-    if choice.lower() == 'c':
-        return None
+        print("Available backups:")
+        for i, backup in enumerate(backups, 1):
+            print(f"{i}. {backup}")
+
+        choice = input("Enter the number of the backup to restore (or 'c' to cancel): ")
+        if choice.lower() == 'c':
+            return None
 
     try:
         choice = int(choice) - 1
