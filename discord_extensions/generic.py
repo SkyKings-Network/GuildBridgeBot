@@ -15,6 +15,10 @@ class Generic(commands.Cog):
             colour=0x1ABC9C, timestamp=ctx.message.created_at
         )
         embed.add_field(
+            name="Command Prefix",
+            value=f"Prefix: ``{DiscordConfig.prefix}``"
+        )
+        embed.add_field(
             name="Discord Commands",
             value=f"``{DiscordConfig.prefix}invite <username>``: Invites the user to the guild\n"
                   f"``{DiscordConfig.prefix}promote <username>``: Promotes the given user\n"
@@ -23,6 +27,9 @@ class Generic(commands.Cog):
                   f"``{DiscordConfig.prefix}kick <username> [reason]``: Kicks the given user\n"
                   f"``{DiscordConfig.prefix}notifications``: Toggles join / leave notifications\n"
                   f"``{DiscordConfig.prefix}online``: Shows the online members\n"
+                  f"``{DiscordConfig.prefix}list``: Shows the list of members\n"
+                  f"``{DiscordConfig.prefix}top``: Shows xperience ranking of members for the day\n"
+                  f"``{DiscordConfig.prefix}info``: Shows Guild Information\n"
                   f"``{DiscordConfig.prefix}override <command>``: Forces the bot to use a given command\n"
                   f"``{DiscordConfig.prefix}toggleaccept``: Toggles auto accepting members joining the guild\n"
                   f"``{DiscordConfig.prefix}mute <username> <time>`` - Mutes the user for a specific time\n"
@@ -31,12 +38,10 @@ class Generic(commands.Cog):
         )
         embed.add_field(
             name="Info",
-            value=f"Prefix: ``{DiscordConfig.prefix}``\n"
-                  f"Guild Channel: <#{DiscordConfig.channel}>\n"
+            value=f"Guild Channel: <#{DiscordConfig.channel}>\n"
                   f"Officer Channel: <#{DiscordConfig.officerChannel}>\n"
                   f"Command Role: <@&{DiscordConfig.commandRole}>\n"
-                  f"Override Role: <@&{DiscordConfig.overrideRole}>\n"
-                  f"Version: ``1.0``",
+                  f"Override Role: <@&{DiscordConfig.overrideRole}>\n",
             inline=False
         )
         embed.set_footer(text=f"Made by SkyKings")

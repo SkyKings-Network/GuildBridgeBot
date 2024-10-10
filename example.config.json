@@ -16,7 +16,8 @@
         "prefix": "!",
         "webhookURL": "",
         "officerWebhookURL": "",
-        "debugWebhookURL": ""
+        "debugWebhookURL": "",
+        "serverName": ""
     },
     "redis": {
         "host": "",
@@ -28,6 +29,7 @@
     },
     "settings": {
         "autoaccept": false,
+        "dateLimit": 30,
         "extensions": []
     }
 }

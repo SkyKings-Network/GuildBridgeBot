@@ -181,6 +181,7 @@ class DiscordConfig(ConfigObject, base_key="discord"):
     webhookURL: Union[str, None] = ConfigKey(str, None)
     officerWebhookURL: Union[str, None] = ConfigKey(str, None)
     debugWebhookURL: Union[str, None] = ConfigKey(str, None)
+    serverName: Union[str, None] = ConfigKey(str, None)
 
 
 class RedisConfig(ConfigObject, base_key="redis"):
@@ -194,6 +195,7 @@ class RedisConfig(ConfigObject, base_key="redis"):
 
 class SettingsConfig(ConfigObject, base_key="settings"):
     autoaccept: bool = ConfigKey(bool, False)
+    dateLimit: int = ConfigKey(int, 30)
     extensions: List[str] = ConfigKey(list, [])
 
 
