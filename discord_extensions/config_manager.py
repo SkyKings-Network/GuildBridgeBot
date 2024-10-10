@@ -242,10 +242,5 @@ class ConfigManagement(commands.Cog):
                 redacted_config['discord'][key] = '[REDACTED]'
         return redacted_config
 
-    @commands.Cog.listener()
-    async def on_command_error(self, ctx, error):
-        if isinstance(error, commands.CommandOnCooldown):
-            await ctx.send(f"This command is on cooldown. Please try again in {error.retry_after:.2f} seconds.")
-
 async def setup(bot):
     await bot.add_cog(ConfigManagement(bot))
