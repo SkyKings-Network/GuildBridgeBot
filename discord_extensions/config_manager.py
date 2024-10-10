@@ -180,9 +180,9 @@ class ConfigManagement(commands.Cog):
 
         try:
             msg = await self.bot.wait_for('message', check=check, timeout=60.0)
-            choice = int(msg.content) - 1
+            choice = int(msg.content)
             if 0 <= choice < len(backups):
-                restored_config = config_utils.restore_config(True, backups[choice])
+                restored_config = config_utils.restore_config(True, choice)
                 if restored_config:
                     config_utils.write_config(restored_config)
                     await ctx.send(f"Configuration restored from {backups[choice]}.")
