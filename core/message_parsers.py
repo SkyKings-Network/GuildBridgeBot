@@ -180,6 +180,9 @@ class GuildMessageParser:
                 member_text = f"{rank_format} {m.name}" if rank_format else m.name
                 member_texts.append(member_text)
             
+            # Remove any discord formatting characters by using \ behind them
+            member_texts = [re.sub(r'([*_~`|])', r'\1', text) for text in member_texts]
+            
             role_description += ", ".join(member_texts) + "\n\n"
             
             # Check if adding this role would exceed the limit
