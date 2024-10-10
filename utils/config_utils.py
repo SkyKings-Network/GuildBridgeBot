@@ -96,14 +96,17 @@ def restore_config(dsc, choice = None):
 
     try:
         choice = int(choice) - 1
+        print(choice)
+        print(backups[choice])
         if 0 <= choice < len(backups):
             with open(backups[choice], 'r') as f:
                 return json.load(f)
         else:
             print("Invalid choice.")
             return None
-    except ValueError:
+    except ValueError as e:
         print("Invalid input.")
+        print(e)
         return None
 
 def is_config_valid(config):
