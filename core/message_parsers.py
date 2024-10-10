@@ -173,7 +173,7 @@ class GuildMessageParser:
         current_description += f"## {self.guild_name}\n\n"
 
         for role in self.roles:
-            role_description = f"###{role.name}\n"
+            role_description = f"### {role.name}\n"
             member_texts = []
             for m in role.members:
                 rank_format = self._format_rank(m.rank)
