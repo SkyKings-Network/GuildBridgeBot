@@ -5,8 +5,6 @@ import os
 
 bot = DiscordBridgeBot()
 
-os.system("python3 -m pip install -U -r requirements.txt")
-
 async def main():
     async with bot:
         await bot.load_extension("discord_extensions.admin")
