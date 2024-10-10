@@ -1,6 +1,11 @@
 import subprocess
 import json
 import os
+import re
+import shutil
+from datetime import datetime
+import uuid
+from cryptography.fernet import Fernet
 
 # ASCII art of SKYKINGS
 ascii_art = r"""
@@ -125,6 +130,171 @@ def is_valid_prefix(prefix):
 def is_valid_role_name(role):
     return 1 <= len(role) <= 100 and all(c.isprintable() for c in role)
 
+def get_user_input(config):
+    print("\nPlease provide the following configuration details:\n")
+
+    config['account']['email'] = validate_input(
+        f"Enter your account email (default: {config['account']['email']}): ",
+        is_valid_email,
+        "Invalid email format. Please try again.",
+        allow_empty=True
+    ) or config['account']['email']
+
+    config['discord']['token'] = validate_input(
+        "Enter Discord bot token: ",
+        lambda x: len(x) > 50 and all(c.isalnum() or c in '.-_' for c in x),
+        "Invalid Discord bot token. It should be a long string of letters, numbers, and some special characters."
+    )
+
+    config['discord']['channel'] = validate_input(
+        "Enter Discord channel ID: ",
+        is_valid_discord_id,
+        "Invalid Discord channel ID. It should be a 17-19 digit number."
+    )
+
+    config['discord']['officerChannel'] = validate_input(
+        "Enter Officer Discord channel ID: ",
+        is_valid_discord_id,
+        "Invalid Discord channel ID. It should be a 17-19 digit number."
+    )
+
+    config['discord']['commandRole'] = validate_input(
+        "Enter Discord command role: ",
+        is_valid_role_name,
+        "Invalid role name. It should be 1-100 printable characters."
+    )
+
+    config['discord']['overrideRole'] = validate_input(
+        "Enter Discord override role: ",
+        is_valid_role_name,
+        "Invalid role name. It should be 1-100 printable characters."
+    )
+
+    config['discord']['ownerId'] = validate_input(
+        "Enter Discord owner ID: ",
+        is_valid_discord_id,
+        "Invalid Discord owner ID. It should be a 17-19 digit number."
+    )
+
+    config['discord']['prefix'] = validate_input(
+        f"Enter Discord command prefix (default: {config['discord']['prefix']}): ",
+        is_valid_prefix,
+        "Invalid prefix. It should be a single printable character.",
+        allow_empty=True
+    ) or config['discord']['prefix']
+
+    config['discord']['webhookURL'] = validate_input(
+        "Enter Discord webhook URL: ",
+        is_valid_url,
+        "Invalid webhook URL. It should be a valid Discord webhook URL."
+    )
+
+    config['discord']['officerWebhookURL'] = validate_input(
+        "Enter Officer Discord webhook URL: ",
+        is_valid_url,
+        "Invalid webhook URL. It should be a valid Discord webhook URL."
+    )
+
+    config['discord']['serverName'] = input("Enter Discord server name: ")
+
+    debug_mode = input("Do you want to enable debug mode? (yes/no, default: no): ").lower()
+    if debug_mode == "yes":
+        config['discord']['debugWebhookURL'] = validate_input(
+            "Enter Debug Webhook URL: ",
+            is_valid_url,
+            "Invalid webhook URL. It should be a valid Discord webhook URL."
+        )
+
+    redis_integration = input("Do you want to enable Redis integration? (yes/no, default: no): ").lower()
+    if redis_integration == "yes":
+        config['redis']['enabled'] = True
+        config['redis']['host'] = input(f"Enter Redis host (default: {config['redis']['host']}): ") or config['redis']['host']
+        config['redis']['port'] = validate_input(
+            f"Enter Redis port (default: {config['redis']['port']}): ",
+            is_valid_port,
+            "Invalid port number. It should be between 1 and 65535.",
+            allow_empty=True
+        ) or config['redis']['port']
+        config['redis']['password'] = input("Enter Redis password (optional): ")
+        config['redis']['clientName'] = input("Enter Redis client name: ") or f"GuildBridgeBot-{uuid.uuid4().hex[:8]}"
+        config['redis']['receiveChannel'] = input("Enter Redis receive channel: ") or "guildbridge_receive"
+        config['redis']['sendChannel'] = input("Enter Redis send channel: ") or "guildbridge_send"
+
+    config['settings']['autoaccept'] = input("Enable autoaccept? (true/false, default: false): ").lower() == "true"
+    config['settings']['dateLimit'] = int(input(f"Enter date limit (default: {config['settings']['dateLimit']} days): ") or config['settings']['dateLimit'])
+
+    logging_enabled = input("Do you want to enable logging? (yes/no, default: no): ").lower()
+    if logging_enabled == "yes":
+        config['logging']['enabled'] = True
+        log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+        while True:
+            log_level = input(f"Enter log level ({', '.join(log_levels)}), default: INFO: ").upper() or "INFO"
+            if log_level in log_levels:
+                config['logging']['level'] = log_level
+                break
+            print("Invalid log level. Please try again.")
+        config['logging']['file'] = input("Enter log file name (default: guildbridge.log): ") or "guildbridge.log"
+
+    return config
+
+def write_config(config):
+    try:
+        with open("config.json", "w") as f:
+            json.dump(config, f, indent=4)
+        print("\nConfiguration successfully saved to config.json.")
+    except IOError as e:
+        print(f"Failed to write config.json: {e}")
+
+def backup_config():
+    if os.path.exists("config.json"):
+        backup_name = f"config_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        shutil.copy("config.json", backup_name)
+        print(f"Existing configuration backed up as {backup_name}")
+
+def restore_config():
+    backups = [f for f in os.listdir() if f.startswith("config_backup_") and f.endswith(".json")]
+    if not backups:
+        print("No backup files found.")
+        return None
+
+    print("Available backups:")
+    for i, backup in enumerate(backups, 1):
+        print(f"{i}. {backup}")
+
+    choice = input("Enter the number of the backup to restore (or 'c' to cancel): ")
+    if choice.lower() == 'c':
+        return None
+
+    try:
+        choice = int(choice) - 1
+        if 0 <= choice < len(backups):
+            with open(backups[choice], 'r') as f:
+                return json.load(f)
+        else:
+            print("Invalid choice.")
+            return None
+    except ValueError:
+        print("Invalid input.")
+        return None
+
+def print_summary(config):
+    print("\nConfiguration Summary:")
+    print(json.dumps(config, indent=2))
+    print("\nPlease review the configuration above.")
+    confirm = input("Is this configuration correct? (yes/no): ").lower()
+    return confirm == 'yes'
+
+def is_config_valid(config):
+    required_fields = [
+        config['account']['email'],
+        config['discord']['token'],
+        config['discord']['channel'],
+        config['discord']['officerChannel'],
+        config['discord']['ownerId'],
+        config['discord']['webhookURL'],
+        config['discord']['officerWebhookURL']
+    ]
+    return all(required_fields)
 
 def encrypt_config(config, key):
     f = Fernet(key)
@@ -265,4 +435,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
