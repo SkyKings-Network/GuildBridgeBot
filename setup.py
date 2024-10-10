@@ -7,7 +7,6 @@ import shutil
 from datetime import datetime
 import time
 import uuid
-from cryptography.fernet import Fernet
 import getpass
 
 # ASCII art of SKYKINGS

@@ -95,15 +95,9 @@ Follow these instructions to copy the repository to a new server.
     source venv/bin/activate
     ```
 
-3. **Install Dependencies:**
+3. **Setup the Bot:**
     ```bash
-    python3 -m pip install -U -r requirements.txt
-    ```
-
-4. **Configuration**:  
-    Update the `config.json` file with your guild's settings:
-    ```bash
-    nano config.json
+    python3 setup.py
     ```
 
 5. **Start the Bot Using PM2:**
