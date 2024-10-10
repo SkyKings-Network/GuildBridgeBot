@@ -173,11 +173,11 @@ class GuildMessageParser:
         current_description += f"# {self.guild_name}\n\n"
 
         for role in self.roles:
-            role_description = f"## {role.name}\n"
+            role_description = f"**{role.name}**\n"
             member_texts = []
             for m in role.members:
                 rank_format = self._format_rank(m.rank)
-                member_text = f"{rank_format}{m.name}" if rank_format else m.name
+                member_text = f"{rank_format} {m.name}" if rank_format else m.name
                 member_texts.append(member_text)
             
             role_description += ", ".join(member_texts) + "\n\n"
@@ -192,22 +192,25 @@ class GuildMessageParser:
 
         # Add statistics to the last embed
         stats_description = (
-            f"## Guild Statistics\n"
+            f"\n\n**Guild Statistics**\n"
             f"**Total Members:** {self.total_members}\n"
             f"**Online Members:** {self.online_members}\n"
             f"**Offline Members:** {self.offline_members}\n"
         )
 
-        embeds.append(discord.Embed(description=current_description.strip(), colour=0x1ABC9C))
-        current_description = f"# {self.guild_name} (Statistics)\n\n" + stats_description
-        page_number += 1
+        if len(current_description) + len(stats_description) < 4000:
+            current_description += stats_description
+        else:
+            embeds.append(discord.Embed(description=current_description.strip(), colour=0x1ABC9C))
+            current_description = f"# {self.guild_name} (Statistics)\n\n" + stats_description
+            page_number += 1
 
         embeds.append(discord.Embed(description=current_description.strip(), colour=0x1ABC9C))
 
         # Update titles with page numbers
         total_pages = len(embeds)
         for i, embed in enumerate(embeds, 1):
-            embed.title = f"{self.guild_name} - Page {i}/{total_pages}"
+            embed.set_footer(text=f"{self.guild_name} - Page {i}/{total_pages}")
 
         return embeds
 
