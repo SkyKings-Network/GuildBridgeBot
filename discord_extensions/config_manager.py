@@ -145,6 +145,10 @@ class ConfigManagement(commands.Cog):
         await ctx.send(embed=embed)
         self.log_changes(ctx.author, changes)
         self.pending_changes[ctx.author.id] = {}
+        embedVar = discord.Embed(color=0x1ABC9C).set_author(name="Restarting the bot...")
+        await ctx.send(embed=embedVar)
+        await self.bot.close()
+        await asyncio.sleep(5)
 
     def log_changes(self, author, changes):
         for key, (old_value, new_value) in changes.items():
