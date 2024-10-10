@@ -139,7 +139,14 @@ class Bridge(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
-        if isinstance(error, commands.CommandOnCooldown):
+        if isinstance(error, commands.CheckFailure):
+            embed = discord.Embed(
+                title="Unauthorized",
+                description=f"You do not have access to this command.",
+                color=discord.Color.red()
+            )
+            await send_temp_message(ctx, embed)
+        elif isinstance(error, commands.CommandOnCooldown):
             embed = discord.Embed(
                 title="Cooldown",
                 description=f"This command is on cooldown. Try again in {error.retry_after:.2f} seconds.",
