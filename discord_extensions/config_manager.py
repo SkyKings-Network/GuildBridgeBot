@@ -180,7 +180,7 @@ class ConfigManagement(commands.Cog):
 
         try:
             msg = await self.bot.wait_for('message', check=check, timeout=60.0)
-            choice = int(msg.content)
+            choice = int(msg.content) - 1
             if 0 <= choice < len(backups):
                 restored_config = config_utils.restore_config(True, choice)
                 if restored_config:

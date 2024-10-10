@@ -95,9 +95,7 @@ def restore_config(dsc, choice = None):
             return None
 
     try:
-        print(choice)
         choice = int(choice) - 1
-        print(backups[choice])
         if 0 <= choice < len(backups):
             with open(backups[choice], 'r') as f:
                 return json.load(f)

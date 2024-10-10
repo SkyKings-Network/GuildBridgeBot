@@ -21,19 +21,27 @@ class Generic(commands.Cog):
         embed.add_field(
             name="Discord Commands",
             value=f"``{DiscordConfig.prefix}invite <username>``: Invites the user to the guild\n"
-                  f"``{DiscordConfig.prefix}promote <username>``: Promotes the given user\n"
-                  f"``{DiscordConfig.prefix}demote <username>``: Demotes the given user\n"
-                  f"``{DiscordConfig.prefix}setrank <username> <rank>``: Sets the given user to a specific rank\n"
-                  f"``{DiscordConfig.prefix}kick <username> [reason]``: Kicks the given user\n"
-                  f"``{DiscordConfig.prefix}notifications``: Toggles join / leave notifications\n"
-                  f"``{DiscordConfig.prefix}online``: Shows the online members\n"
-                  f"``{DiscordConfig.prefix}list``: Shows the list of members\n"
-                  f"``{DiscordConfig.prefix}top``: Shows xperience ranking of members for the day\n"
-                  f"``{DiscordConfig.prefix}info``: Shows Guild Information\n"
-                  f"``{DiscordConfig.prefix}override <command>``: Forces the bot to use a given command\n"
-                  f"``{DiscordConfig.prefix}toggleaccept``: Toggles auto accepting members joining the guild\n"
-                  f"``{DiscordConfig.prefix}mute <username> <time>`` - Mutes the user for a specific time\n"
-                  f"``{DiscordConfig.prefix}unmute <username>`` - Unmutes the user",
+                f"``{DiscordConfig.prefix}promote <username>``: Promotes the given user\n"
+                f"``{DiscordConfig.prefix}demote <username>``: Demotes the given user\n"
+                f"``{DiscordConfig.prefix}setrank <username> <rank>``: Sets the given user to a specific rank\n"
+                f"``{DiscordConfig.prefix}kick <username> [reason]``: Kicks the given user\n"
+                f"``{DiscordConfig.prefix}notifications``: Toggles join / leave notifications\n"
+                f"``{DiscordConfig.prefix}online``: Shows the online members\n"
+                f"``{DiscordConfig.prefix}list``: Shows the list of members\n"
+                f"``{DiscordConfig.prefix}top``: Shows xperience ranking of members for the day\n"
+                f"``{DiscordConfig.prefix}info``: Shows Guild Information\n"
+                f"``{DiscordConfig.prefix}override <command>``: Forces the bot to use a given command\n"
+                f"``{DiscordConfig.prefix}toggleaccept``: Toggles auto accepting members joining the guild\n"
+                f"``{DiscordConfig.prefix}mute <username> <time>``: Mutes the user for a specific time\n"
+                f"``{DiscordConfig.prefix}unmute <username>``: Unmutes the user\n"
+                f"``{DiscordConfig.prefix}showconfig``: Displays the current configuration\n"
+                f"``{DiscordConfig.prefix}updateconfig <key> <value>``: Queues a configuration update\n"
+                f"``{DiscordConfig.prefix}saveconfig``: Applies and saves queued configuration changes\n"
+                f"``{DiscordConfig.prefix}cancelchanges``: Cancels all queued configuration changes\n"
+                f"``{DiscordConfig.prefix}showchanges``: Shows all queued configuration changes\n"
+                f"``{DiscordConfig.prefix}backupconfig``: Creates a backup of the current configuration\n"
+                f"``{DiscordConfig.prefix}restoreconfig``: Restores configuration from a backup\n"
+                f"``{DiscordConfig.prefix}validateconfig``: Validates the current configuration",
             inline=False
         )
         embed.add_field(
@@ -41,7 +49,8 @@ class Generic(commands.Cog):
             value=f"Guild Channel: <#{DiscordConfig.channel}>\n"
                   f"Officer Channel: <#{DiscordConfig.officerChannel}>\n"
                   f"Command Role: <@&{DiscordConfig.commandRole}>\n"
-                  f"Override Role: <@&{DiscordConfig.overrideRole}>\n",
+                  f"Override Role: <@&{DiscordConfig.overrideRole}>\n"
+                  f"Server Name: {DiscordConfig.serverName}\n",
             inline=False
         )
         embed.set_footer(text=f"Made by SkyKings")
