@@ -69,8 +69,7 @@ default_config = {
         "sendChannel": ""
     },
     "settings": {"autoaccept": False, "dateLimit": 30, "extensions": []},
-    "logging": {"enabled": False, "level": "INFO", "file": "guildbridge.log"},
-    "encryption": {"enabled": False, "key": ""}
+    "logging": {"enabled": False, "level": "INFO", "file": "guildbridge.log"}
 }
 
 def install_modules():
