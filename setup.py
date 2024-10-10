@@ -228,20 +228,11 @@ def get_user_input(config):
                 break
             print("Invalid log level. Please try again.")
         config['logging']['file'] = input("Enter log file name (default: guildbridge.log): ") or "guildbridge.log"
-
-    encrypt_config = input("Do you want to encrypt sensitive information in the config? (yes/no, default: no): ").lower() == 'yes'
-    if encrypt_config:
-        config['encryption']['enabled'] = True
-        config['encryption']['key'] = generate_encryption_key().decode()
-        print("Encryption key generated. Please keep it safe!")
         
     return config
 
 def write_config(config):
-    try:
-        if config['encryption']['enabled']:
-            config = encrypt_config(config, config['encryption']['key'].encode())
-        
+    try:        
         with open("config.json", "w") as f:
             json.dump(config, f, indent=4)
         print("\nConfiguration successfully saved to config.json.")
@@ -282,10 +273,7 @@ def restore_config():
 
 def print_summary(config):
     print("\nConfiguration Summary:")
-    safe_config = config.copy()
-    safe_config['discord']['token'] = '********' if safe_config['discord']['token'] else ''
-    safe_config['redis']['password'] = '********' if safe_config['redis']['password'] else ''
-    print(json.dumps(safe_config, indent=2))
+    print(json.dumps(config, indent=2))
     print("\nPlease review the configuration above.")
     confirm = input("Is this configuration correct? (yes/no): ").lower()
     return confirm == 'yes'
@@ -302,40 +290,6 @@ def is_config_valid(config):
         config['discord']['officerWebhookURL']
     ]
     return all(required_fields)
-
-def encrypt_config(config, key):
-    f = Fernet(key)
-    sensitive_fields = [
-        ('discord', 'token'),
-        ('discord', 'webhookURL'),
-        ('discord', 'officerWebhookURL'),
-        ('discord', 'debugWebhookURL'),
-        ('redis', 'password')
-    ]
-    for section, field in sensitive_fields:
-        if section in config and field in config[section] and config[section][field]:
-            config[section][field] = f.encrypt(config[section][field].encode()).decode()
-    return config
-
-def decrypt_config(config, key):
-    f = Fernet(key)
-    sensitive_fields = [
-        ('discord', 'token'),
-        ('discord', 'webhookURL'),
-        ('discord', 'officerWebhookURL'),
-        ('discord', 'debugWebhookURL'),
-        ('redis', 'password')
-    ]
-    for section, field in sensitive_fields:
-        if section in config and field in config[section] and config[section][field]:
-            try:
-                config[section][field] = f.decrypt(config[section][field].encode()).decode()
-            except:
-                print(f"Warning: Unable to decrypt {section}.{field}. It may not be encrypted.")
-    return config
-
-def generate_encryption_key():
-    return Fernet.generate_key()
 
 def migrate_config(old_config):
     current_version = old_config.get('version', '0.0')
@@ -371,10 +325,6 @@ def read_config():
     try:
         with open("config.json", "r") as f:
             config = json.load(f)
-        
-        if config.get('encryption', {}).get('enabled', False):
-            key = getpass.getpass("Enter the encryption key to decrypt the configuration: ").encode()
-            config = decrypt_config(config, key)
         
         return config
     except IOError as e:
