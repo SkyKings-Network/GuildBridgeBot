@@ -81,7 +81,7 @@ class GuildMessageParser:
         member_text = member_text.replace('●', '').strip()
         
         # Extract rank if present
-        rank_match = re.match(r'\[(MVP\+\+?|VIP\+?)\]\s+', member_text)
+        rank_match = re.match(r'\[(MVP\+\+?|MVP|VIP\+?|VIP)\]\s+', member_text)
         if rank_match:
             rank = self._clean_rank(rank_match.group(0))
             name = member_text[rank_match.end():].strip()
