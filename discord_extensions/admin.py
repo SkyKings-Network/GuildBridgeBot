@@ -49,7 +49,6 @@ class Admin(commands.Cog):
         os.system("git pull")
         await self.bot.close()
         await asyncio.sleep(10)
-        os.system("python3 -m pip install -U -r requirements.txt")
 
     @commands.command()
     @commands.has_role(DiscordConfig.overrideRole)
