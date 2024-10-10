@@ -1,3 +1,4 @@
+import signal
 import subprocess
 import json
 import os
@@ -127,10 +128,10 @@ def get_user_input(config):
     print("\nPlease provide the following configuration details:\n")
 
     config['account']['email'] = validate_input(
-        f"Enter your account email (default: {config['account']['email']}): ",
+        f"Enter your account email: ",
         is_valid_email,
         "Invalid email format. Please try again.",
-        allow_empty=True
+        allow_empty=False
     ) or config['account']['email']
 
     config['discord']['token'] = getpass.getpass("Enter Discord bot token: ")
@@ -419,6 +420,14 @@ def main():
                 print("Previous configuration restored and migrated if necessary.")
             else:
                 print("Restoration cancelled.")
+
+def signal_handler(sig, frame):
+    print("\nSetup cancelled.")
+    print("No changes made.")
+    exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
 
 if __name__ == "__main__":
     main()
