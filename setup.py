@@ -77,17 +77,17 @@ def install_modules():
         with open(os.devnull, 'w') as devnull:
             # Installing Python modules from requirements.txt
             print("\nInstalling required Python modules from requirements.txt...")
-            subprocess.check_call(["pip", "install", "-r", "requirements.txt"], stdout=devnull, stderr=devnull)
+            subprocess.check_call(["pip", "install", "-r", "requirements.txt"], stdout=devnull, stderr=subprocess.stdout)
             print("Python modules installed.\n")
 
             # Installing discord.py
             print("Installing discord.py module...")
-            subprocess.check_call(["pip", "install", "discord.py"], stdout=devnull, stderr=devnull)
+            subprocess.check_call(["pip", "install", "discord.py"], stdout=devnull, stderr=subprocess.stdout)
             print("discord.py installed.\n")
 
             # Installing mineflayer via npm
             print("Installing mineflayer via npm...")
-            subprocess.check_call(["npm", "install", "mineflayer"], stdout=devnull, stderr=devnull)
+            subprocess.check_call(["npm", "install", "mineflayer"], stdout=devnull, stderr=subprocess.stdout)
             print("mineflayer installed.\n")
 
         print("All required modules were installed successfully.")
