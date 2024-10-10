@@ -177,11 +177,9 @@ class GuildMessageParser:
             member_texts = []
             for m in role.members:
                 rank_format = self._format_rank(m.rank)
-                member_text = f"{rank_format} {m.name}" if rank_format else m.name
+                member_name = re.sub(r'([*_~`|])', r'\\\1', m.name)
+                member_text = f"{rank_format} {member_name}" if rank_format else m.name
                 member_texts.append(member_text)
-            
-            # Remove any discord formatting characters by using \ behind them
-            member_texts = [re.sub(r'([*_~`|])', r'\\\1', text) for text in member_texts]
             
             role_description += ", ".join(member_texts) + "\n\n"
             
