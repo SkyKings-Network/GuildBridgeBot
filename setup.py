@@ -5,6 +5,7 @@ import os
 import re
 import shutil
 from datetime import datetime
+import time
 import uuid
 from cryptography.fernet import Fernet
 import getpass
@@ -382,6 +383,8 @@ def read_config():
 
 def main():
     print(welcome_message)
+
+    time.sleep(5)
 
     if os.path.exists("config.json"):
         existing_config = read_config()
