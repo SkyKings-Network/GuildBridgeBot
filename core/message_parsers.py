@@ -241,7 +241,7 @@ class GuildMessageParser:
         # Reverse data to show oldest to newest
         dates, exp_values = zip(*reversed(exp_data))
         
-        # Create figure with tansparent background
+        # Create figure with transparent background
         plt.style.use('default')
         fig, ax = plt.subplots(figsize=(12, 6))
         
@@ -279,6 +279,9 @@ class GuildMessageParser:
         
         # Adjust layout
         plt.tight_layout()
+        
+        # Set y-axis limits to scale better
+        ax.set_ylim(min(exp_values) * 0.95, max(exp_values) * 1.05)
         
         # Save to bytes buffer
         buf = io.BytesIO()
