@@ -47,6 +47,7 @@ class Admin(commands.Cog):
         embedVar = discord.Embed(color=0x1ABC9C).set_author(name="Updating the bot...")
         await ctx.send(embed=embedVar)
         os.system("git pull")
+        os.system("python3 -m pip install -U -r requirements.txt")
         await self.bot.close()
         await asyncio.sleep(10)
 
