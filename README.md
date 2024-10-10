@@ -131,8 +131,6 @@ Follow these instructions to copy the repository to a new server.
 
 | Command | Description |
 |---------|-------------|
-| `!officerchat` | Toggle officer chat mode |
-| `!guildchat` | Toggle regular guild chat mode |
 | `!notifications` | Toggle join/leave notifications |
 | `!toggleaccept` | Toggle auto-accepting guild invites |
 
