@@ -76,6 +76,7 @@ def backup_config():
         backup_name = f"config_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         shutil.copy("config.json", backup_name)
         print(f"Existing configuration backed up as {backup_name}")
+        return backup_name
 
 def restore_config():
     backups = [f for f in os.listdir() if f.startswith("config_backup_") and f.endswith(".json")]
