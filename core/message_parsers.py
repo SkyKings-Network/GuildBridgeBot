@@ -81,7 +81,7 @@ class GuildMessageParser:
         member_text = member_text.replace('●', '').strip()
         
         # Extract rank if present
-        rank_match = re.match(r'\[(MVP\+?|VIP\+?)\]\s+', member_text)
+        rank_match = re.match(r'\[(MVP\+\+?|MVP|VIP\+?|VIP)\]\s+', member_text)
         if rank_match:
             rank = self._clean_rank(rank_match.group(0))
             name = member_text[rank_match.end():].strip()
@@ -170,14 +170,15 @@ class GuildMessageParser:
         current_description = ""
         page_number = 1
 
-        current_description += f"# {self.guild_name}\n\n"
+        current_description += f"## {self.guild_name}\n\n"
 
         for role in self.roles:
-            role_description = f"## {role.name}\n"
+            role_description = f"### {role.name}\n"
             member_texts = []
             for m in role.members:
                 rank_format = self._format_rank(m.rank)
-                member_text = f"{rank_format}{m.name}" if rank_format else m.name
+                member_name = re.sub(r'([*_~`|])', r'\\\1', m.name)
+                member_text = f"{rank_format} {member_name}" if rank_format else m.name
                 member_texts.append(member_text)
             
             role_description += ", ".join(member_texts) + "\n\n"
@@ -192,22 +193,25 @@ class GuildMessageParser:
 
         # Add statistics to the last embed
         stats_description = (
-            f"## Guild Statistics\n"
+            f"\n### Guild Statistics\n"
             f"**Total Members:** {self.total_members}\n"
             f"**Online Members:** {self.online_members}\n"
             f"**Offline Members:** {self.offline_members}\n"
         )
 
-        embeds.append(discord.Embed(description=current_description.strip(), colour=0x1ABC9C))
-        current_description = f"# {self.guild_name} (Statistics)\n\n" + stats_description
-        page_number += 1
+        if len(current_description) + len(stats_description) < 4000:
+            current_description += stats_description
+        else:
+            embeds.append(discord.Embed(description=current_description.strip(), colour=0x1ABC9C))
+            current_description = f"# {self.guild_name} (Statistics)\n\n" + stats_description
+            page_number += 1
 
         embeds.append(discord.Embed(description=current_description.strip(), colour=0x1ABC9C))
 
         # Update titles with page numbers
         total_pages = len(embeds)
         for i, embed in enumerate(embeds, 1):
-            embed.title = f"{self.guild_name} - Page {i}/{total_pages}"
+            embed.set_footer(text=f"{self.guild_name} - Page {i}/{total_pages}")
 
         return embeds
 
@@ -238,7 +242,7 @@ class GuildMessageParser:
         # Reverse data to show oldest to newest
         dates, exp_values = zip(*reversed(exp_data))
         
-        # Create figure with tansparent background
+        # Create figure with transparent background
         plt.style.use('default')
         fig, ax = plt.subplots(figsize=(12, 6))
         
@@ -276,6 +280,9 @@ class GuildMessageParser:
         
         # Adjust layout
         plt.tight_layout()
+        
+        # Set y-axis limits to scale better
+        ax.set_ylim(min(exp_values) * 0.95, max(exp_values) * 1.05)
         
         # Save to bytes buffer
         buf = io.BytesIO()
