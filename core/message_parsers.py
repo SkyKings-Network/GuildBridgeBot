@@ -76,6 +76,15 @@ class GuildMessageParser:
     def _clean_rank(self, rank: str) -> str:
         return re.sub(r'[\[\]]', '', rank).strip()
 
+    def _reset_data(self):
+        self.guild_name = ""
+        self.total_members = 0
+        self.online_members = 0
+        self.offline_members = 0
+        self.roles = []
+        self.top_entries = []
+        self.date = None
+
     def _extract_member_info(self, member_text: str) -> GuildMember:
         # Remove the bullet point
         member_text = member_text.replace('●', '').strip()
@@ -196,8 +205,10 @@ class GuildMessageParser:
             f"\n### Guild Statistics\n"
             f"**Total Members:** {self.total_members}\n"
             f"**Online Members:** {self.online_members}\n"
-            f"**Offline Members:** {self.offline_members}\n"
         )
+
+        if not self.offline_members == 0:
+            stats_description = (stats_description, f"**Offline Members:** {self.offline_members}\n")
 
         if len(current_description) + len(stats_description) < 4000:
             current_description += stats_description
@@ -213,6 +224,7 @@ class GuildMessageParser:
         for i, embed in enumerate(embeds, 1):
             embed.set_footer(text=f"{self.guild_name} - Page {i}/{total_pages}")
 
+        self._reset_data()
         return embeds
 
 
@@ -236,6 +248,7 @@ class GuildMessageParser:
             )
         
         embed.description = "\n".join(description)
+        self._reset_data()
         return [embed]
 
     def _create_exp_graph(self, exp_data):
@@ -360,5 +373,6 @@ class GuildMessageParser:
         embed.set_image(url="attachment://exp_graph.png")
         embed.set_footer(text="Last Updated")
         embed.timestamp = datetime.utcnow()
-        
+
+        self._reset_data()        
         return {"embed": embed, "file": file}
