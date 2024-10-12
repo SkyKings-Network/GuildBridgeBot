@@ -5,7 +5,6 @@ import discord
 from discord.ext import commands
 
 from core.config import DiscordConfig, SettingsConfig
-from utils.utils import send_temp_message
 
 
 class Bridge(commands.Cog):
