@@ -20,6 +20,7 @@ async def main():
         await bot.load_extension("discord_extensions.admin")
         await bot.load_extension("discord_extensions.bridge")
         await bot.load_extension("discord_extensions.generic")
+        await bot.load_extension("discord_extensions.config_manager")
         if SettingsConfig.extensions:
             print(f"Ext > Loading {len(SettingsConfig.extensions)} extensions...")
             for extension in SettingsConfig.extensions:

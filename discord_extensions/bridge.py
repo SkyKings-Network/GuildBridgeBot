@@ -1,9 +1,9 @@
 import asyncio
 import sys
 import traceback
-
 import discord
 from discord.ext import commands
+
 from core.config import DiscordConfig, SettingsConfig
 
 
@@ -138,24 +138,23 @@ class Bridge(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
-        if isinstance(error, commands.CommandOnCooldown):
+        if isinstance(error, commands.CheckFailure):
+            embed = discord.Embed(
+                title="Unauthorized",
+                description=f"You do not have access to this command.",
+                color=discord.Color.red()
+            )
+            await ctx.send(embed, , delete_after=5)
+        elif isinstance(error, commands.CommandOnCooldown):
             embed = discord.Embed(
                 title="Cooldown",
                 description=f"This command is on cooldown. Try again in {error.retry_after:.2f} seconds.",
                 color=discord.Color.red()
             )
-            await self.send_temp_message(ctx, embed)
+            await ctx.send(embed, , delete_after=5)
         else:
             print(f"Ignoring exception in command {ctx.command}:", file=sys.stderr)
             traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
-
-    async def send_temp_message(self, ctx, embed):
-        message = await ctx.send(embed=embed)
-        await asyncio.sleep(5)
-        try:
-            await message.delete()
-        except discord.errors.NotFound:
-            pass
 
 async def setup(bot):
     await bot.add_cog(Bridge(bot))
