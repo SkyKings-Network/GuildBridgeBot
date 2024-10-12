@@ -145,14 +145,14 @@ class Bridge(commands.Cog):
                 description=f"You do not have access to this command.",
                 color=discord.Color.red()
             )
-            await send_temp_message(ctx, embed)
+            await ctx.send(embed, , delete_after=5)
         elif isinstance(error, commands.CommandOnCooldown):
             embed = discord.Embed(
                 title="Cooldown",
                 description=f"This command is on cooldown. Try again in {error.retry_after:.2f} seconds.",
                 color=discord.Color.red()
             )
-            await send_temp_message(ctx, embed)
+            await ctx.send(embed, , delete_after=5)
         else:
             print(f"Ignoring exception in command {ctx.command}:", file=sys.stderr)
             traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
