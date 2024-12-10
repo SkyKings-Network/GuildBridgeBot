@@ -7,7 +7,6 @@ import asyncio
 import datetime
 
 import aiohttp
-import discord
 from discord.ext import commands
 from core.config import DiscordConfig, ExtensionConfig, ConfigKey
 

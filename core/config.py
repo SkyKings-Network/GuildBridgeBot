@@ -26,12 +26,15 @@ except json.JSONDecodeError as e:
 
 
 class ConfigKey:
-    def __init__(self, type: type, default=...):
+    def __init__(self, type: type, default=..., *, list_type: type = None):
+        if type is not list and list_type:
+            raise ValueError("list_type is only valid when type is list")
         self.type = type
         self.default = default if default is not ... else ""
         self.required = default is ...
         self.basekey = None
         self.key = None
+        self.list_type = list_type
 
     def validate(self, value):
         if not value:
@@ -42,8 +45,20 @@ class ConfigKey:
             try:
                 value = self.type(value)
             except Exception:
-                raise TypeError(f"Expected {self.type.__name__} for '{self.key}' in section '{self.basekey}' "
-                                f"but got {type(value).__name__}")
+                raise TypeError(
+                    f"Expected {self.type.__name__} for '{self.key}' in section '{self.basekey}' "
+                    f"but got {type(value).__name__}"
+                    )
+        if isinstance(value, list) and self.list_type:
+            for index, item in enumerate(value):
+                if not isinstance(item, self.list_type):
+                    try:
+                        value[index] = self.list_type(item)
+                    except Exception:
+                        raise TypeError(
+                            f"Expected {self.list_type.__name__} for '{self.key}.{index}' in section '{self.basekey}' "
+                            f"but got {type(item).__name__}"
+                        )
         return value
 
 
@@ -83,9 +98,11 @@ class _ConfigObject(type):
             # check if anything is required
             for k, v in keys.items():
                 if v.required:
-                    raise InvalidConfig(f"Missing required section '{obj.BASE_KEY}'. "
-                                        f"It has been automatically added to the config file, "
-                                        f"please update the settings.")
+                    raise InvalidConfig(
+                        f"Missing required section '{obj.BASE_KEY}'. "
+                        f"It has been automatically added to the config file, "
+                        f"please update the settings."
+                        )
         return obj
 
     @classmethod
@@ -105,7 +122,7 @@ class _ConfigObject(type):
         raise NotImplementedError
 
     @classmethod
-    def get(cls, key: str) -> Any   :
+    def get(cls, key: str) -> Any:
         raise NotImplementedError
 
     @classmethod
@@ -173,7 +190,9 @@ class AccountConfig(ConfigObject, base_key="account"):
 class DiscordConfig(ConfigObject, base_key="discord"):
     token: str = ConfigKey(str)
     channel: int = ConfigKey(int)
+    allowCrosschat: List[int] = ConfigKey(list, [], list_type=int)
     officerChannel: Union[int, None] = ConfigKey(int, None)
+    allowOfficerCrosschat: List[int] = ConfigKey(list, [], list_type=int)
     commandRole: Union[int, None] = ConfigKey(int, None)
     overrideRole: Union[int, None] = ConfigKey(int, None)
     ownerId: Union[int, None] = ConfigKey(int, None)
@@ -182,6 +201,7 @@ class DiscordConfig(ConfigObject, base_key="discord"):
     officerWebhookURL: Union[str, None] = ConfigKey(str, None)
     debugWebhookURL: Union[str, None] = ConfigKey(str, None)
     serverName: Union[str, None] = ConfigKey(str, None)
+    ignoreCrosschatWarning: bool = ConfigKey(bool, False)
 
 
 class RedisConfig(ConfigObject, base_key="redis"):
@@ -196,7 +216,7 @@ class RedisConfig(ConfigObject, base_key="redis"):
 class SettingsConfig(ConfigObject, base_key="settings"):
     autoaccept: bool = ConfigKey(bool, False)
     dateLimit: int = ConfigKey(int, 30)
-    extensions: List[str] = ConfigKey(list, [])
+    extensions: List[str] = ConfigKey(list, [], list_type=str)
 
 
 _config_objects = [ServerConfig, AccountConfig, DiscordConfig, RedisConfig, SettingsConfig]
@@ -225,6 +245,7 @@ if _fnf:
     )
 validate_config(config)
 _completed_init = True
+
 
 class ExtensionConfig(ConfigObject, base_key=""):
     """

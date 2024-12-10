@@ -6,6 +6,7 @@ import os
 
 from javascript import require, On, config
 
+from core.colors import Color
 from core.config import ServerConfig, SettingsConfig, AccountConfig
 
 mineflayer = require("mineflayer")
@@ -31,7 +32,7 @@ class MinecraftBotManager:
         await self.client.loop.run_in_executor(None, self.bot.chat, message)
 
     def stop(self, restart: bool = True):
-        print("Minecraft > Stopping bot.....")
+        print(f"{Color.GREEN}Minecraft{Color.RESET} > Stopping bot.....")
         self.auto_restart = restart
         try:
             self.bot.quit()
@@ -57,20 +58,20 @@ class MinecraftBotManager:
         def login(this):
             if not self._online:
                 self.send_to_discord("Bot Online")
-                print("Minecraft > Bot is logged in as", self.bot.username)
+                print(f"{Color.GREEN}Minecraft{Color.RESET} > Bot is logged in as", self.bot.username)
             self._online = True
             self._ready.set()
             self.client.dispatch("minecraft_ready")
 
         @On(self.bot, "end")
         def end(this, reason):
-            print(f"Minecraft > Bot offline: {reason}")
+            print(f"{Color.GREEN}Minecraft{Color.RESET} > Bot offline: {reason}")
             self.send_to_discord("Bot Offline")
             self.client.dispatch("minecraft_disconnected")
             self._online = False
             self._ready.clear()
             if self.auto_restart:
-                print("Minecraft > Restarting...")
+                print(f"{Color.GREEN}Minecraft{Color.RESET} > Restarting...")
                 # new_bot = self.createbot(self.client)
                 # self.client.mineflayer_bot = new_bot
                 # return
@@ -86,7 +87,7 @@ class MinecraftBotManager:
 
         @On(self.bot, "kicked")
         def kicked(this, reason, loggedIn):
-            print(f"Mineflayer > Bot kicked: {reason}")
+            print(f"{Color.GREEN}Minecraft{Color.RESET} > Bot kicked: {reason}")
             self.client.dispatch("minecraft_disconnected")
             if loggedIn:
                 self.send_to_discord(f"Bot kicked: {reason}")
@@ -181,7 +182,7 @@ class MinecraftBotManager:
 
     @classmethod
     def createbot(cls, client):
-        print("Mineflayer > Creating the bot...")
+        print(f"{Color.GREEN}Minecraft{Color.RESET} > Creating the bot...")
         bot = mineflayer.createBot(
             {
                 "host": ServerConfig.host,
@@ -192,9 +193,9 @@ class MinecraftBotManager:
                 "viewDistance": "tiny",
             }
         )
-        print("Mineflayer > Initialized")
+        print(f"{Color.GREEN}Minecraft{Color.RESET} > Initialized")
         botcls = cls(client, bot)
         client.mineflayer_bot = botcls
         botcls.oncommands()
-        print("Mineflayer > Events registered")
+        print(f"{Color.GREEN}Minecraft{Color.RESET} > Events registered")
         return botcls

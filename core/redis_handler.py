@@ -3,6 +3,8 @@ import json
 import traceback
 import uuid
 import redis.asyncio as redis
+
+from core.colors import Color
 from core.config import RedisConfig
 
 
@@ -129,7 +131,7 @@ class RedisManager:
             async with self.redis.pubsub() as pubsub:
                 channel = self.recieve_channel + ":" + self.client_name
                 await pubsub.subscribe(channel)
-                print(f"Redis > Subscribed to {channel}")
+                print(f"{Color.MAGENTA}Redis{Color.RESET} > Subscribed to {channel}")
                 while (not self.bot.is_closed()) and self.running:
                     try:
                         message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=10)
@@ -140,11 +142,11 @@ class RedisManager:
                     try:
                         message_data = json.loads(message["data"])
                     except json.JSONDecodeError as e:  # pylint: disable=broad-exception-caught
-                        print("Redis > Invalid payload received: " + str(e))
+                        print(f"{Color.MAGENTA}Redis{Color.RESET} > Invalid payload received: " + str(e))
                         continue
                     if message_data.get("type") not in ("request", "response"):
                         print(
-                            "Redis > Invalid payload received (missing or invalid `type`)"
+                            f"{Color.MAGENTA}Redis{Color.RESET} > Invalid payload received (missing or invalid `type`)"
                         )
                         continue
                     if message_data["type"] == "response":
@@ -156,10 +158,10 @@ class RedisManager:
                         continue
                     if "source" not in message_data:
                         print(
-                            "Redis > Invalid payload received (missing source)"
+                            f"{Color.MAGENTA}Redis{Color.RESET} > Invalid payload received (missing source)"
                         )
                         continue
-                    print(f"Redis > Handling message from {message_data.get('source')}")
+                    print(f"{Color.MAGENTA}Redis{Color.RESET} > Handling message from {message_data.get('source')}")
                     try:
                         response = await self.process_request(message_data)
                     except Exception as e:  # pylint: disable=broad-exception-caught
@@ -168,7 +170,7 @@ class RedisManager:
                             uuid=message_data["uuid"],
                             data={"error": str(e)},
                         )
-                        print("Redis > Error processing request\n" + str(e))
+                        print(f"{Color.MAGENTA}Redis{Color.RESET} > Error processing request\n" + str(e))
                         traceback.print_exc()
                         print("Payload: " + str(message_data))
                         continue
@@ -178,11 +180,11 @@ class RedisManager:
                         data=response,
                     )
         except asyncio.CancelledError:
-            print("Redis > Task Cancelled")
+            print(f"{Color.MAGENTA}Redis{Color.RESET} > Task Cancelled")
         except redis.ConnectionError:
-            print("Redis > Redis connection closed")
+            print(f"{Color.MAGENTA}Redis{Color.RESET} > Redis connection closed")
         except Exception as e:  # pylint: disable=broad-exception-caught
-            print("Redis > Critical error occurred\n" + str(e))
+            print(f"{Color.MAGENTA}Redis{Color.RESET} > Critical error occurred\n" + str(e))
             traceback.print_exc()
             content = f"Critical error occurred in RedisManager: {e}"
             content += "\n```\n" + traceback.format_exc() + "\n```"
@@ -199,10 +201,10 @@ class RedisManager:
         finally:
             if self.redis is not None:
                 await self.close(restart=self._restart)
-        print("Redis > Connection closed")
+        print(f"{Color.MAGENTA}Redis{Color.RESET} > Connection closed")
         if self._restart:
             await asyncio.sleep(5)
-            print("Redis > Restarting...")
+            print(f"{Color.MAGENTA}Redis{Color.RESET} > Restarting...")
             await self.start()
 
     async def send_message(self, **data) -> str:
