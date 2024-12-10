@@ -15,6 +15,7 @@ except ModuleNotFoundError as e:
 
 bot = DiscordBridgeBot()
 
+
 async def main():
     async with bot:
         await bot.load_extension("discord_extensions.admin")
@@ -27,5 +28,6 @@ async def main():
                 print(f"Ext > {extension} loaded!")
             print("Ext > Extensions loaded!")
         await bot.start(DiscordConfig.token)
+
 
 asyncio.run(main())

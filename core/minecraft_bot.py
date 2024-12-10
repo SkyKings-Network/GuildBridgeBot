@@ -19,7 +19,11 @@ class MinecraftBotManager:
         self.message_buffer = []
         self.auto_restart = True
         self._online = False
-    
+        self._ready = asyncio.Event()
+
+    async def wait_until_ready(self):
+        await self._ready.wait()
+
     def is_online(self):
         return self._online
 
@@ -27,14 +31,15 @@ class MinecraftBotManager:
         await self.client.loop.run_in_executor(None, self.bot.chat, message)
 
     def stop(self, restart: bool = True):
-        print("Stopping bot.....")
+        print("Minecraft > Stopping bot.....")
         self.auto_restart = restart
         try:
             self.bot.quit()
         except Exception as e:
-            logging.error(f"Failed to quit bot gracefully: {e}")
+            pass
         finally:
             self._online = False
+            self._ready.clear()
             while self._online:
                 time.sleep(0.2)
 
@@ -43,42 +48,42 @@ class MinecraftBotManager:
 
     async def reconnect(self):
         await asyncio.sleep(3)
-        asyncio.run_coroutine_threadsafe(self.discord_bot.close(), self.client.loop)
+        asyncio.run_coroutine_threadsafe(self.client.close(), self.client.loop)
 
     def oncommands(self):
         message_buffer = []
 
-        @On(self.bot, "login")
+        @On(self.bot, "spawn")
         def login(this):
-            print("Bot is logged in.")
-            print(self.bot.username)
-            self.bot.chat("§")
+            print("Minecraft > Bot is logged in as", self.bot.username)
             if not self._online:
                 self.send_to_discord("Bot Online")
             self._online = True
+            self._ready.set()
             self.client.dispatch("minecraft_ready")
 
         @On(self.bot, "end")
         def end(this, reason):
-            print(f"Mineflayer > Bot offline: {reason}")
+            print(f"Minecraft > Bot offline: {reason}")
             self.send_to_discord("Bot Offline")
             self.client.dispatch("minecraft_disconnected")
             self._online = False
+            self._ready.clear()
             if self.auto_restart:
-                print("Mineflayer > Restarting...")
+                print("Minecraft > Restarting...")
                 # new_bot = self.createbot(self.client)
                 # self.client.mineflayer_bot = new_bot
                 # return
                 self.send_to_discord("Updating the bot...")
                 os.system("git pull")
-                
+
                 asyncio.run(self.reconnect())
 
             for state, handler, thread in config.event_loop.threads:
                 thread.terminate()
             config.event_loop.threads = []
             config.event_loop.stop()
-        
+
         @On(self.bot, "kicked")
         def kicked(this, reason, loggedIn):
             print(f"Mineflayer > Bot kicked: {reason}")
@@ -87,7 +92,6 @@ class MinecraftBotManager:
                 self.send_to_discord(f"Bot kicked: {reason}")
             else:
                 self.send_to_discord(f"Bot kicked before logging in: {reason}")
-            
 
         @On(self.bot, "error")
         def error(this, reason):
@@ -96,36 +100,34 @@ class MinecraftBotManager:
 
         @On(self.bot, "messagestr")
         def chat(this, message, messagePosition, jsonMsg, sender, verified):
-            def print_message(_message):
-                max_length = 100  # Maximum length of each chunk
-                chunks = [_message[i:i + max_length] for i in range(0, len(_message), max_length)]
-                for chunk in chunks:
-                    print(chunk)
-
-            print_message(message)
-
             if self.bot.username is None:
                 pass
             else:
+                print(message)
                 if message.startswith("Guild > " + self.bot.username) or message.startswith(
                         "Officer > " + self.bot.username
-                        ):
+                ):
                     pass
                 else:
                     if message.startswith("Guild >") or message.startswith("Officer >"):
                         self.send_to_discord(message)
 
-                    # Online Command
-                    if message.startswith("Guild Name: ") or "Top Guild Experience" in message or message.startswith("Created: "):
+                    # Online Command / GEXP Command
+                    if (
+                            message.startswith("Guild Name: ") or
+                            "Top Guild Experience" in message or
+                            message.startswith("Created: ")
+                    ):
                         message_buffer.clear()
                         self.wait_response = True
                     if message == "-----------------------------------------------------" and self.wait_response:
                         self.wait_response = False
                         self.send_to_discord("\n".join(message_buffer))
                         message_buffer.clear()
+                        print("End buffer")
                     if self.wait_response is True:
                         message_buffer.append(message)
-
+                        return
 
                     if "Unknown command" in message:
                         self.send_to_discord(message)
@@ -150,7 +152,8 @@ class MinecraftBotManager:
                             "is already in your guild!" in message or \
                             ("has muted" in message and "for" in message) or \
                             "has unmuted" in message or \
-                            "You're currently guild muted" in message:
+                            "You're currently guild muted" in message or \
+                            "Guild Log" in message:  # Guild log is sent as one fat message
                         self.send_to_discord(message)
 
     def send_minecraft_message(self, discord, message, type):

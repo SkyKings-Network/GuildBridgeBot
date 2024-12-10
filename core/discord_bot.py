@@ -3,6 +3,7 @@ import os
 import re
 import threading
 import traceback
+from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Coroutine, Union
 
 import aiohttp
@@ -53,6 +54,12 @@ class DiscordBridgeBot(commands.Bot):
         self.officer_webhook: discord.Webhook | None = None
         self.debug_webhook: discord.Webhook | None = None
         self.name = None
+        self.add_check(self.ready_check)
+
+    async def ready_check(self, ctx):
+        await self.wait_until_ready()
+        await self.mineflayer_bot.wait_until_ready()
+        return True
 
     def get_intents(self) -> discord.Intents:
         """Returns a mutable intents class for the bot."""
@@ -71,7 +78,7 @@ class DiscordBridgeBot(commands.Bot):
         await self.send_debug_message(
             f"An error occurred in {ctx.command.name}\n\n"
             f"```py\n"
-            f"{traceback.format_exception(type(error), error, error.__traceback__)}\n"
+            f"{''.join(traceback.format_exception(type(error), error, error.__traceback__))}\n"
             f"```"
         )
 
@@ -106,7 +113,7 @@ class DiscordBridgeBot(commands.Bot):
         channel = self.get_channel(DiscordConfig.channel)
         if channel is None:
             print(f"Discord > Channel {DiscordConfig.channel} not found! Please set the correct channel ID!")
-            await self.close()
+            return await self.close()
         self.init_webhooks()
         if self.mineflayer_bot is None:
             print("Discord > Starting the Minecraft bot...")
@@ -122,6 +129,8 @@ class DiscordBridgeBot(commands.Bot):
         if not message.author.bot:
             if str(message.content).startswith(DiscordConfig.prefix):
                 pass
+            elif not self.mineflayer_bot.is_online():
+                return
             elif message.channel.id == DiscordConfig.channel:
                 await self.send_minecraft_user_message(message.author.display_name, message)
             elif message.channel.id == DiscordConfig.officerChannel:
@@ -177,7 +186,11 @@ class DiscordBridgeBot(commands.Bot):
             return None
 
         is_officer = kwargs.pop("officer", False)
-        webhook = self.officer_webhook if is_officer else self.webhook
+        officer_maybe = kwargs.pop("officer_maybe", False)
+        if officer_maybe:
+            webhook = self.officer_webhook or self.webhook
+        else:
+            webhook = self.officer_webhook if is_officer else self.webhook
            
         if webhook:
             kwargs["wait"] = True
@@ -191,15 +204,20 @@ class DiscordBridgeBot(commands.Bot):
                 print(f"Discord > Failed to send message to {'officer ' if is_officer else ''}webhook: {e}")
                 await self.send_debug_message(traceback.format_exc())
         else:
-            channel_id = DiscordConfig.officerChannel if is_officer else DiscordConfig.channel
+            if officer_maybe:
+                channel_id = DiscordConfig.officerChannel or DiscordConfig.channel
+            else:
+                channel_id = DiscordConfig.officerChannel if is_officer else DiscordConfig.channel
             channel = self.get_channel(channel_id)
             if channel is None:
-                print(f"Discord > Channel {channel_id} not found! Please set the correct channel ID!")
+                if channel_id:
+                    print(f"Discord > Channel {channel_id} not found! Please set the correct channel ID!")
                 return None
+            is_officer_channel = channel.id == DiscordConfig.officerChannel
             try:
                 return await channel.send(*args, **kwargs)
             except Exception as e:
-                print(f"Discord > Failed to send message to {'officer ' if is_officer else ''}channel {channel}: {e}")
+                print(f"Discord > Failed to send message to {'officer ' if is_officer_channel else ''}channel {channel}: {e}")
                 await self.send_debug_message(traceback.format_exc())
 
     async def send_message(self, *args, **kwargs) -> Union[discord.Message, discord.WebhookMessage, None]:
@@ -686,82 +704,63 @@ class DiscordBridgeBot(commands.Bot):
                 )
                 await self.send_debug_message("Sending bot is guild muted message")
                 await self.send_message(embed=embed)
-    
-            # mute stuff
-            elif "has muted the guild chat" in message:
-                splitmsg = message.split()
-                playername = splitmsg[0]
-                if ("[VIP]" in splitmsg or "[VIP+]" in splitmsg or
-                        "[MVP]" in splitmsg or "[MVP+]" in splitmsg or "[MVP++]" in splitmsg):
-                    playername = splitmsg[1]
-                duration = splitmsg[-1]
-                embed = Embed(colour=0x1ABC9C)
-                embed.set_author(
-                    name=f"The guild chat has been muted by {playername} for {duration}.",
-                    icon_url="https://www.mc-heads.net/avatar/" + playername
-                )
-                self.dispatch("hypixel_guild_chat_muted", playername, duration)
-                await self.debug_webhook.send("guild-muted")
-                await self.send_message(embed=embed)
-    
-            elif "has unmuted the guild chat" in message:
-                splitmsg = message.split()
-                playername = splitmsg[0]
-                if ("[VIP]" in splitmsg or "[VIP+]" in splitmsg or
-                        "[MVP]" in splitmsg or "[MVP+]" in splitmsg or "[MVP++]" in splitmsg):
-                    playername = splitmsg[1]
-                embed = Embed(colour=0x1ABC9C)
-                embed.set_author(
-                    name=f"The guild chat has been unmuted by {playername}.",
-                    icon_url="https://www.mc-heads.net/avatar/" + playername
-                )
-                self.dispatch("hypixel_guild_chat_unmuted", playername)
-                await self.debug_webhook.send("guild-unmuted")
-                await self.send_message(embed=embed)
-    
-            # personal mutes
-            elif "has muted" in message:
-                _regex = r"(?:\[[A-Z+]+\] )?([a-zA-Z0-9_]+) has muted (?:\[[A-Z+]+\] )?([a-zA-Z0-9_]+) for ([a-zA-Z0-9_]+)"
-                matches = re.match(_regex, message)
-                muter = matches.group(1)
-                muted = matches.group(2)
-                duration = matches.group(3)
-                self.dispatch("hypixel_guild_member_muted", muter, muted, duration)
-                embed = Embed(colour=0x1ABC9C)
-                embed.set_author(
-                    name=f"{muter} has muted {muted} for {duration}.",
-                    icon_url="https://www.mc-heads.net/avatar/" + muter
-                )
-                await self.debug_webhook.send("guild-member-mute")
-                await self.send_message(embed=embed, officer=True)
-    
-            elif "has unmuted" in message:
-                _regex = r"(?:\[[A-Z+]+\] )?([a-zA-Z0-9_]+) has unmuted (?:\[[A-Z+]+\] )?([a-zA-Z0-9_]+)"
-                matches = re.match(_regex, message)
-                muter = matches.group(1)
-                muted = matches.group(2)
-                self.dispatch("hypixel_guild_member_unmuted", muter, muted)
-                embed = Embed(colour=0x1ABC9C)
-                embed.set_author(
-                    name=f"{muter} has unmuted {muted}.",
-                    icon_url="https://www.mc-heads.net/avatar/" + muter
-                )
-                await self.debug_webhook.send("guild-member-unmute")
-                await self.send_message(embed=embed, officer=True)
-    
-            elif "You're currently guild muted for" in message:
-                duration_remaining = message.split()[-1][:-1]
-                self.dispatch("hypixel_guild_message_send_failed")
-                embed = Embed(colour=0x1ABC9C)
-                embed.set_author(
-                    name=f"The bot is currently guild muted for {duration_remaining}.",
-                )
-                await self.debug_webhook.send("bot-guild-muted")
-                await self.send_message(embed=embed)
+
+            elif message.strip() == "":
+                return
+
+            elif "Guild Log" in message:
+                message = message.splitlines()
+                entries = []
+                page = None
+                max_pages = None
+                # header
+                header = message[1]
+                page_regex = r"\(Page (\d+) of (\d+)\)"
+                matches = re.findall(page_regex, header)
+                if matches:
+                    page = int(matches[0][0])
+                    max_pages = int(matches[0][1])
+                # remove first 3 lines, and last line
+                for line in message[3:-1]:
+                    entries.append(line)
+                months = {
+                    "Jan": 1,
+                    "Feb": 2,
+                    "Mar": 3,
+                    "Apr": 4,
+                    "May": 5,
+                    "Jun": 6,
+                    "Jul": 7,
+                    "Aug": 8,
+                    "Sep": 9,
+                    "Oct": 10,
+                    "Nov": 11,
+                    "Dec": 12,
+                }
+                desc = ""
+                tz_offsets = {
+                    "EST": -5,
+                    "EDT": -4,
+                }
+                for entry in entries:
+                    entry = entry.split()
+                    month = months[entry[0]]
+                    day = int(entry[1])
+                    year = int(entry[2])
+                    time = entry[3].split(":")
+                    hour = int(time[0])
+                    minute = int(time[1])
+                    tz = entry[4][:-1]
+                    tz_offset = tz_offsets.get(tz, 0)
+                    message = discord.utils.escape_markdown(" ".join(entry[5:]))
+                    dt = datetime(year, month, day, hour, minute, 0)
+                    dt = dt.replace(tzinfo=timezone(timedelta(hours=tz_offset)))
+                    desc += f"<t:{int(dt.timestamp())}:d> {message}\n"
+                embed = discord.Embed(color=0x1ABC9C, title="Guild Log", description=desc)
+                embed.set_footer(text=f"Page {page}/{max_pages}")
+                await self.send_message(embed=embed, officer_maybe=True)
 
             else:
-                if message.strip() == "":
-                    return
                 parser = GuildMessageParser(message)
                 embeds = parser.parse()
                 if isinstance(embeds, list):
@@ -773,7 +772,7 @@ class DiscordBridgeBot(commands.Bot):
                     await self.send_message(embed=embeds["embed"], file=embeds["file"])
                 else:
                     await self.send_debug_message(f"Normal message: `{message}`")
-                    embed = discord.Embed(colour=0x1ABC9C).set_author(name=message)
+                    embed = discord.Embed(colour=0x1ABC9C, description=message)
                     await self.send_message(embed=embed)
         except Exception as e:
             await self.on_error("minecraft_message", message, e)

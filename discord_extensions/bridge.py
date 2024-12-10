@@ -136,11 +136,38 @@ class Bridge(commands.Cog):
     async def info(self, ctx):
         await self.bot.mineflayer_bot.chat("/g info")
 
+    @commands.command()
+    @commands.cooldown(1, 5, commands.BucketType.channel)
+    @commands.has_role(DiscordConfig.commandRole)
+    async def log(self, ctx, *, params: str):
+        await self.bot.mineflayer_bot.chat("/g log " + params)
+
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
+        error = getattr(error, "original", error)
         if isinstance(error, commands.CommandOnCooldown):
             embed = discord.Embed(
                 description=f"This command is on cooldown. Try again in {error.retry_after:.2f} seconds.",
+                color=discord.Color.red()
+            )
+            await ctx.send(embed=embed, delete_after=5)
+        elif isinstance(error, (commands.CheckFailure, commands.CheckAnyFailure)):
+            embed = discord.Embed(
+                description="You do not have permission to use this command.",
+                color=discord.Color.red()
+            )
+            await ctx.send(embed=embed, delete_after=5)
+        elif isinstance(error, commands.MissingRequiredArgument):
+            embed = discord.Embed(
+                description="You are missing a required argument: `" + error.param.name + "`",
+                color=discord.Color.red()
+            )
+            await ctx.send(embed=embed, delete_after=5)
+        elif isinstance(error, commands.CommandNotFound):
+            pass
+        elif isinstance(error, commands.BadArgument):
+            embed = discord.Embed(
+                description="Invalid argument: " + str(error),
                 color=discord.Color.red()
             )
             await ctx.send(embed=embed, delete_after=5)
