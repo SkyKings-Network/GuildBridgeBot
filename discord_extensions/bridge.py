@@ -139,7 +139,7 @@ class Bridge(commands.Cog):
     @commands.command()
     @commands.cooldown(1, 5, commands.BucketType.channel)
     @commands.has_role(DiscordConfig.commandRole)
-    async def log(self, ctx, *, params: str):
+    async def log(self, ctx, *, params: str = ""):
         await self.bot.mineflayer_bot.chat("/g log " + params)
 
     @commands.Cog.listener()
