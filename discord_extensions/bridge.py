@@ -140,22 +140,14 @@ class Bridge(commands.Cog):
     async def on_command_error(self, ctx, error):
         if isinstance(error, commands.CommandOnCooldown):
             embed = discord.Embed(
-                title="Cooldown",
                 description=f"This command is on cooldown. Try again in {error.retry_after:.2f} seconds.",
                 color=discord.Color.red()
             )
-            await self.send_temp_message(ctx, embed)
+            await ctx.send(embed=embed, delete_after=5)
         else:
             print(f"Ignoring exception in command {ctx.command}:", file=sys.stderr)
             traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
-
-    async def send_temp_message(self, ctx, embed):
-        message = await ctx.send(embed=embed)
-        await asyncio.sleep(5)
-        try:
-            await message.delete()
-        except discord.errors.NotFound:
-            pass
+            
 
 async def setup(bot):
     await bot.add_cog(Bridge(bot))
