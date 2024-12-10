@@ -55,9 +55,9 @@ class MinecraftBotManager:
 
         @On(self.bot, "spawn")
         def login(this):
-            print("Minecraft > Bot is logged in as", self.bot.username)
             if not self._online:
                 self.send_to_discord("Bot Online")
+                print("Minecraft > Bot is logged in as", self.bot.username)
             self._online = True
             self._ready.set()
             self.client.dispatch("minecraft_ready")
@@ -103,7 +103,6 @@ class MinecraftBotManager:
             if self.bot.username is None:
                 pass
             else:
-                print(message)
                 if message.startswith("Guild > " + self.bot.username) or message.startswith(
                         "Officer > " + self.bot.username
                 ):
