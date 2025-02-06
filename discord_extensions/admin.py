@@ -119,14 +119,13 @@ class Admin(commands.Cog):
 
                         if config_current_commit_date == "":
                             print(f"Set version in config.json to the current commit date. {latest_commit_date}")
+                            DataConfig.current_version = latest_commit_date.strftime("%Y-%m-%dT%H:%M:%SZ")
                             return
 
                         config_current_commit_date = datetime.strptime(config_current_commit_date, "%Y-%m-%dT%H:%M:%SZ")
 
                         if latest_commit_date > config_current_commit_date:
-                            print(f"A newer version is available. Latest commit date: {latest_commit_date}. Please update from {config_current_commit_date}.")
-                        else:
-                            print(f"You are using the latest version. Current commit date: {config_current_commit_date}.")
+                            DataConfig.latest_version = latest_commit_date.strftime("%Y-%m-%dT%H:%M:%SZ")
                     else:
                         print(f"Failed to check for updates. HTTP Status: {response.status}")
 
