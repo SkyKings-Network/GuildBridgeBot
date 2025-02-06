@@ -287,9 +287,6 @@ class DiscordBridgeBot(commands.Bot):
             current_version = DataConfig.current_version
             latest_version = DataConfig.latest_version
 
-            print(f"Current Version: {current_version}")
-            print(f"Latest Version: {latest_version}")
-
             if current_version != latest_version:
                 embed.set_footer(
                     text=f"📩 Bridge Update available! (!update)"
