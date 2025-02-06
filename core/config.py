@@ -172,6 +172,7 @@ class ConfigObject(metaclass=_ConfigObject, base_key=""):
                     raise InvalidConfig(f"Missing required section '{cls.BASE_KEY}'")
             _config[cls.BASE_KEY] = {}
         for k, v in cls.keys.items():
+            print(k, v)
             config_val = data.get(k)
             val = v.validate(config_val)
             data[k] = val
