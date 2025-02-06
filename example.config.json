@@ -31,5 +31,8 @@
         "autoaccept": false,
         "dateLimit": 30,
         "extensions": []
+    },
+    "data": {
+        "current_version": ""
     }
 }

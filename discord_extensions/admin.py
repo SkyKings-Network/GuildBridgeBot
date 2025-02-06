@@ -5,10 +5,15 @@ import discord
 from discord.ext import commands, tasks
 from core.config import DiscordConfig, SettingsConfig
 
+import json
+import aiohttp
+from datetime import datetime
+
 class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.check_bot_status.start()
+        self.check_bot_version.start()
 
     @commands.command()
     @commands.has_role(DiscordConfig.overrideRole)
@@ -46,6 +51,19 @@ class Admin(commands.Cog):
     async def update(self, ctx):
         embedVar = discord.Embed(color=0x1ABC9C).set_author(name="Updating the bot...")
         await ctx.send(embed=embedVar)
+        url = "https://api.github.com/repos/SkyKings-Network/GuildBridgeBot/commits/main"
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    latest_commit_date = data["commit"]["committer"]["date"]
+                    latest_commit_date = datetime.strptime(latest_commit_date, "%Y-%m-%dT%H:%M:%SZ")
+                    with open("config.json", "r") as f:
+                        config = json.load(f)
+                        config["data"]["current_version"] = latest_commit_date
+                        print(f"Updated config.json with latest commit date: {latest_commit_date}")
+
         os.system("git pull")
         await self.bot.close()
         await asyncio.sleep(10)
@@ -71,6 +89,42 @@ class Admin(commands.Cog):
                     print("Discord > Bot is offline!")
                     await self.bot.close()
                     await asyncio.sleep(10)
+        except Exception as e:
+            print(e)
+
+    @tasks.loop(seconds=30)
+    async def check_bot_version(self):
+        try:
+
+            with open("config.json") as f:
+                config = json.load(f)
+                print(config)
+                config_current_commit_date = config["data"]["current_version"]
+                print(config_current_commit_date)
+
+            url = "https://api.github.com/repos/SkyKings-Network/GuildBridgeBot/commits/main"
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        
+                        latest_commit_date = data["commit"]["committer"]["date"]
+                        latest_commit_date = datetime.strptime(latest_commit_date, "%Y-%m-%dT%H:%M:%SZ")
+
+                        if config_current_commit_date == "":
+                            print(f"Set version in config.json to the current commit date. {latest_commit_date}")
+                            return
+
+                        config_current_commit_date = datetime.strptime(config_current_commit_date, "%Y-%m-%dT%H:%M:%SZ")
+
+                        if latest_commit_date > config_current_commit_date:
+                            print(f"A newer version is available. Latest commit date: {latest_commit_date}. Please update from {config_current_commit_date}.")
+                        else:
+                            print(f"You are using the latest version. Current commit date: {config_current_commit_date}.")
+                    else:
+                        print(f"Failed to check for updates. HTTP Status: {response.status}")
+
+            
         except Exception as e:
             print(e)
 
