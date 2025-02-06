@@ -103,10 +103,8 @@ class Admin(commands.Cog):
     @tasks.loop(seconds=30)
     async def check_bot_version(self):
         try:
-
-            with open("config.json") as f:
-                config = json.load(f)
-                config_current_commit_date = config["data"]["current_version"]
+            
+            config_current_commit_date = DataConfig.current_version
 
             url = "https://api.github.com/repos/SkyKings-Network/GuildBridgeBot/commits/main"
             async with aiohttp.ClientSession() as session:
@@ -126,6 +124,7 @@ class Admin(commands.Cog):
 
                         if latest_commit_date > config_current_commit_date:
                             DataConfig.latest_version = latest_commit_date.strftime("%Y-%m-%dT%H:%M:%SZ")
+
                     else:
                         print(f"Failed to check for updates. HTTP Status: {response.status}")
 
