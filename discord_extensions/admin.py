@@ -62,12 +62,9 @@ class Admin(commands.Cog):
 
                     with open("config.json", "r") as f:
                         config = json.load(f)
-
-                    # If current_version is already the latest commit date, don't update
-                    if config["data"]["current_version"] == latest_commit_date.strftime("%Y-%m-%dT%H:%M:%SZ"):
-                        return
                         
                     config["data"]["current_version"] = latest_commit_date.strftime("%Y-%m-%dT%H:%M:%SZ")
+                    config["data"]["latest_version"] = latest_commit_date.strftime("%Y-%m-%dT%H:%M:%SZ")
                         
                     with open("config.json", "w") as f:
                         json.dump(config, f, indent=4)
