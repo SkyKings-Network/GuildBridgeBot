@@ -105,7 +105,7 @@ class Admin(commands.Cog):
         except Exception as e:
             print(e)
 
-    @tasks.loop(seconds=30)
+    @tasks.loop(seconds=600)
     async def check_bot_version(self):
         try:
             await self.bot.wait_until_ready()
