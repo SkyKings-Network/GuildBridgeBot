@@ -166,7 +166,6 @@ class ConfigObject(metaclass=_ConfigObject, base_key=""):
     def validate(cls, _config: dict):
         data = _config.get(cls.BASE_KEY)
         if data is None:
-            # check if anything is required
             for k, v in cls.keys.items():
                 if v.required:
                     raise InvalidConfig(f"Missing required section '{cls.BASE_KEY}'")
@@ -174,7 +173,6 @@ class ConfigObject(metaclass=_ConfigObject, base_key=""):
             data = _config[cls.BASE_KEY]
 
         for k, v in cls.keys.items():
-            print(k, v)
             config_val = data.get(k)
             val = v.validate(config_val)
             data[k] = val
