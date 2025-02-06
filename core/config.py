@@ -11,6 +11,7 @@ __all__ = (
     "SettingsConfig",
     "ConfigKey",
     "ExtensionConfig",
+    "DataConfig",
 )
 
 _completed_init = False
@@ -186,6 +187,9 @@ class ServerConfig(ConfigObject, base_key="server"):
 class AccountConfig(ConfigObject, base_key="account"):
     email: str = ConfigKey(str)
 
+class DataConfig(ConfigObject, base_key="data"):
+    current_version: str = ConfigKey(str, "")
+    latest_version: str = ConfigKey(str, "")
 
 class DiscordConfig(ConfigObject, base_key="discord"):
     token: str = ConfigKey(str)
@@ -219,7 +223,7 @@ class SettingsConfig(ConfigObject, base_key="settings"):
     extensions: List[str] = ConfigKey(list, [], list_type=str)
 
 
-_config_objects = [ServerConfig, AccountConfig, DiscordConfig, RedisConfig, SettingsConfig]
+_config_objects = [ServerConfig, AccountConfig, DiscordConfig, RedisConfig, SettingsConfig, DataConfig]
 
 
 def validate_config(_config: Dict):

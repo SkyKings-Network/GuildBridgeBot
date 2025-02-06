@@ -12,7 +12,7 @@ from discord import Embed
 from discord.ext import commands
 
 from core.colors import Color
-from core.config import DiscordConfig, RedisConfig
+from core.config import DiscordConfig, RedisConfig, DataConfig
 from core.message_parsers import GuildMessageParser
 from core.minecraft_bot import MinecraftBotManager
 from core.redis_handler import RedisManager
@@ -283,6 +283,14 @@ class DiscordBridgeBot(commands.Bot):
             )
         else:
             embed = Embed(description=message, colour=0x1ABC9C, timestamp=discord.utils.utcnow())
+            # Check if latest version vs current version is different
+            current_version = DataConfig.current_version
+            latest_version = DataConfig.latest_version
+
+            print(current_version)
+            print(latest_version)
+            print("Version Check *")
+
             embed.set_footer(text="Update.")
             embed.set_author(name=username, icon_url="https://www.mc-heads.net/avatar/" + username)
             return await self.send_message(embed=embed, officer=officer)
