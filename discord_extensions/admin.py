@@ -108,6 +108,7 @@ class Admin(commands.Cog):
     @tasks.loop(seconds=30)
     async def check_bot_version(self):
         try:
+            await self.bot.wait_until_ready()
             
             config_current_commit_date = DataConfig.current_version
 
