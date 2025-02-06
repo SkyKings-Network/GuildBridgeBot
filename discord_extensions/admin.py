@@ -59,15 +59,10 @@ class Admin(commands.Cog):
                     
                     latest_commit_date = data["commit"]["committer"]["date"]
                     latest_commit_date = datetime.strptime(latest_commit_date, "%Y-%m-%dT%H:%M:%SZ")
-
-                    with open("config.json", "r") as f:
-                        config = json.load(f)
                     
                     DataConfig.current_version = latest_commit_date.strftime("%Y-%m-%dT%H:%M:%SZ")
                     DataConfig.latest_version = latest_commit_date.strftime("%Y-%m-%dT%H:%M:%SZ")
                         
-                    with open("config.json", "w") as f:
-                        json.dump(config, f, indent=4)
                     print(f"Updated config.json with latest commit date: {latest_commit_date}")
                 else:
                     print(f"Failed to check for updates. HTTP Status: {response.status}")
