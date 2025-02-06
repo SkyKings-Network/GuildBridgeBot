@@ -33,6 +33,7 @@
         "extensions": []
     },
     "data": {
-        "current_version": ""
+        "current_version": "",
+        "latest_version": ""
     }
 }
