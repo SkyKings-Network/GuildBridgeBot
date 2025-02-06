@@ -127,7 +127,16 @@ class Admin(commands.Cog):
 
                         config_current_commit_date = datetime.strptime(config_current_commit_date, "%Y-%m-%dT%H:%M:%SZ")
 
+                        # Check if the latest commit date is greater than the current commit date
                         if latest_commit_date > config_current_commit_date:
+                            with open("config.json", "r") as f:
+                                config = json.load(f)
+                            
+                            config["data"]["latest_version"] = latest_commit_date.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+                            with open("config.json", "w") as f:
+                                json.dump(config, f, indent=4)
+
                             DataConfig.latest_version = latest_commit_date.strftime("%Y-%m-%dT%H:%M:%SZ")
 
                     else:
