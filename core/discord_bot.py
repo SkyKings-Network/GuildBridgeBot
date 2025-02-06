@@ -274,6 +274,7 @@ class DiscordBridgeBot(commands.Bot):
     ) -> Union[discord.Message, discord.WebhookMessage, None]:
         await self.send_debug_message("Sending user message")
         if self.webhook:
+            print("Sending webhook message")
             return await self.send_message(
                 username=username,
                 avatar_url="https://www.mc-heads.net/avatar/" + username,
@@ -282,6 +283,7 @@ class DiscordBridgeBot(commands.Bot):
             )
         else:
             embed = Embed(description=message, colour=0x1ABC9C, timestamp=discord.utils.utcnow())
+            embed.set_footer(text="Update.")
             embed.set_author(name=username, icon_url="https://www.mc-heads.net/avatar/" + username)
             return await self.send_message(embed=embed, officer=officer)
 
