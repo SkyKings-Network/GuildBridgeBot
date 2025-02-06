@@ -30,6 +30,7 @@ and events, facilitating better communication and management.
 - **Auto-Accept Invites**: Optionally auto-accept guild invites.
 - **Robust Error Handling**: Automatic reconnection and error reporting.
 - **Customizable Appearance**: Use Discord webhooks for more control over bot messages.
+- **Update Notifications**: Get notified in discord when theres a bridge update.
 
 ## Requirements
 
