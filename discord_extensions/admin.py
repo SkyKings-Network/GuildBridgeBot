@@ -3,7 +3,7 @@ import os
 
 import discord
 from discord.ext import commands, tasks
-from core.config import DiscordConfig, SettingsConfig
+from core.config import DiscordConfig, SettingsConfig, DataConfig
 
 import json
 import aiohttp
@@ -62,9 +62,9 @@ class Admin(commands.Cog):
 
                     with open("config.json", "r") as f:
                         config = json.load(f)
-                        
-                    config["data"]["current_version"] = latest_commit_date.strftime("%Y-%m-%dT%H:%M:%SZ")
-                    config["data"]["latest_version"] = latest_commit_date.strftime("%Y-%m-%dT%H:%M:%SZ")
+                    
+                    DataConfig.current_version = latest_commit_date.strftime("%Y-%m-%dT%H:%M:%SZ")
+                    DataConfig.latest_version = latest_commit_date.strftime("%Y-%m-%dT%H:%M:%SZ")
                         
                     with open("config.json", "w") as f:
                         json.dump(config, f, indent=4)
