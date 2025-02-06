@@ -274,7 +274,6 @@ class DiscordBridgeBot(commands.Bot):
     ) -> Union[discord.Message, discord.WebhookMessage, None]:
         await self.send_debug_message("Sending user message")
         if self.webhook:
-            print("Sending webhook message")
             return await self.send_message(
                 username=username,
                 avatar_url="https://www.mc-heads.net/avatar/" + username,
@@ -283,15 +282,16 @@ class DiscordBridgeBot(commands.Bot):
             )
         else:
             embed = Embed(description=message, colour=0x1ABC9C, timestamp=discord.utils.utcnow())
+
             # Check if latest version vs current version is different
             current_version = DataConfig.current_version
             latest_version = DataConfig.latest_version
 
-            print(current_version)
-            print(latest_version)
-            print("Version Check *")
+            if current_version != latest_version:
+                embed.set_footer(
+                    text=f"📩 Bridge Update available! (!update)"
+                )
 
-            embed.set_footer(text="Update.")
             embed.set_author(name=username, icon_url="https://www.mc-heads.net/avatar/" + username)
             return await self.send_message(embed=embed, officer=officer)
 
