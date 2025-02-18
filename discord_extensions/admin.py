@@ -24,11 +24,11 @@ class Admin(commands.Cog):
     @commands.has_role(DiscordConfig.overrideRole)
     async def toggleaccept(self, ctx):
         if SettingsConfig.autoaccept:
-            embedVar = discord.Embed(description=":white_check_mark: Auto accepting guild invites is now ``off``!")
+            embedVar = discord.Embed(description=":white_check_mark: Auto accepting guild join requests is now ``off``!")
             await ctx.send(embed=embedVar)
             SettingsConfig.autoaccept = False
         else:
-            embedVar = discord.Embed(description=":white_check_mark: Auto accepting guild invites is now ``on``!")
+            embedVar = discord.Embed(description=":white_check_mark: Auto accepting guild join requests is now ``on``!")
             await ctx.send(embed=embedVar)
             SettingsConfig.autoaccept = True
 

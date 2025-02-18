@@ -39,10 +39,10 @@ class Generic(commands.Cog):
         )
         embed.add_field(
             name="Info",
-            value=f"Guild Channel: <#{DiscordConfig.channel}>\n"
-                  f"Officer Channel: <#{DiscordConfig.officerChannel}>\n"
-                  f"Command Role: <@&{DiscordConfig.commandRole}>\n"
-                  f"Override Role: <@&{DiscordConfig.overrideRole}>\n",
+            value="Guild Channel: " + (f"<#{DiscordConfig.channel}>" if DiscordConfig.channel else "❌") + "\n" + 
+                  "Officer Channel: " + (f"<#{DiscordConfig.officerChannel}>" if DiscordConfig.officerChannel else "❌") + "\n" + 
+                  "Command Role: " + (f"<@&{DiscordConfig.commandRole}>" if DiscordConfig.commandRole else "❌") + "\n" + 
+                  "Override Role: " + (f"<@&{DiscordConfig.overrideRole}>" if DiscordConfig.overrideRole else "❌") + "\n",
             inline=False
         )
         embed.set_footer(text=f"Made by SkyKings")

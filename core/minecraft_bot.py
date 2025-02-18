@@ -21,6 +21,8 @@ class MinecraftBotManager:
         self.auto_restart = True
         self._online = False
         self._ready = asyncio.Event()
+        if SettingsConfig.printChat:
+            print(f"{Color.GREEN}Minecraft{Color.RESET} > {Color.YELLOW}[WARNING]{Color.RESET} Chat logging is enabled!")
 
     async def wait_until_ready(self):
         await self._ready.wait()
@@ -45,6 +47,8 @@ class MinecraftBotManager:
                 time.sleep(0.2)
 
     def send_to_discord(self, message):
+        if SettingsConfig.printChat:
+            print(f"{Color.GREEN}Minecraft{Color.RESET} > Dispatching to Discord")
         asyncio.run_coroutine_threadsafe(self.client.send_discord_message(message), self.client.loop)
 
     async def reconnect(self):
@@ -100,10 +104,12 @@ class MinecraftBotManager:
             self.client.dispatch("minecraft_error")
 
         @On(self.bot, "messagestr")
-        def chat(this, message, messagePosition, jsonMsg, sender, verified):
+        def chat(this, message, *args):
             if self.bot.username is None:
                 pass
             else:
+                if SettingsConfig.printChat:
+                    print(f"{Color.GREEN}Minecraft{Color.RESET} > Chat: {message}")
                 if message.startswith("Guild > " + self.bot.username) or message.startswith(
                         "Officer > " + self.bot.username
                 ):
@@ -120,11 +126,14 @@ class MinecraftBotManager:
                     ):
                         message_buffer.clear()
                         self.wait_response = True
+                        if SettingsConfig.printChat:
+                            print(f"{Color.GREEN}Minecraft{Color.RESET} > Buffering chat...")
                     if message == "-----------------------------------------------------" and self.wait_response:
                         self.wait_response = False
                         self.send_to_discord("\n".join(message_buffer))
                         message_buffer.clear()
-                        print("End buffer")
+                        if SettingsConfig.printChat:
+                            print(f"{Color.GREEN}Minecraft{Color.RESET} > End of chat buffer")
                     if self.wait_response is True:
                         message_buffer.append(message)
                         return
@@ -133,7 +142,6 @@ class MinecraftBotManager:
                         self.send_to_discord(message)
                     if "Click here to accept or type /guild accept " in message:
                         self.send_to_discord(message)
-                        self.send_minecraft_message(None, message, "invite")
                     elif " is already in another guild!" in message or \
                             ("You invited" in message and "to your guild. They have 5 minutes to accept." in message) or \
                             "You sent an offline invite to " in message or \
@@ -153,7 +161,10 @@ class MinecraftBotManager:
                             ("has muted" in message and "for" in message) or \
                             "has unmuted" in message or \
                             "You're currently guild muted" in message or \
-                            "Guild Log" in message:  # Guild log is sent as one fat message
+                            "Guild Log" in message or \
+                            ("You've already invited" in message and "to your guild! Wait for them to accept!" in message) or \
+                            " has requested to join the guild!" in message.lower():
+                        # Guild log is sent as one fat message
                         self.send_to_discord(message)
 
     def send_minecraft_message(self, discord, message, type):
@@ -165,16 +176,6 @@ class MinecraftBotManager:
             message_text = f"/ochat {discord}: {message}"
             message_text = message_text[:256]
             self.bot.chat(message_text)
-
-        if type == "invite":
-            if SettingsConfig.autoaccept:
-                message = message.split()
-                if ("[VIP]" in message or "[VIP+]" in message or
-                        "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message):
-                    username = message.split()[2]
-                else:
-                    username = message.split()[1]
-                self.bot.chat(f"/guild accept {username}")
 
     def send_minecraft_command(self, message):
         message = message.replace("!o ", "/")

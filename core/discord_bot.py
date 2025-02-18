@@ -12,7 +12,7 @@ from discord import Embed
 from discord.ext import commands
 
 from core.colors import Color
-from core.config import DiscordConfig, RedisConfig, DataConfig
+from core.config import DiscordConfig, RedisConfig, DataConfig, SettingsConfig
 from core.message_parsers import GuildMessageParser
 from core.minecraft_bot import MinecraftBotManager
 from core.redis_handler import RedisManager
@@ -44,8 +44,9 @@ class DiscordBridgeBot(commands.Bot):
                 guild_messages=True, message_content=True, guilds=True,
             ),
             help_command=None,
-            activity=discord.Game(name="Guild Bridge Bot")
+            activity=discord.Game(name="Guild Bridge Bot"),
         )
+        self.owner_id = DiscordConfig.ownerId
         self.mineflayer_bot = None
         self.redis_manager = None
         self.invite_queue: asyncio.Queue | None = None
@@ -71,15 +72,6 @@ class DiscordBridgeBot(commands.Bot):
             f"An error occurred in {event_method} with args {args} and kwargs {kwargs}\n\n"
             f"```py\n"
             f"{traceback.format_exc()}\n"
-            f"```"
-        )
-
-    async def on_command_error(self, ctx, error) -> None:
-        error = getattr(error, "original", error)
-        await self.send_debug_message(
-            f"An error occurred in {ctx.command.name}\n\n"
-            f"```py\n"
-            f"{''.join(traceback.format_exception(type(error), error, error.__traceback__))}\n"
             f"```"
         )
 
@@ -209,6 +201,7 @@ class DiscordBridgeBot(commands.Bot):
                     pass
                 if not fut.done():
                     fut.set_result((False, "timeout"))
+                    print(f"{Color.CYAN}Discord{Color.RESET} > Invite timed out.")
                 self._current_invite_future = None
         except asyncio.CancelledError:
             pass
@@ -354,7 +347,13 @@ class DiscordBridgeBot(commands.Bot):
             else:
                 content = content.replace(f"<#{mention}>", f"#unknown-channel")
         # filter links
-        content = link_regex.sub("<link>", content)
+        def _filter(match):
+            try:
+                return str(float(match.group(0)))
+            except ValueError:
+                return "<link>"
+
+        content = link_regex.sub(_filter, content)
         if message.reference:
             if message.reference.cached_message:
                 reply = message.reference.cached_message
@@ -376,7 +375,7 @@ class DiscordBridgeBot(commands.Bot):
                         except AttributeError:  # still wasn't a valid user message
                             pass
                 if reply_to:
-                    username += f" replied to {reply_to}"
+                    username += f" -> {reply_to}"
         if officer:
             content = f"/oc {username}: {content}"
         else:
@@ -406,6 +405,8 @@ class DiscordBridgeBot(commands.Bot):
                 self.dispatch("minecraft_pong")
             if message.startswith("Guild >"):
                 if ":" not in message:
+                    message = message.replace("Guild >", "")
+                    # Member join/leave game notification
                     if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
                         if "]:" in message:
                             memberusername = message.split()[1]
@@ -424,7 +425,7 @@ class DiscordBridgeBot(commands.Bot):
                     else:
                         embed = Embed(timestamp=discord.utils.utcnow(), colour=0xFF6347)
                         embed.set_author(name=message, icon_url="https://www.mc-heads.net/avatar/" + memberusername)
-                    await self.send_debug_message("Sending player joined message")
+                    await self.send_debug_message("Sending player connection message")
                     await self.send_message(embed=embed)
                 else:
                     username, message = regex.match(message).groups()
@@ -446,29 +447,65 @@ class DiscordBridgeBot(commands.Bot):
                 username, message = regex_officer.match(message).groups()
                 if self.mineflayer_bot.bot.username in username:
                     return
-                message = message.replace("Guild >", "")
+                message = message.replace("Officer > ", "")
                 if "[" in username:
                     username = username.split("]")[1]
                 username = username.strip()
                 self.dispatch("hypixel_guild_officer_message", username, message)
                 await self.send_user_message(username, message, officer=True)
 
-            # Bot recieved guild invite
-            elif "Click here to accept or type /guild accept " in message:
-                if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
-                    playername = message.split()[2]
-                else:
-                    playername = message.split()[1]
-
-                embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-                embed.set_author(
-                    name=f"{playername} invited me to a guild!",
-                    icon_url="https://www.mc-heads.net/avatar/" + playername
-                )
-
-                self.dispatch("hypixel_guild_invite_recieved", playername)
-                await self.send_debug_message("Sending invite recieved message")
-                await self.send_message(embed=embed)
+            # Text in log may conflict with other messages, so we do guild log first
+            elif "Guild Log" in message:
+                message = message.splitlines()
+                entries = []
+                page = None
+                max_pages = None
+                # header
+                header = message[1]
+                page_regex = r"\(Page (\d+) of (\d+)\)"
+                matches = re.findall(page_regex, header)
+                if matches:
+                    page = int(matches[0][0])
+                    max_pages = int(matches[0][1])
+                # remove first 3 lines, and last line
+                for line in message[3:-1]:
+                    entries.append(line)
+                months = {
+                    "Jan": 1,
+                    "Feb": 2,
+                    "Mar": 3,
+                    "Apr": 4,
+                    "May": 5,
+                    "Jun": 6,
+                    "Jul": 7,
+                    "Aug": 8,
+                    "Sep": 9,
+                    "Oct": 10,
+                    "Nov": 11,
+                    "Dec": 12,
+                }
+                desc = ""
+                tz_offsets = {
+                    "EST": -5,
+                    "EDT": -4,
+                }
+                for entry in entries:
+                    entry = entry.split()
+                    month = months[entry[0]]
+                    day = int(entry[1])
+                    year = int(entry[2])
+                    time = entry[3].split(":")
+                    hour = int(time[0])
+                    minute = int(time[1])
+                    tz = entry[4][:-1]
+                    tz_offset = tz_offsets.get(tz, 0)
+                    message = discord.utils.escape_markdown(" ".join(entry[5:]))
+                    dt = datetime(year, month, day, hour, minute, 0)
+                    dt = dt.replace(tzinfo=timezone(timedelta(hours=tz_offset)))
+                    desc += f"<t:{int(dt.timestamp())}:f> {message}\n"
+                embed = discord.Embed(color=0x1ABC9C, title="Guild Log", description=desc)
+                embed.set_footer(text=f"Page {page}/{max_pages}")
+                await self.send_message(embed=embed, officer_maybe=True)
 
             # Someone joined/left the guild
             elif " joined the guild!" in message:
@@ -596,9 +633,9 @@ class DiscordBridgeBot(commands.Bot):
                 message = message.split()
                 if message[2] == "an" and message[3] == "offline":
                     if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
-                        playername = message[7]
+                        playername = message[7][:-1]
                     else:
-                        playername = message[6]
+                        playername = message[6][:-1]
                 else:
                     if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
                         playername = message[3]
@@ -675,6 +712,26 @@ class DiscordBridgeBot(commands.Bot):
                 await self.send_debug_message("Sending invites disabled message")
                 await self.send_message(embed=embed)
 
+            # Someone requested to join
+            elif " has requested to join the guild!" in message.lower():  # case might be weird?
+                message = message.split()
+                if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
+                    playername = message[1]
+                else:
+                    playername = message[0]
+                embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+                embed.set_author(
+                    name=f"{playername} has requested to join the guild!",
+                    icon_url="https://www.mc-heads.net/avatar/" + playername
+                )
+                self.dispatch("hypixel_guild_join_request", playername)
+                await self.send_debug_message("Sending join request message")
+                await self.send_message(embed=embed)
+                if SettingsConfig.acceptGuildJoinRequests:
+                    await self.send_debug_message("Accepting join request for " + playername)
+                    await self.mineflayer_bot.chat(f"/g accept {playername}")
+
+            # Guild is full
             elif "Your guild is full!" in message:
                 embed = Embed(colour=0x1ABC9C)
                 embed.set_author(
@@ -757,60 +814,28 @@ class DiscordBridgeBot(commands.Bot):
                 await self.send_debug_message("Sending bot is guild muted message")
                 await self.send_message(embed=embed)
 
+            # Bot recieved guild invite
+            elif "Click here to accept or type /guild accept " in message:
+                if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
+                    playername = message.split()[2]
+                else:
+                    playername = message.split()[1]
+
+                embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+                embed.set_author(
+                    name=f"{playername} invited me to a guild!",
+                    icon_url="https://www.mc-heads.net/avatar/" + playername
+                )
+
+                self.dispatch("hypixel_guild_invite_recieved", playername)
+                await self.send_debug_message("Sending invite recieved message")
+                await self.send_message(embed=embed)
+                if SettingsConfig.autoaccept:
+                    await self.send_debug_message("Accepting invite from " + playername)
+                    await self.mineflayer_bot.chat(f"/g accept {playername}")
+
             elif message.strip() == "":
                 return
-
-            elif "Guild Log" in message:
-                message = message.splitlines()
-                entries = []
-                page = None
-                max_pages = None
-                # header
-                header = message[1]
-                page_regex = r"\(Page (\d+) of (\d+)\)"
-                matches = re.findall(page_regex, header)
-                if matches:
-                    page = int(matches[0][0])
-                    max_pages = int(matches[0][1])
-                # remove first 3 lines, and last line
-                for line in message[3:-1]:
-                    entries.append(line)
-                months = {
-                    "Jan": 1,
-                    "Feb": 2,
-                    "Mar": 3,
-                    "Apr": 4,
-                    "May": 5,
-                    "Jun": 6,
-                    "Jul": 7,
-                    "Aug": 8,
-                    "Sep": 9,
-                    "Oct": 10,
-                    "Nov": 11,
-                    "Dec": 12,
-                }
-                desc = ""
-                tz_offsets = {
-                    "EST": -5,
-                    "EDT": -4,
-                }
-                for entry in entries:
-                    entry = entry.split()
-                    month = months[entry[0]]
-                    day = int(entry[1])
-                    year = int(entry[2])
-                    time = entry[3].split(":")
-                    hour = int(time[0])
-                    minute = int(time[1])
-                    tz = entry[4][:-1]
-                    tz_offset = tz_offsets.get(tz, 0)
-                    message = discord.utils.escape_markdown(" ".join(entry[5:]))
-                    dt = datetime(year, month, day, hour, minute, 0)
-                    dt = dt.replace(tzinfo=timezone(timedelta(hours=tz_offset)))
-                    desc += f"<t:{int(dt.timestamp())}:d> {message}\n"
-                embed = discord.Embed(color=0x1ABC9C, title="Guild Log", description=desc)
-                embed.set_footer(text=f"Page {page}/{max_pages}")
-                await self.send_message(embed=embed, officer_maybe=True)
 
             else:
                 parser = GuildMessageParser(message)
