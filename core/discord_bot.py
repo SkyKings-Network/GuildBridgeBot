@@ -348,8 +348,13 @@ class DiscordBridgeBot(commands.Bot):
                 content = content.replace(f"<#{mention}>", f"#unknown-channel")
         # filter links
         def _filter(match):
+            num = match.group(0)
+            extra = ""
+            if num[-1] in ("k", "m", "b"):
+                extra = num[-1]
+                num = num[:-1]
             try:
-                return str(float(match.group(0)))
+                return str(float(num)) + extra
             except ValueError:
                 return "<link>"
 
