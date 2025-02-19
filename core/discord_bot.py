@@ -375,7 +375,7 @@ class DiscordBridgeBot(commands.Bot):
                         except AttributeError:  # still wasn't a valid user message
                             pass
                 if reply_to:
-                    username += f" -> {reply_to}"
+                    username += f" replied to {reply_to}"
         if officer:
             content = f"/oc {username}: {content}"
         else:
