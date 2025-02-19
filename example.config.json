@@ -9,7 +9,9 @@
     "discord": {
         "token": "",
         "channel": "",
+        "allowCrosschat": [],
         "officerChannel": "",
+        "allowOfficerCrosschat": [],
         "commandRole": "",
         "overrideRole": "",
         "ownerId": "",
@@ -17,7 +19,8 @@
         "webhookURL": "",
         "officerWebhookURL": "",
         "debugWebhookURL": "",
-        "serverName": ""
+        "serverName": "",
+        "ignoreCrosschatWarning": false
     },
     "redis": {
         "host": "",
@@ -30,7 +33,8 @@
     "settings": {
         "autoaccept": false,
         "dateLimit": 30,
-        "extensions": []
+        "extensions": [],
+        "printChat": false
     },
     "data": {
         "current_version": "",
