@@ -268,9 +268,9 @@ class DiscordBridgeBot(commands.Bot):
         await self.send_debug_message("Sending user message")
         if self.webhook:
             return await self.send_message(
-                username=username,
+                username=discord.utils.escape_markdown(username),
                 avatar_url="https://www.mc-heads.net/avatar/" + username,
-                content=message,
+                content=discord.utils.escape_markdown(message),
                 officer=officer,
             )
         else:
@@ -295,7 +295,7 @@ class DiscordBridgeBot(commands.Bot):
             if message.attachments:
                 count = len(message.attachments)
                 await self.mineflayer_bot.chat(
-                    f"/gc {username} attached {'a' if count == 1 else count} file{'s' if count > 1 else ''}"
+                    f"/gc {username}: attached {'a' if count == 1 else count} file{'s' if count > 1 else ''}"
                     )
             else:
                 try:
@@ -323,7 +323,6 @@ class DiscordBridgeBot(commands.Bot):
         # replace the rest of the mentions
         user_mentions = set(mention_regex.findall(content))
         for mention in user_mentions:
-            userid = int(mention)
             try:
                 user = await self.fetch_user(int(mention))
                 content = content.replace(f"<@!{mention}>", f"@{user.name}")
