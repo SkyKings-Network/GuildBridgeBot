@@ -4,6 +4,7 @@ import os
 import discord
 from discord.ext import commands, tasks
 from core.config import DiscordConfig, SettingsConfig, DataConfig
+from core.checks import has_override_role, has_command_role
 
 import json
 import aiohttp
@@ -16,12 +17,12 @@ class Admin(commands.Cog):
         self.check_bot_version.start()
 
     @commands.command()
-    @commands.has_role(DiscordConfig.overrideRole)
+    @has_override_role
     async def notifications(self, ctx):
         await self.bot.mineflayer_bot.chat("/g notifications")
 
     @commands.command()
-    @commands.has_role(DiscordConfig.overrideRole)
+    @has_override_role
     async def toggleaccept(self, ctx):
         if SettingsConfig.autoaccept:
             embedVar = discord.Embed(description=":white_check_mark: Auto accepting guild join requests is now ``off``!")
@@ -33,21 +34,21 @@ class Admin(commands.Cog):
             SettingsConfig.autoaccept = True
 
     @commands.command(aliases=['r'])
-    @commands.has_role(DiscordConfig.commandRole)
+    @has_command_role
     async def relog(self, ctx):
         self.bot.mineflayer_bot.stop(True)
         embedVar = discord.Embed(color=0x1ABC9C).set_author(name="Restarting the bot...")
         await ctx.send(embed=embedVar)
 
     @commands.command(aliases=['o', 'over'])
-    @commands.has_role(DiscordConfig.overrideRole)
+    @has_override_role
     async def override(self, ctx, *, command):
         await self.bot.mineflayer_bot.chat("/" + command)
         embedVar = discord.Embed(color=0x1ABC9C, description=f"`/{command}` has been sent!")
         await ctx.send(embed=embedVar)
 
     @commands.command()
-    @commands.has_role(DiscordConfig.overrideRole)
+    @has_override_role
     async def update(self, ctx):
         embedVar = discord.Embed(color=0x1ABC9C).set_author(name="Updating the bot...")
         await ctx.send(embed=embedVar)
@@ -82,7 +83,7 @@ class Admin(commands.Cog):
         await asyncio.sleep(10)
 
     @commands.command()
-    @commands.has_role(DiscordConfig.overrideRole)
+    @has_override_role
     async def reload(self, ctx):
         embedVar = discord.Embed(color=0x1ABC9C).set_author(name="Reloading extensions...")
         msg = await ctx.send(embed=embedVar)

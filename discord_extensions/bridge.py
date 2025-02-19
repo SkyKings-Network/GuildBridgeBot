@@ -5,6 +5,7 @@ import traceback
 import discord
 from discord.ext import commands
 from core.config import DiscordConfig, SettingsConfig
+from core.checks import has_command_role
 
 
 class Bridge(commands.Cog):
@@ -15,7 +16,7 @@ class Bridge(commands.Cog):
             self.date_limit = 30
 
     @commands.command(aliases=['i'])
-    @commands.has_role(DiscordConfig.commandRole)
+    @has_command_role
     async def invite(self, ctx, username):
         msg = await ctx.reply(
             embed=discord.Embed(
@@ -45,7 +46,7 @@ class Bridge(commands.Cog):
             await msg.edit(embed=embed)
 
     @commands.command()
-    @commands.has_role(DiscordConfig.commandRole)
+    @has_command_role
     async def kick(self, ctx, username, *, reason):
         message = await ctx.send(
             embed=discord.Embed(
@@ -76,7 +77,7 @@ class Bridge(commands.Cog):
             )
 
     @commands.command()
-    @commands.has_role(DiscordConfig.commandRole)
+    @has_command_role
     async def mute(self, ctx, username, time):
         message = await ctx.send(
             embed=discord.Embed(
@@ -107,7 +108,7 @@ class Bridge(commands.Cog):
             )
 
     @commands.command()
-    @commands.has_role(DiscordConfig.commandRole)
+    @has_command_role
     async def unmute(self, ctx, username):
         message = await ctx.send(
             embed=discord.Embed(
@@ -138,7 +139,7 @@ class Bridge(commands.Cog):
             )
 
     @commands.command()
-    @commands.has_role(DiscordConfig.commandRole)
+    @has_command_role
     async def setrank(self, ctx, username, rank):
         msg = await ctx.reply(
             embed=discord.Embed(
@@ -179,7 +180,7 @@ class Bridge(commands.Cog):
 
 
     @commands.command()
-    @commands.has_role(DiscordConfig.commandRole)
+    @has_command_role
     async def promote(self, ctx, username):
         msg = await ctx.reply(
             embed=discord.Embed(
@@ -210,7 +211,7 @@ class Bridge(commands.Cog):
             )
 
     @commands.command()
-    @commands.has_role(DiscordConfig.commandRole)
+    @has_command_role
     async def demote(self, ctx, username):
         msg = await ctx.reply(
             embed=discord.Embed(
@@ -300,8 +301,8 @@ class Bridge(commands.Cog):
             )
 
     @commands.command()
-    @commands.cooldown(1, 5, commands.BucketType.channel)
-    @commands.has_role(DiscordConfig.commandRole)
+    @commands.cooldown(1, 3, commands.BucketType.channel)
+    @has_command_role
     async def log(self, ctx, *, params: str = ""):
         if DiscordConfig.officerChannel is not None and ctx.channel.id != DiscordConfig.officerChannel:
             embed = discord.Embed(
