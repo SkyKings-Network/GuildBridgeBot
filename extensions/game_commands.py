@@ -95,10 +95,15 @@ class GameCommands(commands.Cog):
         await self.send_chat_message(name, "Commands: " + ", ".join(["!" + k for k in self.commands.keys()]), officer=officer)
 
     async def level(self, name, args, *, officer: bool = False):
-        if len(args) < 1:
-            return await self.send_chat_message(name, "Usage: !level <player> [profile]", officer=officer)
-        player = args[0]
-        profile = args[1] if len(args) > 1 else None
+        if len(args) == 0:
+            player = name
+            profile = None
+        else:
+            player = args[0]
+            if len(args) > 1:
+                profile = args[1]
+            else:
+                profile = None
         try:
             uuid, player = await self.get_info(player)
         except aiohttp.ClientResponseError as e:
