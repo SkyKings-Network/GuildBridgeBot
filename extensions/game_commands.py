@@ -92,7 +92,15 @@ class GameCommands(commands.Cog):
         return
     
     async def help(self, name, args, *, officer: bool = False):
-        await self.send_chat_message(name, "Commands: " + ", ".join(["!" + k for k in self.commands.keys()]), officer=officer)
+        if len(args) == 0:
+            return await self.send_chat_message(name, "Commands: " + ", ".join(["!" + k for k in self.commands.keys()]), officer=officer)
+        command = args[0]
+        if command not in self.commands:
+            return await self.send_chat_message(name, f"Unknown command: {command}.", officer=officer)
+        if command == "help":
+            return await self.send_chat_message(name, "Usage: !help [command]", officer=officer)
+        if command == "level":
+            return await self.send_chat_message(name, "Usage: !level [player] [profile]", officer=officer)
 
     async def level(self, name, args, *, officer: bool = False):
         if len(args) == 0:
