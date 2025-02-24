@@ -88,8 +88,8 @@ class Admin(commands.Cog):
         embedVar = discord.Embed(color=0x1ABC9C).set_author(name="Reloading extensions...")
         msg = await ctx.send(embed=embedVar)
         os.system("git pull")
-        for ext in self.bot.extensions:
-            await self.bot.reload_extensions(ext)
+        for ext in list(self.bot.extensions):
+            await self.bot.reload_extension(ext)
         embed = discord.Embed(color=0x1ABC9C).set_author(name="Extensions reloaded!")
         await msg.edit(embed=embed)
 

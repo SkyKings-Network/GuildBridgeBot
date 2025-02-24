@@ -263,10 +263,17 @@ class DiscordBridgeBot(commands.Bot):
                 return await self.send_message(*args, **kwargs, retry=False)
 
     async def send_user_message(
-        self, username, message, *, officer: bool = False
+        self, username, message, *, officer: bool = False, command: bool = False
     ) -> Union[discord.Message, discord.WebhookMessage, None]:
         await self.send_debug_message("Sending user message")
         if self.webhook:
+            if command:
+                return await self.send_message(
+                    username=discord.utils.escape_markdown(username),
+                    avatar_url="https://www.mc-heads.net/avatar/" + username,
+                    embeds=[Embed(description=message, colour=0x1ABC9C)],
+                    officer=officer,
+                )
             return await self.send_message(
                 username=discord.utils.escape_markdown(username),
                 avatar_url="https://www.mc-heads.net/avatar/" + username,
@@ -282,10 +289,10 @@ class DiscordBridgeBot(commands.Bot):
 
             if current_version != latest_version:
                 embed.set_footer(
-                    text=f"📩 Bridge Update available! (!update)"
+                    text="📩 Bridge Update available! (!update)"
                 )
 
-            embed.set_author(name=username, icon_url="https://www.mc-heads.net/avatar/" + username)
+            embed.set_author(name=("🤖 " + username) if command else username, icon_url="https://www.mc-heads.net/avatar/" + username)
             return await self.send_message(embed=embed, officer=officer)
 
     async def send_minecraft_user_message(self, username, message: discord.Message, *, officer: bool = False):
@@ -834,9 +841,6 @@ class DiscordBridgeBot(commands.Bot):
                 self.dispatch("hypixel_guild_invite_recieved", playername)
                 await self.send_debug_message("Sending invite recieved message")
                 await self.send_message(embed=embed)
-                if SettingsConfig.autoaccept:
-                    await self.send_debug_message("Accepting invite from " + playername)
-                    await self.mineflayer_bot.chat(f"/g accept {playername}")
 
             elif message.strip() == "":
                 return
