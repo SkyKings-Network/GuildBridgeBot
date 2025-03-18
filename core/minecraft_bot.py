@@ -38,10 +38,13 @@ class MinecraftBotManager:
 
     def stop(self, restart: bool = True):
         print(f"{Color.GREEN}Minecraft{Color.RESET} > Stopping bot...")
-        try:
-            self.bot.quit()
-        except Exception as e:
-            pass
+        # idk why but this literally never works
+        # so skip it and force terminate the js environment
+        # try:
+        #     self.bot.quit()
+        # except Exception as e:
+        #     pass
+        self._starting = restart
         self._online = False
         self._ready.clear()
         javascript.terminate()
@@ -171,7 +174,6 @@ class MinecraftBotManager:
 
     @classmethod
     def createbot(cls, client):
-        self._starting = True
         javascript.init()
         mineflayer = javascript.require("mineflayer")
         print(f"{Color.GREEN}Minecraft{Color.RESET} > Creating the bot...")
@@ -188,6 +190,7 @@ class MinecraftBotManager:
         print(f"{Color.GREEN}Minecraft{Color.RESET} > Initialized")
         botcls = cls(client, bot)
         client.mineflayer_bot = botcls
+        botcls._starting = True
         try:
             botcls.oncommands()
         except Exception as e:
