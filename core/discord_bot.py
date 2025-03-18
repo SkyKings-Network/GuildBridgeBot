@@ -110,7 +110,12 @@ class DiscordBridgeBot(commands.Bot):
         self.init_webhooks()
         if self.mineflayer_bot is None:
             print(f"{Color.CYAN}Discord{Color.RESET} > Starting the Minecraft bot...")
-            self.mineflayer_bot = MinecraftBotManager.createbot(self)
+            try:
+                self.mineflayer_bot = MinecraftBotManager.createbot(self)
+            except Exception as e:
+                print(f"{Color.CYAN}Discord{Color.RESET} > Failed to start Minecraft bot: {e}")
+                traceback.print_exc()
+                return await self.close()
         if self.redis_manager is None and RedisConfig.host:
             print(f"{Color.CYAN}Discord{Color.RESET} > Starting the Redis manager...")
             self.redis_manager = await RedisManager.create(self, self.mineflayer_bot)
