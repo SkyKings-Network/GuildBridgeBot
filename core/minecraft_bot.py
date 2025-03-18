@@ -201,5 +201,5 @@ class MinecraftBotManager:
                 return cls.createbot(client)
             raise
         print(f"{Color.GREEN}Minecraft{Color.RESET} > Events registered")
-        self._starting = False
+        botcls._starting = False
         return botcls
