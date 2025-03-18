@@ -39,7 +39,7 @@ class Admin(commands.Cog):
         embedVar = discord.Embed(color=0x1ABC9C).set_author(name="Restarting the bot...")
         await ctx.send(embed=embedVar)
         try:
-            await self.bot.loop.run_in_executor(None, self.bot.mineflayer_bot.stop, True)
+            self.bot.mineflayer_bot.stop(True)
         except Exception as e:
             print(e)
             embedVar = discord.Embed(color=0x1ABC9C).set_author(name="Error while restarting the bot!")

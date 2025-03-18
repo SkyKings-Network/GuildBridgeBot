@@ -14,7 +14,6 @@ from core.config import ServerConfig, SettingsConfig, AccountConfig
 
 class MinecraftBotManager:
     def __init__(self, client, bot):
-        asyncio.set_event_loop(client.loop)
         self.client = client
         self.bot = bot
         self.wait_response = False
