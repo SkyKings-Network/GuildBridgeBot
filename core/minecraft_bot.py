@@ -4,12 +4,11 @@ import time
 import logging
 import os
 
+import javascript
 from javascript import require, On, config
 
 from core.colors import Color
 from core.config import ServerConfig, SettingsConfig, AccountConfig
-
-mineflayer = require("mineflayer")
 
 
 class MinecraftBotManager:
@@ -34,31 +33,29 @@ class MinecraftBotManager:
         await self.client.loop.run_in_executor(None, self.bot.chat, message)
 
     def stop(self, restart: bool = True):
-        print(f"{Color.GREEN}Minecraft{Color.RESET} > Stopping bot.....")
-        self.auto_restart = restart
+        print(f"{Color.GREEN}Minecraft{Color.RESET} > Stopping bot...")
         try:
             self.bot.quit()
         except Exception as e:
             pass
-        finally:
-            self._online = False
-            self._ready.clear()
-            while self._online:
-                time.sleep(0.2)
+        self._online = False
+        self._ready.clear()
+        javascript.terminate()
+        time.sleep(3)
+        if restart:
+            print(f"{Color.GREEN}Minecraft{Color.RESET} > Restarting...")
+            self.createbot(self.client)
+
 
     def send_to_discord(self, message):
         if SettingsConfig.printChat:
             print(f"{Color.GREEN}Minecraft{Color.RESET} > Dispatching to Discord")
         asyncio.run_coroutine_threadsafe(self.client.send_discord_message(message), self.client.loop)
 
-    async def reconnect(self):
-        await asyncio.sleep(3)
-        asyncio.run_coroutine_threadsafe(self.client.close(), self.client.loop)
-
     def oncommands(self):
         message_buffer = []
 
-        @On(self.bot, "spawn")
+        @javascript.On(self.bot, "spawn")
         def login(this):
             if not self._online:
                 self.send_to_discord("Bot Online")
@@ -67,43 +64,30 @@ class MinecraftBotManager:
             self._ready.set()
             self.client.dispatch("minecraft_ready")
 
-        @On(self.bot, "end")
+        @javascript.On(self.bot, "end")
         def end(this, reason):
             print(f"{Color.GREEN}Minecraft{Color.RESET} > Bot offline: {reason}")
             self.send_to_discord("Bot Offline")
             self.client.dispatch("minecraft_disconnected")
-            self._online = False
-            self._ready.clear()
-            if self.auto_restart:
-                print(f"{Color.GREEN}Minecraft{Color.RESET} > Restarting...")
-                # new_bot = self.createbot(self.client)
-                # self.client.mineflayer_bot = new_bot
-                # return
-                self.send_to_discord("Updating the bot...")
-                os.system("git pull")
+            self.stop(self.auto_restart)
 
-                asyncio.run(self.reconnect())
-
-            for state, handler, thread in config.event_loop.threads:
-                thread.terminate()
-            config.event_loop.threads = []
-            config.event_loop.stop()
-
-        @On(self.bot, "kicked")
+        @javascript.On(self.bot, "kicked")
         def kicked(this, reason, loggedIn):
             print(f"{Color.GREEN}Minecraft{Color.RESET} > Bot kicked: {reason}")
             self.client.dispatch("minecraft_disconnected")
             if loggedIn:
                 self.send_to_discord(f"Bot kicked: {reason}")
+                self.stop(True)
             else:
                 self.send_to_discord(f"Bot kicked before logging in: {reason}")
+                self.stop(False)
 
-        @On(self.bot, "error")
+        @javascript.On(self.bot, "error")
         def error(this, reason):
             print(reason)
             self.client.dispatch("minecraft_error")
 
-        @On(self.bot, "messagestr")
+        @javascript.On(self.bot, "messagestr")
         def chat(this, message, *args):
             if self.bot.username is None:
                 pass
@@ -183,6 +167,8 @@ class MinecraftBotManager:
 
     @classmethod
     def createbot(cls, client):
+        javascript.init()
+        mineflayer = javascript.require("mineflayer")
         print(f"{Color.GREEN}Minecraft{Color.RESET} > Creating the bot...")
         bot = mineflayer.createBot(
             {
@@ -197,6 +183,14 @@ class MinecraftBotManager:
         print(f"{Color.GREEN}Minecraft{Color.RESET} > Initialized")
         botcls = cls(client, bot)
         client.mineflayer_bot = botcls
-        botcls.oncommands()
+        try:
+            botcls.oncommands()
+        except Exception as e:
+            if "Call to 'on' timed out" in str(e):
+                print(f"{Color.GREEN}Minecraft{Color.RESET} > Error: {e}")
+                print(f"{Color.GREEN}Minecraft{Color.RESET} > Restarting...")
+                botcls.stop()
+                return cls.createbot(client)
+            raise
         print(f"{Color.GREEN}Minecraft{Color.RESET} > Events registered")
         return botcls

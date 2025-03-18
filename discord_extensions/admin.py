@@ -36,9 +36,9 @@ class Admin(commands.Cog):
     @commands.command(aliases=['r'])
     @has_command_role
     async def relog(self, ctx):
-        self.bot.mineflayer_bot.stop(True)
         embedVar = discord.Embed(color=0x1ABC9C).set_author(name="Restarting the bot...")
         await ctx.send(embed=embedVar)
+        await self.bot.loop.run_in_executor(None, self.bot.mineflayer_bot.stop, True)
 
     @commands.command(aliases=['o', 'over'])
     @has_override_role

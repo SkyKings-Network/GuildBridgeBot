@@ -32,4 +32,7 @@ async def main():
         await bot.start(DiscordConfig.token)
 
 
-asyncio.run(main())
+try:
+    asyncio.run(main())
+except KeyboardInterrupt:
+    pass
