@@ -19,6 +19,7 @@ class MinecraftBotManager:
         self.message_buffer = []
         self.auto_restart = True
         self._online = False
+        self._restarting
         self._ready = asyncio.Event()
         if SettingsConfig.printChat:
             print(f"{Color.GREEN}Minecraft{Color.RESET} > {Color.YELLOW}[WARNING]{Color.RESET} Chat logging is enabled!")
@@ -28,6 +29,9 @@ class MinecraftBotManager:
 
     def is_online(self):
         return self._online
+
+    def is_starting(self):
+        return self._starting
 
     async def chat(self, message):
         await self.client.loop.run_in_executor(None, self.bot.chat, message)
@@ -167,6 +171,7 @@ class MinecraftBotManager:
 
     @classmethod
     def createbot(cls, client):
+        self._starting = True
         javascript.init()
         mineflayer = javascript.require("mineflayer")
         print(f"{Color.GREEN}Minecraft{Color.RESET} > Creating the bot...")
@@ -193,4 +198,5 @@ class MinecraftBotManager:
                 return cls.createbot(client)
             raise
         print(f"{Color.GREEN}Minecraft{Color.RESET} > Events registered")
+        self._starting = False
         return botcls

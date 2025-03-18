@@ -97,7 +97,7 @@ class Admin(commands.Cog):
     async def check_bot_status(self):
         try:
             if self.bot.mineflayer_bot is not None:
-                if self.bot.mineflayer_bot.is_online():
+                if self.bot.mineflayer_bot.is_online() or self.bot.mineflayer_bot.is_starting():
                     pass
                 else:
                     print("Discord > Bot is offline!")
