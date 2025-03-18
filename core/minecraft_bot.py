@@ -19,7 +19,7 @@ class MinecraftBotManager:
         self.message_buffer = []
         self.auto_restart = True
         self._online = False
-        self._restarting
+        self._starting = False
         self._ready = asyncio.Event()
         if SettingsConfig.printChat:
             print(f"{Color.GREEN}Minecraft{Color.RESET} > {Color.YELLOW}[WARNING]{Color.RESET} Chat logging is enabled!")
