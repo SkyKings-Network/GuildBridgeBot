@@ -3,6 +3,7 @@ import sys
 import time
 import logging
 import os
+import traceback
 
 import javascript
 from javascript import require, On, config
@@ -51,7 +52,12 @@ class MinecraftBotManager:
         time.sleep(3)
         if restart:
             print(f"{Color.GREEN}Minecraft{Color.RESET} > Restarting...")
-            self.createbot(self.client)
+            try:
+                self.createbot(self.client)
+            except Exception as e:
+                print(f"{Color.GREEN}Minecraft{Color.RESET} > Error: {e}")
+                traceback.print_exc()
+                raise
 
 
     def send_to_discord(self, message):

@@ -38,7 +38,12 @@ class Admin(commands.Cog):
     async def relog(self, ctx):
         embedVar = discord.Embed(color=0x1ABC9C).set_author(name="Restarting the bot...")
         await ctx.send(embed=embedVar)
-        await self.bot.loop.run_in_executor(None, self.bot.mineflayer_bot.stop, True)
+        try:
+            await self.bot.loop.run_in_executor(None, self.bot.mineflayer_bot.stop, True)
+        except Exception as e:
+            print(e)
+            embedVar = discord.Embed(color=0x1ABC9C).set_author(name="Error while restarting the bot!")
+            await ctx.send(embed=embedVar)
 
     @commands.command(aliases=['o', 'over'])
     @has_override_role
