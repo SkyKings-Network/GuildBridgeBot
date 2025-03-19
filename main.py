@@ -20,6 +20,8 @@ if "update" in sys.argv:
     directory = os.path.dirname(os.path.realpath(__file__))
     subprocess.check_call(["git", "pull"], cwd=directory)
     subprocess.check_call([sys.executable, "-m", "pip", "install", "-U", "-r", directory + "/requirements.txt"])
+    print(f"{Color.GREEN}Updated!{Color.RESET}")
+    sys.exit(0)
 
 bot = DiscordBridgeBot()
 
