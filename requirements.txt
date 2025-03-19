@@ -1,6 +1,5 @@
-discord.py
-redis
-javascript
-requests
-pandas
-matplotlib
+discord.py~=2.5.2
+redis~=5.2.1
+javascript~=1!1.2.2
+requests~=2.32.3
+matplotlib~=3.10.1

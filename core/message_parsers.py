@@ -4,9 +4,6 @@ from datetime import datetime
 import re
 import matplotlib.pyplot as plt
 import io
-import pandas as pd
-import numpy as np
-import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
 import discord

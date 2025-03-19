@@ -15,6 +15,12 @@ except ModuleNotFoundError as e:
     print(f"Module {missing_module} installed. Restarting bot...")
     os.execv(sys.executable, ['python'] + sys.argv)
 
+if "update" in sys.argv:
+    print(f"{Color.YELLOW}Updating...{Color.RESET}")
+    directory = os.path.dirname(os.path.realpath(__file__))
+    subprocess.check_call(["git", "pull"], cwd=directory)
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-U", "-r", directory + "/requirements.txt"])
+
 bot = DiscordBridgeBot()
 
 
@@ -33,6 +39,7 @@ async def main():
 
 
 try:
-    asyncio.run(main())
+    # asyncio.run(main())
+    ...
 except KeyboardInterrupt:
     pass
