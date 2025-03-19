@@ -59,9 +59,7 @@ class DiscordBridgeBot(commands.Bot):
         self.add_check(self.ready_check)
 
     async def ready_check(self, ctx):
-        await self.wait_until_ready()
-        await self.mineflayer_bot.wait_until_ready()
-        return True
+        return self.is_ready() and self.mineflayer_bot.is_ready()
 
     def get_intents(self) -> discord.Intents:
         """Returns a mutable intents class for the bot."""

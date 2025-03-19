@@ -21,12 +21,11 @@ class MinecraftBotManager:
         self.auto_restart = True
         self._online = False
         self._starting = False
-        self._ready = asyncio.Event()
         if SettingsConfig.printChat:
             print(f"{Color.GREEN}Minecraft{Color.RESET} > {Color.YELLOW}[WARNING]{Color.RESET} Chat logging is enabled!")
 
-    async def wait_until_ready(self):
-        await self._ready.wait()
+    def is_ready(self):
+        return self._online and not self._starting
 
     def is_online(self):
         return self._online
@@ -47,7 +46,6 @@ class MinecraftBotManager:
         #     pass
         self._starting = restart
         self._online = False
-        self._ready.clear()
         javascript.terminate()
         time.sleep(3)
         if restart:
@@ -74,7 +72,6 @@ class MinecraftBotManager:
                 self.send_to_discord("Bot Online")
                 print(f"{Color.GREEN}Minecraft{Color.RESET} > Bot is logged in as", self.bot.username)
             self._online = True
-            self._ready.set()
             self.client.dispatch("minecraft_ready")
 
         @javascript.On(self.bot, "end")
