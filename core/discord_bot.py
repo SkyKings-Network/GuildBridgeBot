@@ -359,7 +359,7 @@ class DiscordBridgeBot(commands.Bot):
         def _filter(match):
             num = match.group(0)
             extra = ""
-            if num[-1] in ("k", "m", "b"):
+            if num[-1].lower() in ("k", "m", "b"):
                 extra = num[-1]
                 num = num[:-1]
             try:
