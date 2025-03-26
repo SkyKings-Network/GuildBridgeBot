@@ -180,10 +180,4 @@ This bot is not affiliated with or endorsed by Hypixel. Use at your own risk and
 
 If you encounter any issues or have questions, please open an issue on the GitHub repository.
 
-## To-Do List
-
-- [ ] **Improve Minecraft-to-Discord sync speed**: Consider using a queue instead of dispatching events.
-- [ ] **Add auto-accept requirements** for guild invites.
-- [ ] **Make logs easier to read** by reducing the number of print statements and improving log formatting.
-
 ---
