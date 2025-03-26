@@ -335,7 +335,13 @@ class Bridge(commands.Cog):
             )
             await ctx.send(embed=embed, delete_after=5)
         elif isinstance(error, commands.CommandNotFound):
-            pass
+            message = ctx.message
+            if not str(message.content).startswith(DiscordConfig.prefix):
+                pass
+            elif message.channel.id == DiscordConfig.channel:
+                await self.bot.send_minecraft_user_message(message.author.display_name, message)
+            elif message.channel.id == DiscordConfig.officerChannel:
+                await self.bot.send_minecraft_user_message(message.author.display_name, message, officer=True)
         elif isinstance(error, commands.BadArgument):
             embed = discord.Embed(
                 description="Invalid argument: " + str(error),

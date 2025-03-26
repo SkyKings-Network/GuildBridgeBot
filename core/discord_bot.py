@@ -129,7 +129,6 @@ class DiscordBridgeBot(commands.Bot):
             print(prefix, "If you do not trust your guild members, it is recommended to disable crosschat.")
             print(prefix, "To disable this warning, set 'ignoreCrosschatWarning' under 'discord' in your config file.")
 
-
     async def on_message(self, message: discord.Message):
         if message.author == self.user:
             return
