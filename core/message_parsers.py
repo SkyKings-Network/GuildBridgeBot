@@ -8,25 +8,6 @@ from concurrent.futures import ThreadPoolExecutor
 
 import discord
 
-class HypixelRank:
-    # Using emojis or special characters to represent different ranks
-    RANK_FORMATS = {
-        'VIP': '🟢',      # Green circle for VIP
-        'VIP+': '🟢⭐',    # Green circle with star for VIP+
-        'MVP': '🔷',      # Blue diamond for MVP
-        'MVP+': '🔷⭐',    # Blue diamond with star for MVP+
-        'MVP++': '🟡⭐',   # Gold circle with star for MVP++
-        'ADMIN': '🔴',    # Red circle for ADMIN
-        'HELPER': '💙',   # Blue heart for HELPER
-        'MODERATOR': '💚' # Green heart for MODERATOR
-    }
-
-    @staticmethod
-    def format_rank(rank: str) -> str:
-        rank = rank.upper() if rank else ''
-        emoji = HypixelRank.RANK_FORMATS.get(rank, '')
-        return f'{emoji}**[{rank}]**' if rank else ''
-
 @dataclass
 class GuildMember:
     name: str
@@ -159,38 +140,36 @@ class GuildMessageParser:
 
         return self._format_top_embed()
 
-    def _format_rank(self, rank: str) -> str:
-        return f"**[{rank}]**" if rank else ""
-
     def _format_list_embed(self) -> List[discord.Embed]:
         embeds = []
         current_description = ""
         page_number = 1
 
-        current_description += f"## {self.guild_name}\n\n"
+        current_description += ""
+        title = self.guild_name
 
         for role in self.roles:
             role_description = f"### {role.name}\n"
             member_texts = []
             for m in role.members:
-                rank_format = self._format_rank(m.rank)
-                member_name = re.sub(r'([*_~`|])', r'\\\1', m.name)
-                member_text = f"{rank_format} {member_name}" if rank_format else m.name
+                member_name = m.name
+                member_text = f"**[{m.rank}]** {member_name}" if m.rank else f"{member_name}"
                 member_texts.append(member_text)
             
-            role_description += ", ".join(member_texts) + "\n\n"
+            role_description += ", ".join(member_texts) + "\n"
             
             # Check if adding this role would exceed the limit
             if len(current_description) + len(role_description) > 4000:
-                embeds.append(discord.Embed(description=current_description.strip(), colour=0x1ABC9C))
-                current_description = f"# {self.guild_name} (Continued)\n\n" + role_description
+                embeds.append(discord.Embed(title=title, description=current_description.strip(), colour=0x1ABC9C))
+                title = ""
+                current_description = role_description
                 page_number += 1
             else:
                 current_description += role_description
 
         # Add statistics to the last embed
         stats_description = (
-            f"\n### Guild Statistics\n"
+            f"### Guild Statistics\n"
             f"**Total Members:** {self.total_members}\n"
             f"**Online Members:** {self.online_members}\n"
             f"**Offline Members:** {self.offline_members}\n"
@@ -199,11 +178,12 @@ class GuildMessageParser:
         if len(current_description) + len(stats_description) < 4000:
             current_description += stats_description
         else:
-            embeds.append(discord.Embed(description=current_description.strip(), colour=0x1ABC9C))
-            current_description = f"# {self.guild_name} (Statistics)\n\n" + stats_description
+            embeds.append(discord.Embed(title=title, description=current_description.strip(), colour=0x1ABC9C))
+            title = ""
+            current_description = stats_description
             page_number += 1
 
-        embeds.append(discord.Embed(description=current_description.strip(), colour=0x1ABC9C))
+        embeds.append(discord.Embed(title=title, description=current_description.strip(), colour=0x1ABC9C))
 
         # Update titles with page numbers
         total_pages = len(embeds)
@@ -217,19 +197,15 @@ class GuildMessageParser:
         return self._format_list_embed()
 
     def _format_top_embed(self) -> List[discord.Embed]:
-        embed = discord.Embed(title=f"Guild Ranking List", colour=0x1ABC9C)
+        date_check = "(Today)" if (self.date == datetime.now().date()) else ""
+        embed = discord.Embed(title=f"Top Guild Experience: {self.date.strftime('%B %d, %Y')} {date_check}", colour=0x1ABC9C)
         
         description = []
-        date_check = "(Today)" if (self.date == datetime.now().date()) else ""
-        print(date_check)
-        description.append(f"# Top Guild Experience - {self.date.strftime('%m/%d/%Y')} {date_check}")
         for entry in self.top_entries:
             member = entry.member
-            rank_format = HypixelRank.format_rank(member.rank)
-            member_text = f"{rank_format}{member.name}" if rank_format else member.name
+            member_text = f"[{member.rank}] {member.name}" if member.rank else member.name
             description.append(
-                f"### {entry.position}. {member_text}\n"
-                f"**{entry.experience:,}** Guild Experience"
+                f"**{entry.position}:** {member_text} - {entry.experience:,} GEXP"
             )
         
         embed.description = "\n".join(description)
