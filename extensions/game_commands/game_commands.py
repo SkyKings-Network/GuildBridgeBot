@@ -13,6 +13,7 @@ from core.colors import Color
 
 from discord.ext import commands
 from core.config import ExtensionConfig, ConfigKey, DiscordConfig
+from discord_extensions.generic import HELP_EMBED
 
 from .slayer_calculators import calculate_slayer_level, get_next_slayer_level, get_kills_needed
 
@@ -26,6 +27,21 @@ class GameCommandConfig(ExtensionConfig, base_key="game_commands"):
     command_cooldown: float = ConfigKey(float, default=5.0)  # seconds
 
 PREFIX = DiscordConfig.prefix 
+
+COMMAND_INFO = {
+    "help": {
+        "description": "Get help on commands.",
+        "usage": f"{PREFIX}help [command]",
+    },
+    "level": {
+        "description": "Get the level of a player.",
+        "usage": f"{PREFIX}level (player) [profile]",
+    },
+    "slayers": {
+        "description": "Get the slayer levels of a player.",
+        "usage": f"{PREFIX}slayers (player) [profile] [boss]",
+    }
+}
 
 class GameCommands(commands.Cog):
     def __init__(self, bot):
@@ -49,6 +65,13 @@ class GameCommands(commands.Cog):
         self.session = None
         self.index = 0
         self.last_command = None
+        HELP_EMBED.description += "\n``( )`` = Argument required in Discord, optional in-game"
+        HELP_EMBED.insert_field_at(
+            2,
+            name="Game Commands",
+            value="\n".join([f"``{v['usage']}`` {v['description']}" for k, v in COMMAND_INFO.items() if k in cmd_list]),
+            inline=False
+        )
 
     @property
     def antispam(self):
@@ -129,6 +152,12 @@ class GameCommands(commands.Cog):
     async def cog_unload(self) -> None:
         if self.session is not None:
             await self.session.close()
+        for i, field in enumerate(HELP_EMBED.fields):
+            if field.name == "Game Commands":
+                HELP_EMBED.remove_field(i)
+                break
+        # remove line from description
+        HELP_EMBED.description = "\n".join([line for line in HELP_EMBED.description.splitlines() if not line == "``( )`` = Argument required in Discord, optional in-game"])
 
     async def get_info(self, username):
         if self.session is None:
@@ -149,13 +178,9 @@ class GameCommands(commands.Cog):
         command = args[0]
         if command not in self.commands:
             return await chat_msg(f"Unknown command: {command}.")
-        if command == "help":
-            return await chat_msg(f"Usage: {PREFIX}help [command]")
-        if command == "level":
-            return await chat_msg(f"Usage: {PREFIX}level [player] [profile]")
-        if command == "slayers":
-            return await chat_msg(f"Usage: {PREFIX}slayers [player] [profile] [boss]")
-        return await chat_msg(f"Command '{command}' has no help text.")
+        if command in COMMAND_INFO:
+            return await chat_msg(f"{COMMAND_INFO[command]['usage']} - {COMMAND_INFO[command]['description']}")
+        return await chat_msg(f"Command '{command}' does not have help information.")
 
     async def level(self, name, args, *, officer: bool = False, head: str = None):
         chat_msg = lambda msg: self.send_chat_message(name, msg, officer=officer, head=head)
