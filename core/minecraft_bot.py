@@ -98,7 +98,7 @@ class MinecraftBotManager:
             self.client.dispatch("minecraft_error")
 
         @javascript.On(self.bot, "messagestr")
-        def chat(this, message, *args):
+        def chat(this, message, _, raw_message, *args):
             if self.bot.username is None:
                 pass
             else:

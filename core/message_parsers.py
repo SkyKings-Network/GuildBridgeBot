@@ -310,19 +310,18 @@ class GuildMessageParser:
         guild_data = self._parse_guild_data(input_data)
         
         # Create the main description
-        description = f"""
-    ## Guild Stats and Experience History
-
-    • **Created:** {guild_data.get('created', 'Unknown')}
-    • **Members:** {guild_data.get('members', 'Unknown')}
-    • **Guild Level:** {guild_data.get('level', 'Unknown')}
-    • **Total Experience:** {guild_data.get('total_exp', 'Unknown')} **{guild_data.get('rank', '')}**
-    """
+        description = (
+            "## Guild Stats and Experience History\n"
+            f"- **Created:** {guild_data.get('created', 'Unknown')}"
+            f"- **Members:** {guild_data.get('members', 'Unknown')}"
+            f"- **Guild Level:** {guild_data.get('level', 'Unknown')}"
+            f"- **Total Experience:** {guild_data.get('total_exp', 'Unknown')} **{guild_data.get('rank', '')}**"
+        )
         
         # Create the embed
         embed = discord.Embed(
             description=description,
-            color=0x5865F2  # Discord blurple color
+            color=discord.Color.blurple()
         )
         
         # Create the graph
