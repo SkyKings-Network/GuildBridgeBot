@@ -265,20 +265,21 @@ class DiscordBridgeBot(commands.Bot):
                 return await self.send_message(*args, **kwargs, retry=False)
 
     async def send_user_message(
-        self, username, message, *, officer: bool = False, command: bool = False
+        self, username, message, *, officer: bool = False, command: bool = False, head: str = None
     ) -> Union[discord.Message, discord.WebhookMessage, None]:
         await self.send_debug_message("Sending user message")
+        head = ("https://www.mc-heads.net/avatar/" + username) if not head else head
         if self.webhook:
             if command:
                 return await self.send_message(
                     username=discord.utils.escape_markdown(username),
-                    avatar_url="https://www.mc-heads.net/avatar/" + username,
+                    avatar_url=head,
                     embeds=[Embed(description=message, colour=0x1ABC9C)],
                     officer=officer,
                 )
             return await self.send_message(
                 username=discord.utils.escape_markdown(username),
-                avatar_url="https://www.mc-heads.net/avatar/" + username,
+                avatar_url=head,
                 content=discord.utils.escape_markdown(message),
                 officer=officer,
             )
@@ -294,7 +295,7 @@ class DiscordBridgeBot(commands.Bot):
                     text="📩 Bridge Update available! (!update)"
                 )
 
-            embed.set_author(name=("🤖 " + username) if command else username, icon_url="https://www.mc-heads.net/avatar/" + username)
+            embed.set_author(name=("🤖 " + username) if command else username, icon_url=head)
             return await self.send_message(embed=embed, officer=officer)
 
     async def send_minecraft_user_message(self, username, message: discord.Message, *, officer: bool = False):
