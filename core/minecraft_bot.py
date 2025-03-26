@@ -47,8 +47,8 @@ class MinecraftBotManager:
         self._starting = restart
         self._online = False
         javascript.terminate()
-        time.sleep(3)
         if restart:
+            time.sleep(3)
             print(f"{Color.GREEN}Minecraft{Color.RESET} > Restarting...")
             try:
                 self.createbot(self.client)
