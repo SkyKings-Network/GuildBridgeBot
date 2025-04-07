@@ -152,7 +152,7 @@ class GuildMessageParser:
             role_description = f"### {role.name}\n"
             member_texts = []
             for m in role.members:
-                member_name = m.name
+                member_name = discord.utils.escape_markdown(m.name)
                 member_text = f"**[{m.rank}]** {member_name}" if m.rank else f"{member_name}"
                 member_texts.append(member_text)
             
