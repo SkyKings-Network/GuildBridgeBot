@@ -139,9 +139,10 @@ class DiscordBridgeBot(commands.Bot):
                 return
             elif message.channel.id == DiscordConfig.channel:
                 await self.send_minecraft_user_message(message.author.display_name, message)
+                await self.process_commands(message)
             elif message.channel.id == DiscordConfig.officerChannel:
                 await self.send_minecraft_user_message(message.author.display_name, message, officer=True)
-            await self.process_commands(message)
+                await self.process_commands(message)
         else:
             if not message.embeds:
                 return
