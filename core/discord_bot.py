@@ -133,15 +133,14 @@ class DiscordBridgeBot(commands.Bot):
         if message.author == self.user:
             return
         if not message.author.bot:
-            if str(message.content).startswith(DiscordConfig.prefix):
-                pass
+            if str(message.content).startswith(DiscordConfig.prefix) and message.channel.id in (DiscordConfig.channel, DiscordConfig.officerChannel):
+                await self.process_commands(message)
             elif not self.mineflayer_bot.is_online():
                 return
             elif message.channel.id == DiscordConfig.channel:
                 await self.send_minecraft_user_message(message.author.display_name, message)
             elif message.channel.id == DiscordConfig.officerChannel:
                 await self.send_minecraft_user_message(message.author.display_name, message, officer=True)
-            await self.process_commands(message)
         else:
             if not message.embeds:
                 return
