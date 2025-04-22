@@ -829,8 +829,8 @@ class DiscordBridgeBot(commands.Bot):
 
             # hypixel mute
             elif "Your mute will expire in " in message:
-                duration_remaining = "".join(message.split()[5:-1])
-                embed = Embed(colour=0x1ABC9C)
+                duration_remaining = " ".join(message.split()[5:-1])
+                embed = Embed(color=discord.Color.red())
                 embed.set_author(
                     name=f"The bot is currently muted for {duration_remaining}.",
                 )
