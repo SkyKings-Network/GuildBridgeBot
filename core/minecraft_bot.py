@@ -157,7 +157,8 @@ class MinecraftBotManager:
                             "You're currently guild muted" in message or \
                             "Guild Log" in message or \
                             ("You've already invited" in message and "to your guild! Wait for them to accept!" in message) or \
-                            " has requested to join the guild!" in message.lower():
+                            " has requested to join the guild!" in message.lower() or \
+                            "Your mute will expire in " in message:
                         # Guild log is sent as one fat message
                         self.send_to_discord(message)
 

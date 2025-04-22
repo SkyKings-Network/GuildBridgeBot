@@ -828,6 +828,18 @@ class DiscordBridgeBot(commands.Bot):
                 await self.send_debug_message("Sending bot is guild muted message")
                 await self.send_message(embed=embed)
 
+            # hypixel mute
+            elif "Your mute will expire in " in message:
+                duration_remaining = "".join(message.split()[5:-1])
+                embed = Embed(colour=0x1ABC9C)
+                embed.set_author(
+                    name=f"The bot is currently muted for {duration_remaining}.",
+                )
+                await self.send_debug_message("Sending bot is muted message")
+                await self.send_message(embed=embed)
+            elif "Mute ID: " in message:
+                print(f"{Color.CYAN}Discord{Color.RESET} > {message}")
+
             # Bot recieved guild invite
             elif "Click here to accept or type /guild accept " in message:
                 if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
