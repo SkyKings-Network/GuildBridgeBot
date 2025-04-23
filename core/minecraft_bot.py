@@ -83,13 +83,14 @@ class MinecraftBotManager:
 
         @javascript.On(self.bot, "kicked")
         def kicked(this, reason, loggedIn):
-            print(f"{Color.GREEN}Minecraft{Color.RESET} > Bot kicked: {reason}")
+            reason_text = reason.get("text", "") + "".join([e.get("text", "") for e in reason.get("extra", [])])
+            print(f"{Color.GREEN}Minecraft{Color.RESET} > Bot kicked: {reason_text}")
             self.client.dispatch("minecraft_disconnected")
             if loggedIn:
-                self.send_to_discord(f"Bot kicked: {reason}")
+                self.send_to_discord(f"Bot kicked from the server.")
                 self.stop(True)
             else:
-                self.send_to_discord(f"Bot kicked before logging in: {reason}")
+                self.send_to_discord(f"Bot kicked before logging in to the server.")
                 self.stop(False)
 
         @javascript.On(self.bot, "error")
