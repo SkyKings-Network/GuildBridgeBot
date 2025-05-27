@@ -41,7 +41,7 @@ class DiscordBridgeBot(commands.Bot):
         super().__init__(
             command_prefix=commands.when_mentioned_or(DiscordConfig.prefix), case_insensitive=True,
             allowed_mentions=discord.AllowedMentions(everyone=False), intents=discord.Intents(
-                guild_messages=True, message_content=True, guilds=True,
+                guild_messages=True, message_content=True, guilds=True, members=True,
             ),
             help_command=None,
             activity=discord.Game(name="Guild Bridge Bot"),
