@@ -34,7 +34,13 @@ class MinecraftBotManager:
         return self._starting
 
     async def chat(self, message):
-        await self.client.loop.run_in_executor(None, self.bot.chat, message)
+        try:
+            await self.client.loop.run_in_executor(None, self.bot.chat, message)
+        except Exception as e:
+            if "Timed out accessing 'chat'" in str(e):
+                self.stop()
+            else:
+                raise
 
     def stop(self, restart: bool = True):
         print(f"{Color.GREEN}Minecraft{Color.RESET} > Stopping bot...")
