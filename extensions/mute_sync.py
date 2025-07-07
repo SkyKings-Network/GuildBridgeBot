@@ -78,7 +78,7 @@ class MuteSync(commands.Cog):
             data = await resp.json()
             guild = data["guild"]
             if guild is None:
-                
+                return []
             for member in guild["members"]:
                 uuid = member["uuid"]
                 discord_id = await self.get_discord_user(uuid)
