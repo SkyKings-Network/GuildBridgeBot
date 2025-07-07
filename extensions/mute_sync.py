@@ -77,6 +77,8 @@ class MuteSync(commands.Cog):
                 resp.raise_for_status()
             data = await resp.json()
             guild = data["guild"]
+            if guild is None:
+                
             for member in guild["members"]:
                 uuid = member["uuid"]
                 discord_id = await self.get_discord_user(uuid)
@@ -194,6 +196,8 @@ class MuteSync(commands.Cog):
         await self.bot.wait_until_ready()
         guild = self.bot.get_channel(DiscordConfig.channel).guild
         await guild.chunk(cache=True)
+        if not self.bot.mineflayer_bot.is_ready():
+            await asyncio.sleep(.5)
         if not self._syncing:
             self._syncing = True
             print("MuteSync > Syncing mutes...")
