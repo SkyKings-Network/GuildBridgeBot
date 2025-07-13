@@ -77,6 +77,7 @@ class MuteSync(commands.Cog):
                 resp.raise_for_status()
             data = await resp.json()
             guild = data["guild"]
+            print(guild)
             if guild is None:
                 return []
             for member in guild["members"]:
