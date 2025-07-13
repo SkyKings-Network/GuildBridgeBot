@@ -95,7 +95,6 @@ class MuteSync(commands.Cog):
                     mute_data.append({"userid": discord_id, "uuid": uuid, "muted": False})
                     if (discord_id, uuid) in self.mutes:
                         self.mutes.pop((discord_id, uuid))
-                await asyncio.sleep(1)
         return mute_data
 
     async def sync_mutes(self):
