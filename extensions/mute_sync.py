@@ -82,7 +82,8 @@ class MuteSync(commands.Cog):
             for member in guild["members"]:
                 uuid = member["uuid"]
                 discord_id = await self.get_discord_user(uuid)
-                exp = datetime.datetime.fromtimestamp(member["mutedTill"] / 1000)
+                # datetime 0 will always be in the past
+                exp = datetime.datetime.fromtimestamp(member.get("mutedTill", 0) / 1000)
                 if exp > datetime.datetime.now():
                     mute_data.append({"userid": discord_id, "uuid": uuid, "muted": True, "expires": exp})
                     self.mutes[(discord_id, uuid)] = exp
