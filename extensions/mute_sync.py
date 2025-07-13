@@ -95,6 +95,7 @@ class MuteSync(commands.Cog):
 
     async def sync_mutes(self):
         mutes = await self.get_guild_mutes()
+        print(mutes)
         guild = self.bot.get_channel(DiscordConfig.channel).guild
         role = guild.get_role(MuteSyncConfig.mute_role)
         members = role.members
