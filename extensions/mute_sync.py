@@ -66,9 +66,11 @@ class MuteSync(commands.Cog):
             return int(data["user"])
 
     async def get_guild_mutes(self):
+        print(self.bot.mineflayer_bot.bot.username)
         bot_uuid = await self.get_uuid(self.bot.mineflayer_bot.bot.username)
         session = await self.get_session()
         mute_data = []
+        print(bot_uuid)
         async with session.get(
                 f"https://api.hypixel.net/guild?player={bot_uuid}",
                 headers={"API-Key": MuteSyncConfig.hypixel_api_key}
