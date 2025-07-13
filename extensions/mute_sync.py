@@ -79,9 +79,7 @@ class MuteSync(commands.Cog):
             if resp.status != 200:
                 resp.raise_for_status()
             data = await resp.json()
-            print(data)
             guild = data["guild"]
-            print(guild)
             if guild is None:
                 return []
             for member in guild["members"]:
@@ -101,13 +99,11 @@ class MuteSync(commands.Cog):
 
     async def sync_mutes(self):
         mutes = await self.get_guild_mutes()
-        print(mutes)
         guild = self.bot.get_channel(DiscordConfig.channel).guild
         role = guild.get_role(MuteSyncConfig.mute_role)
         members = role.members
         role_guild_members = [m for m in members if m.id in [i["userid"] for i in mutes]]
         muted = [i["userid"] for i in mutes if i["muted"]]
-        print(muted)
         for member in role_guild_members:
             if member.id not in muted:
                 await member.remove_roles(role, reason="Guild mute sync")
