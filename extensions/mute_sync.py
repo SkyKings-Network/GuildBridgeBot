@@ -55,7 +55,7 @@ class MuteSync(commands.Cog):
     async def get_discord_user(self, uuid):
         session = await self.get_session()
         async with session.get(
-                f"https://skykings.net/api/user?uuid={uuid}",
+                f"https://old.skykings.net/api/user?uuid={uuid}",
                 headers={"Authorization": MuteSyncConfig.skykings_api_key},
         ) as resp:
             if resp.status == 404:
