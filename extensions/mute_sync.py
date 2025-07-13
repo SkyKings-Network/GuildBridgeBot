@@ -100,6 +100,7 @@ class MuteSync(commands.Cog):
         members = role.members
         role_guild_members = [m for m in members if m.id in [i["userid"] for i in mutes]]
         muted = [i["userid"] for i in mutes if i["muted"]]
+        print(muted)
         for member in role_guild_members:
             if member.id not in muted:
                 await member.remove_roles(role, reason="Guild mute sync")
