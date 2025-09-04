@@ -115,60 +115,59 @@ class MinecraftBotManager:
                         "Officer > " + self.bot.username
                 ):
                     pass
-                else:
-                    if message.startswith("Guild >") or message.startswith("Officer >"):
+                elif message.startswith("Guild >") or message.startswith("Officer >"):
                         self.send_to_discord(message)
 
-                    # Online Command / GEXP Command
-                    if (
-                            message.startswith("Guild Name: ") or
-                            "Top Guild Experience" in message or
-                            message.startswith("Created: ")
-                    ):
-                        message_buffer.clear()
-                        self.wait_response = True
-                        if SettingsConfig.printChat:
-                            print(f"{Color.GREEN}Minecraft{Color.RESET} > Buffering chat...")
-                    if message == "-----------------------------------------------------" and self.wait_response:
-                        self.wait_response = False
-                        self.send_to_discord("\n".join(message_buffer))
-                        message_buffer.clear()
-                        if SettingsConfig.printChat:
-                            print(f"{Color.GREEN}Minecraft{Color.RESET} > End of chat buffer")
-                    if self.wait_response is True:
-                        message_buffer.append(message)
-                        return
+                # Online Command / GEXP Command
+                elif (
+                        message.startswith("Guild Name: ") or
+                        "Top Guild Experience" in message or
+                        message.startswith("Created: ")
+                ):
+                    message_buffer.clear()
+                    self.wait_response = True
+                    if SettingsConfig.printChat:
+                        print(f"{Color.GREEN}Minecraft{Color.RESET} > Buffering chat...")
+                elif message == "-----------------------------------------------------" and self.wait_response:
+                    self.wait_response = False
+                    self.send_to_discord("\n".join(message_buffer))
+                    message_buffer.clear()
+                    if SettingsConfig.printChat:
+                        print(f"{Color.GREEN}Minecraft{Color.RESET} > End of chat buffer")
+                elif self.wait_response is True:
+                    message_buffer.append(message)
+                    return
 
-                    if "Unknown command" in message:
-                        self.send_to_discord(message)
-                    if "Click here to accept or type /guild accept " in message:
-                        self.send_to_discord(message)
-                    elif " is already in another guild!" in message or \
-                            ("You invited" in message and "to your guild. They have 5 minutes to accept." in message) or \
-                            "You sent an offline invite to " in message or \
-                            " joined the guild!" in message or \
-                            " left the guild!" in message or \
-                            " was promoted from " in message or \
-                            " was demoted from " in message or \
-                            " was kicked from the guild!" in message or \
-                            " was kicked from the guild by " in message or \
-                            "You cannot invite this player to your guild!" in message or \
-                            "Disabled guild join/leave notifications!" in message or \
-                            "Enabled guild join/leave notifications!" in message or \
-                            "You cannot say the same message twice!" in message or \
-                            "You don't have access to the officer chat!" in message or \
-                            "Your guild is full!" in message or \
-                            "is already in your guild!" in message or \
-                            ("has muted" in message and "for" in message) or \
-                            "has unmuted" in message or \
-                            "You're currently guild muted" in message or \
-                            "Guild Log" in message or \
-                            ("You've already invited" in message and "to your guild! Wait for them to accept!" in message) or \
-                            " has requested to join the guild!" in message.lower() or \
-                            "Your mute will expire in " in message or \
-                            "Mute ID: " in message:
-                        # Guild log is sent as one fat message
-                        self.send_to_discord(message)
+                elif "Unknown command" in message:
+                    self.send_to_discord(message)
+                elif "Click here to accept or type /guild accept " in message:
+                    self.send_to_discord(message)
+                elif " is already in another guild!" in message or \
+                        ("You invited" in message and "to your guild. They have 5 minutes to accept." in message) or \
+                        "You sent an offline invite to " in message or \
+                        " joined the guild!" in message or \
+                        " left the guild!" in message or \
+                        " was promoted from " in message or \
+                        " was demoted from " in message or \
+                        " was kicked from the guild!" in message or \
+                        " was kicked from the guild by " in message or \
+                        "You cannot invite this player to your guild!" in message or \
+                        "Disabled guild join/leave notifications!" in message or \
+                        "Enabled guild join/leave notifications!" in message or \
+                        "You cannot say the same message twice!" in message or \
+                        "You don't have access to the officer chat!" in message or \
+                        "Your guild is full!" in message or \
+                        "is already in your guild!" in message or \
+                        ("has muted" in message and "for" in message) or \
+                        "has unmuted" in message or \
+                        "You're currently guild muted" in message or \
+                        "Guild Log" in message or \
+                        ("You've already invited" in message and "to your guild! Wait for them to accept!" in message) or \
+                        " has requested to join the guild!" in message.lower() or \
+                        "Your mute will expire in " in message or \
+                        "Mute ID: " in message:
+                    # Guild log is sent as one fat message
+                    self.send_to_discord(message)
 
     def send_minecraft_message(self, discord, message, type):
         if type == "General":
