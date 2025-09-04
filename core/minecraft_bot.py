@@ -114,12 +114,13 @@ class MinecraftBotManager:
                 if message.startswith("Guild > " + self.bot.username) or message.startswith(
                         "Officer > " + self.bot.username
                 ):
-                    pass
-                elif message.startswith("Guild >") or message.startswith("Officer >"):
-                        self.send_to_discord(message)
+                    return
+                if message.startswith("Guild >") or message.startswith("Officer >"):
+                    self.send_to_discord(message)
+                    return
 
                 # Online Command / GEXP Command
-                elif (
+                if (
                         message.startswith("Guild Name: ") or
                         "Top Guild Experience" in message or
                         message.startswith("Created: ")
@@ -128,17 +129,18 @@ class MinecraftBotManager:
                     self.wait_response = True
                     if SettingsConfig.printChat:
                         print(f"{Color.GREEN}Minecraft{Color.RESET} > Buffering chat...")
-                elif message == "-----------------------------------------------------" and self.wait_response:
+                if message == "-----------------------------------------------------" and self.wait_response:
                     self.wait_response = False
                     self.send_to_discord("\n".join(message_buffer))
                     message_buffer.clear()
                     if SettingsConfig.printChat:
                         print(f"{Color.GREEN}Minecraft{Color.RESET} > End of chat buffer")
-                elif self.wait_response is True:
+                    return
+                if self.wait_response is True:
                     message_buffer.append(message)
                     return
 
-                elif "Unknown command" in message:
+                if "Unknown command" in message:
                     self.send_to_discord(message)
                 elif "Click here to accept or type /guild accept " in message:
                     self.send_to_discord(message)
