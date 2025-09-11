@@ -51,11 +51,12 @@ class MuteSync(commands.Cog):
                 resp.raise_for_status()
             data = await resp.json()
             return data["id"]
+        return None
 
     async def get_discord_user(self, uuid):
         session = await self.get_session()
         async with session.get(
-                f"https://old.skykings.net/api/user?uuid={uuid}",
+                f"https://api.skykings.net/user/lookup?uuid={uuid}",
                 headers={"Authorization": MuteSyncConfig.skykings_api_key},
         ) as resp:
             if resp.status == 404:
@@ -63,7 +64,8 @@ class MuteSync(commands.Cog):
             if resp.status != 200:
                 resp.raise_for_status()
             data = await resp.json()
-            return int(data["user"])
+            return int(data["userid"])
+        return None
 
     async def get_guild_mutes(self):
         # wait for this to be populated
