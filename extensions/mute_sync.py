@@ -64,8 +64,7 @@ class MuteSync(commands.Cog):
             if resp.status != 200:
                 resp.raise_for_status()
             data = await resp.json()
-            print(data)
-            return int(data["userid"])
+            return int(data["data"]["userid"])
         return None
 
     async def get_guild_mutes(self):
