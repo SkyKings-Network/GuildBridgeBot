@@ -57,7 +57,7 @@ class MuteSync(commands.Cog):
         session = await self.get_session()
         async with session.get(
                 f"https://api.skykings.net/user/lookup?uuid={uuid}",
-                headers={"Authorization": MuteSyncConfig.skykings_api_key},
+                headers={"X-API-Key": MuteSyncConfig.skykings_api_key},
         ) as resp:
             if resp.status == 404:
                 return None
