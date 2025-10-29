@@ -40,7 +40,7 @@ Follow these instructions to start a new bridge bot instance:
    
 4. **Start the Bot:**
     ```bash
-    docker-compose -f compose.yml up -d
+    docker compose -f compose.yml up -d
     ```
    
 If you are running the bot for the first time, you will need to log in with a Minecraft account.
@@ -75,7 +75,7 @@ Each bot will need its own service definition.
 4. **Save and exit the file.**
 5. **Restart the docker compose setup:**
     ```bash
-    docker-compose -f compose.yml up -d
+    docker compose -f compose.yml up -d
     ```
 
 ### Configuration
@@ -85,6 +85,13 @@ To use a file, mount it into the Docker container at `/Bot/config.json`. For exa
 ```yaml
 volumes:
     - ./config.json:/Bot/config.json
+```
+
+### Updating the Bot
+To update the bot to the latest version, run the following commands:
+```bash
+docker compose -f compose.yml pull
+docker compose -f compose.yml up -d
 ```
 
 ## Commands
