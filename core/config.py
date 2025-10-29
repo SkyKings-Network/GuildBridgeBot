@@ -147,7 +147,6 @@ class ConfigObject(metaclass=_ConfigObject, base_key=""):
 
     @classmethod
     def refresh(cls) -> None:
-        print(cls.BASE_KEY)
         data = config.get(cls.BASE_KEY, {})
         for key, value in cls.keys.items():
             if key not in data:
