@@ -10,11 +10,13 @@ import json
 import aiohttp
 from datetime import datetime
 
+
 class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.check_bot_status.start()
-        self.check_bot_version.start()
+        if os.getenv("IS_DOCKER") != "1":
+            self.check_bot_version.start()
 
     @commands.command()
     @has_override_role
@@ -25,13 +27,20 @@ class Admin(commands.Cog):
     @has_override_role
     async def toggleaccept(self, ctx):
         if SettingsConfig.autoaccept:
-            embedVar = discord.Embed(description=":white_check_mark: Auto accepting guild join requests is now ``off``!")
-            await ctx.send(embed=embedVar)
+            embedVar = discord.Embed(
+                description=":white_check_mark: Auto accepting guild join requests is now ``off``!"
+                )
             SettingsConfig.autoaccept = False
         else:
             embedVar = discord.Embed(description=":white_check_mark: Auto accepting guild join requests is now ``on``!")
-            await ctx.send(embed=embedVar)
             SettingsConfig.autoaccept = True
+        if os.getenv("IS_DOCKER") == "1":
+            embedVar.description += ("\n\n:information_source: **Changes will not persist after a restart in Docker "
+                                     "deployments.** Add the following to your docker compose file:\n"
+                                     "```yaml"
+                                     "- BRIDGE_SETTINGS_AUTOACCEPT=true\n"
+                                     "```")
+        await ctx.send(embed=embedVar)
 
     @commands.command(aliases=['r'])
     @has_command_role
@@ -55,6 +64,10 @@ class Admin(commands.Cog):
     @commands.command()
     @has_override_role
     async def update(self, ctx):
+        if os.getenv("IS_DOCKER") == "1":
+            embedVar = discord.Embed(color=0xE74C3C, description=":x: Updating is not supported in Docker deployments!")
+            await ctx.send(embed=embedVar)
+            return
         embedVar = discord.Embed(color=0x1ABC9C).set_author(name="Updating the bot...")
         await ctx.send(embed=embedVar)
         url = "https://api.github.com/repos/SkyKings-Network/GuildBridgeBot/commits/main"
@@ -62,23 +75,22 @@ class Admin(commands.Cog):
             async with session.get(url) as response:
                 if response.status == 200:
                     data = await response.json()
-                    
+
                     latest_commit_date = data["commit"]["committer"]["date"]
                     latest_commit_date = datetime.strptime(latest_commit_date, "%Y-%m-%dT%H:%M:%SZ")
 
                     with open("config.json", "r") as f:
                         config = json.load(f)
-                    
+
                     config["data"]["current_version"] = latest_commit_date.strftime("%Y-%m-%dT%H:%M:%SZ")
                     config["data"]["latest_version"] = latest_commit_date.strftime("%Y-%m-%dT%H:%M:%SZ")
 
                     with open("config.json", "w") as f:
                         json.dump(config, f, indent=4)
-                    
+
                     DataConfig.current_version = latest_commit_date.strftime("%Y-%m-%dT%H:%M:%SZ")
                     DataConfig.latest_version = latest_commit_date.strftime("%Y-%m-%dT%H:%M:%SZ")
-                        
-                    
+
                     print(f"Updated config.json with latest commit date: {latest_commit_date}")
                 else:
                     print(f"Failed to check for updates. HTTP Status: {response.status}")
@@ -92,7 +104,8 @@ class Admin(commands.Cog):
     async def reload(self, ctx):
         embedVar = discord.Embed(color=0x1ABC9C).set_author(name="Reloading extensions...")
         msg = await ctx.send(embed=embedVar)
-        os.system("git pull")
+        if os.getenv("IS_DOCKER") != "1":
+            os.system("git pull")
         for ext in list(self.bot.extensions):
             await self.bot.reload_extension(ext)
         embed = discord.Embed(color=0x1ABC9C).set_author(name="Extensions reloaded!")
@@ -115,7 +128,7 @@ class Admin(commands.Cog):
     async def check_bot_version(self):
         try:
             await self.bot.wait_until_ready()
-            
+
             config_current_commit_date = DataConfig.current_version
 
             url = "https://api.github.com/repos/SkyKings-Network/GuildBridgeBot/commits/main"
@@ -123,7 +136,7 @@ class Admin(commands.Cog):
                 async with session.get(url) as response:
                     if response.status == 200:
                         data = await response.json()
-                        
+
                         latest_commit_date = data["commit"]["committer"]["date"]
                         latest_commit_date = datetime.strptime(latest_commit_date, "%Y-%m-%dT%H:%M:%SZ")
 
@@ -138,7 +151,7 @@ class Admin(commands.Cog):
                         if latest_commit_date > config_current_commit_date:
                             with open("config.json", "r") as f:
                                 config = json.load(f)
-                            
+
                             config["data"]["latest_version"] = latest_commit_date.strftime("%Y-%m-%dT%H:%M:%SZ")
 
                             with open("config.json", "w") as f:
@@ -149,11 +162,10 @@ class Admin(commands.Cog):
                     else:
                         print(f"Failed to check for updates. HTTP Status: {response.status}")
 
-            
+
         except Exception as e:
             print(e)
 
+
 async def setup(bot):
     await bot.add_cog(Admin(bot))
-
-

@@ -1,0 +1,22 @@
+services:
+  bridge-bot:
+    image: "ghcr.io/skykings-network/bridge-bot:latest"
+    restart: unless-stopped
+    volumes:
+      - .minecraft:/root/.minecraft
+    environment:
+      - BRIDGE_USE_ENV_CONFIG=true
+      - BRIDGE_ACCOUNT_EMAIL=
+      - BRIDGE_DISCORD_TOKEN=
+      - BRIDGE_DISCORD_CHANNEL=
+#  you can add additional bridge bots by duplicating the above, like so:
+#  bridge-bot-2:
+#    image: "ghcr.io/skykings-network/bridge-bot:latest"
+#    restart: unless-stopped
+#    volumes:
+#      - .minecraft:/root/.minecraft
+#    environment:
+#      - BRIDGE_USE_ENV_CONFIG=true
+#      - BRIDGE_ACCOUNT_EMAIL=
+#      - BRIDGE_DISCORD_TOKEN=
+#      - BRIDGE_DISCORD_CHANNEL=

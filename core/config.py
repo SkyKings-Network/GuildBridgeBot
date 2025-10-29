@@ -1,4 +1,5 @@
 import json
+import os
 from typing import Any, Dict, Union, List
 
 from core.errors import InvalidConfig
@@ -16,14 +17,19 @@ __all__ = (
 
 _completed_init = False
 _fnf = False
-try:
-    with open("config.json", "r") as file:
-        config = json.load(file)
-except FileNotFoundError as e:
-    config = {}
-    _fnf = True
-except json.JSONDecodeError as e:
-    raise InvalidConfig("The config file is not a valid JSON file.") from e
+use_env_config = os.getenv("BRIDGE_USE_ENV_CONFIG", "false").lower() in ("1", "true", "yes")
+
+config = {}
+if not use_env_config:
+    try:
+        with open("config.json", "r") as file:
+            config = json.load(file)
+    except FileNotFoundError as e:
+        config = {}
+        _fnf = True
+    except json.JSONDecodeError as e:
+        raise InvalidConfig("The config file is not a valid JSON file.") from e
+
 
 
 class ConfigKey:
@@ -40,22 +46,38 @@ class ConfigKey:
     def validate(self, value):
         if not value:
             if self.required:
+                if use_env_config:
+                    raise InvalidConfig(
+                        f"Missing required environment variable 'BRIDGE_{self.basekey.upper()}_{self.key.upper()}'"
+                        )
                 raise InvalidConfig(f"Missing required key '{self.key}' in section '{self.basekey}'")
             return self.default
         elif not isinstance(value, self.type):
             try:
                 value = self.type(value)
             except Exception:
+                if use_env_config:
+                    raise InvalidConfig(
+                        f"Expected {self.type.__name__} for "
+                        f"'BRIDGE_{self.basekey.upper()}_{self.key.upper()}',"
+                        f" but got {type(value).__name__}"
+                        )
                 raise TypeError(
                     f"Expected {self.type.__name__} for '{self.key}' in section '{self.basekey}' "
                     f"but got {type(value).__name__}"
-                    )
+                )
         if isinstance(value, list) and self.list_type:
             for index, item in enumerate(value):
                 if not isinstance(item, self.list_type):
                     try:
                         value[index] = self.list_type(item)
                     except Exception:
+                        if use_env_config:
+                            raise InvalidConfig(
+                                f"Expected {self.list_type.__name__} for "
+                                f"'BRIDGE_{self.basekey.upper()}_{self.key.upper()}',"
+                                f" but got {type(item).__name__} for item at index {index}"
+                            )
                         raise TypeError(
                             f"Expected {self.list_type.__name__} for '{self.key}.{index}' in section '{self.basekey}' "
                             f"but got {type(item).__name__}"
@@ -73,29 +95,20 @@ class _ConfigObject(type):
         obj = super().__new__(cls, name, bases, attrs)
         obj.keys = keys
         obj.BASE_KEY = kwargs["base_key"]
-        # validate the config
-        data = config.get(obj.BASE_KEY)
-        if data is not None:
-            for key, value in keys.items():
-                value.key = key
-                value.basekey = obj.BASE_KEY
-                if key in ("keys", "BASE_KEY"):
-                    raise InvalidConfig(f"Invalid key name '{key}' in section '{obj.BASE_KEY}'")
-                if key not in data:
-                    if value.required:
-                        raise InvalidConfig(f"Missing required key '{key}' in section '{obj.BASE_KEY}'")
-                    data[key] = value.default
-                else:
-                    data[key] = value.validate(data[key])
-                setattr(obj, key, data[key])
-        elif _completed_init and keys:
-            # add all keys n stuff
-            config[obj.BASE_KEY] = {}
-            for k, v in keys.items():
-                config[obj.BASE_KEY][k] = v.default
-                setattr(obj, k, v.default)
-            with open("config.json", "w") as f:
-                json.dump(config, f, indent=4)
+        for key, value in keys.items():
+            value.key = key
+            value.basekey = obj.BASE_KEY
+            if key in ("keys", "BASE_KEY"):
+                raise InvalidConfig(f"Invalid key name '{key}' in section '{obj.BASE_KEY}'")
+        if _completed_init and keys:
+            if not use_env_config:
+                # add all keys n stuff
+                config[obj.BASE_KEY] = {}
+                for k, v in keys.items():
+                    config[obj.BASE_KEY][k] = v.default
+                    setattr(obj, k, v.default)
+                with open("config.json", "w") as f:
+                    json.dump(config, f, indent=4)
             # check if anything is required
             for k, v in keys.items():
                 if v.required:
@@ -103,8 +116,12 @@ class _ConfigObject(type):
                         f"Missing required section '{obj.BASE_KEY}'. "
                         f"It has been automatically added to the config file, "
                         f"please update the settings."
-                        )
+                    )
         return obj
+
+    @classmethod
+    def refresh(cls, *, soft_fail: bool = False) -> None:
+        raise NotImplementedError
 
     @classmethod
     def __getitem__(cls, item: str) -> Any:
@@ -134,6 +151,22 @@ class _ConfigObject(type):
 class ConfigObject(metaclass=_ConfigObject, base_key=""):
     keys: Dict[str, ConfigKey]
     BASE_KEY: str
+
+    @classmethod
+    def refresh(cls) -> None:
+        data = config.get(cls.BASE_KEY, {})
+        for key, value in cls.keys.items():
+            if key not in data:
+                if value.required:
+                    if use_env_config:
+                        raise InvalidConfig(
+                            f"Missing required environment variable 'BRIDGE_{cls.BASE_KEY.upper()}_{key.upper()}'"
+                        )
+                    raise InvalidConfig(f"Missing required key '{key}' in section '{cls.BASE_KEY}'")
+                data[key] = value.default
+            else:
+                data[key] = value.validate(data[key])
+            setattr(cls, key, data[key])
 
     @classmethod
     def __getitem__(cls, item):
@@ -188,9 +221,11 @@ class ServerConfig(ConfigObject, base_key="server"):
 class AccountConfig(ConfigObject, base_key="account"):
     email: str = ConfigKey(str)
 
+
 class DataConfig(ConfigObject, base_key="data"):
     current_version: str = ConfigKey(str, "")
     latest_version: str = ConfigKey(str, "")
+
 
 class DiscordConfig(ConfigObject, base_key="discord"):
     token: str = ConfigKey(str)
@@ -230,6 +265,7 @@ _config_objects = [ServerConfig, AccountConfig, DiscordConfig, RedisConfig, Sett
 
 def validate_config(_config: Dict):
     for section in _config_objects:
+        section.refresh()
         section.validate(_config)
     return _config
 
@@ -244,11 +280,32 @@ def generate_config():
         json.dump(_config, f, indent=4)
 
 
-if _fnf:
-    generate_config()
-    raise InvalidConfig(
-        "No config file was found, so we generated one for you. Please set it up before continuing."
-    )
+if use_env_config:
+    _config = {}
+    # load config from environment variables
+    for sect in _config_objects:
+        _config[sect.BASE_KEY] = {}
+        for k, v in sect.keys.items():
+            env_var = f"BRIDGE_{sect.BASE_KEY.upper()}_{k.upper()}"
+            env_value = os.getenv(env_var)
+            if env_value is not None:
+                if v.type is bool:
+                    env_value = env_value.lower() in ("1", "true", "yes")
+                elif v.type is int:
+                    env_value = int(env_value)
+                elif v.type is list and v.list_type:
+                    env_value = [v.list_type(item.strip()) for item in env_value.split(",")]
+                _config[sect.BASE_KEY][k] = env_value
+            else:
+                _config[sect.BASE_KEY][k] = v.default if v.default not in (..., None) else ""
+    config.clear()
+    config.update(**_config)
+else:
+    if _fnf:
+        generate_config()
+        raise InvalidConfig(
+            "No config file was found, so we generated one for you. Please set it up before continuing."
+        )
 validate_config(config)
 _completed_init = True
 
