@@ -100,23 +100,14 @@ class _ConfigObject(type):
             value.basekey = obj.BASE_KEY
             if key in ("keys", "BASE_KEY"):
                 raise InvalidConfig(f"Invalid key name '{key}' in section '{obj.BASE_KEY}'")
-        if _completed_init and keys:
-            if not use_env_config and obj.BASE_KEY not in config:
-                # add all keys n stuff
-                config[obj.BASE_KEY] = {}
-                for k, v in keys.items():
-                    config[obj.BASE_KEY][k] = v.default
-                    setattr(obj, k, v.default)
-                with open("config.json", "w") as f:
-                    json.dump(config, f, indent=4)
-            # check if anything is required
+        if not use_env_config and obj.BASE_KEY not in config:
+            # add all keys n stuff
+            config[obj.BASE_KEY] = {}
             for k, v in keys.items():
-                if v.required:
-                    raise InvalidConfig(
-                        f"Missing required section '{obj.BASE_KEY}'. "
-                        f"It has been automatically added to the config file, "
-                        f"please update the settings."
-                    )
+                config[obj.BASE_KEY][k] = v.default
+                setattr(obj, k, v.default)
+            with open("config.json", "w") as f:
+                json.dump(config, f, indent=4)
         return obj
 
     @classmethod
