@@ -2,6 +2,7 @@ services:
   bridge-bot:
     image: "ghcr.io/skykings-network/bridge-bot:latest"
     restart: unless-stopped
+    container_name: bridge-bot  # optional: set a custom container name
     volumes:
       - .minecraft:/root/.minecraft
     environment:
@@ -13,6 +14,7 @@ services:
 #  bridge-bot-2:
 #    image: "ghcr.io/skykings-network/bridge-bot:latest"
 #    restart: unless-stopped
+#    container_name: bridge-bot-2
 #    volumes:
 #      - .minecraft:/root/.minecraft
 #    environment:
