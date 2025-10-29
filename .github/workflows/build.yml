@@ -3,7 +3,7 @@ name: Build & Publish
 on:
   push:
     branches:
-      - v3
+      - main
 
 env:
   IMAGE_REGISTRY: "ghcr.io"
