@@ -108,6 +108,8 @@ class _ConfigObject(type):
                 setattr(obj, k, v.default)
             with open("config.json", "w") as f:
                 json.dump(config, f, indent=4)
+        if _completed_init:
+            obj.refresh()
         return obj
 
     @classmethod
@@ -145,6 +147,7 @@ class ConfigObject(metaclass=_ConfigObject, base_key=""):
 
     @classmethod
     def refresh(cls) -> None:
+        print(cls.BASE_KEY)
         data = config.get(cls.BASE_KEY, {})
         for key, value in cls.keys.items():
             if key not in data:
