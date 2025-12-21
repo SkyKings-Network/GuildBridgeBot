@@ -35,9 +35,15 @@ class MinecraftBotManager:
 
     async def chat(self, message):
         try:
-            await self.client.loop.run_in_executor(None, self.bot.chat, message)
+            await asyncio.wait_for(
+                self.client.loop.run_in_executor(None, self.bot.chat, message),
+                timeout=8,
+            )
+        except asyncio.TimeoutError:
+            print(f"{Color.GREEN}Minecraft{Color.RESET} > chat() timed out - terminating JS runtime")
+            self.stop()
         except Exception as e:
-            if "Timed out accessing 'chat'" in str(e):
+            if "Timed out accessing 'chat'" in str(e) or ("Timed out" in str(e) and "chat" in str(e)):
                 self.stop()
             else:
                 raise
