@@ -1,4 +1,5 @@
 import asyncio
+import json
 import sys
 import time
 import logging
@@ -86,17 +87,23 @@ class MinecraftBotManager:
             self._online = True
             self.client.dispatch("minecraft_ready")
 
-        # @javascript.On(self.bot, "end")
-        # def end(this, reason):
-        #     print(f"{Color.GREEN}Minecraft{Color.RESET} > Bot offline: {reason}")
-        #     self.send_to_discord("Bot Offline")
-        #     self.client.dispatch("minecraft_disconnected")
-        #     self.stop(self.auto_restart)
+        @javascript.On(self.bot, "end")
+        def end(this, reason):
+            time.sleep(3)
+            print(f"{Color.GREEN}Minecraft{Color.RESET} > Bot offline: {reason}")
+            self.send_to_discord("Bot Offline")
+            self.client.dispatch("minecraft_disconnected")
+            self.stop(self.auto_restart)
 
         @javascript.On(self.bot, "kicked")
         def kicked(this, reason, loggedIn):
             if isinstance(reason, str):
-                reason_text = reason
+                try:
+                    reason = json.loads(reason)
+                except Exception:
+                    reason_text = reason
+                else:
+                    reason_text = reason.get("text", "") + "".join([e.get("text", "") for e in reason.get("extra", [])])
             else:
                 reason_text = reason.get("text", "") + "".join([e.get("text", "") for e in reason.get("extra", [])])
             print(f"{Color.GREEN}Minecraft{Color.RESET} > Bot kicked: {reason_text}")
