@@ -95,7 +95,10 @@ class MinecraftBotManager:
 
         @javascript.On(self.bot, "kicked")
         def kicked(this, reason, loggedIn):
-            reason_text = reason.get("text", "") + "".join([e.get("text", "") for e in reason.get("extra", [])])
+            if isinstance(reason, str):
+                reason_text = reason
+            else:
+                reason_text = reason.get("text", "") + "".join([e.get("text", "") for e in reason.get("extra", [])])
             print(f"{Color.GREEN}Minecraft{Color.RESET} > Bot kicked: {reason_text}")
             self.client.dispatch("minecraft_disconnected")
             if loggedIn:
