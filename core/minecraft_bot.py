@@ -80,12 +80,12 @@ class MinecraftBotManager:
             self._online = True
             self.client.dispatch("minecraft_ready")
 
-        @javascript.On(self.bot, "end")
-        def end(this, reason):
-            print(f"{Color.GREEN}Minecraft{Color.RESET} > Bot offline: {reason}")
-            self.send_to_discord("Bot Offline")
-            self.client.dispatch("minecraft_disconnected")
-            self.stop(self.auto_restart)
+        # @javascript.On(self.bot, "end")
+        # def end(this, reason):
+        #     print(f"{Color.GREEN}Minecraft{Color.RESET} > Bot offline: {reason}")
+        #     self.send_to_discord("Bot Offline")
+        #     self.client.dispatch("minecraft_disconnected")
+        #     self.stop(self.auto_restart)
 
         @javascript.On(self.bot, "kicked")
         def kicked(this, reason, loggedIn):
