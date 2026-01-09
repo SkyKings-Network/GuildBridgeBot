@@ -356,11 +356,16 @@ class DiscordBridgeBot(commands.Bot):
                 content = content.replace(f"<#{mention}>", f"#unknown-channel")
         # filter links
         def _filter(match):
-            num = match.group(0)
-            extra = ""
-            if num[-1].lower() in ("k", "m", "b"):
-                extra = num[-1]
-                num = num[:-1]
+            thing = match.group(0)
+            # Ellipses
+            is_dots = True
+            for char in thing:
+                if char != ".":
+                    is_dots = False
+                    break
+            # Numbers (1.2k etc)
+            extra = num[-1]
+            num = num[:-1]
             try:
                 return str(float(num)) + extra
             except ValueError:
