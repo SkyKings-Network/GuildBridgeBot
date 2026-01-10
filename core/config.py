@@ -19,17 +19,37 @@ _completed_init = False
 _fnf = False
 use_env_config = os.getenv("BRIDGE_USE_ENV_CONFIG", "false").lower() in ("1", "true", "yes")
 
-config = {}
+
+class CaseInsensitiveDict(dict[str, Any]):
+    def __setitem__(self, key: str, value: Any) -> None:
+        # infect nested dicts
+        if isinstance(value, dict):
+            super().__setitem__(key.lower(), CaseInsensitiveDict(value))
+        else:
+            super().__setitem__(key.lower(), value)
+
+    def __getitem__(self, key: str) -> Any:
+        return super().__getitem__(key.lower())
+
+    def __contains__(self, key: object) -> bool:
+        if isinstance(key, str):
+            return super().__contains__(key.lower())
+        return False
+
+    def get(self, key: str, default: Any = None) -> Any:
+        return super().get(key.lower(), default)
+
+
+config = CaseInsensitiveDict()
 if not use_env_config:
     try:
         with open("config.json", "r") as file:
-            config = json.load(file)
+            config = CaseInsensitiveDict(json.load(file))
     except FileNotFoundError as e:
-        config = {}
+        CaseInsensitiveDict()
         _fnf = True
     except json.JSONDecodeError as e:
         raise InvalidConfig("The config file is not a valid JSON file.") from e
-
 
 
 class ConfigKey:
@@ -49,7 +69,7 @@ class ConfigKey:
                 if use_env_config:
                     raise InvalidConfig(
                         f"Missing required environment variable 'BRIDGE_{self.basekey.upper()}_{self.key.upper()}'"
-                        )
+                    )
                 raise InvalidConfig(f"Missing required key '{self.key}' in section '{self.basekey}'")
             return self.default
         elif not isinstance(value, self.type):
@@ -61,7 +81,7 @@ class ConfigKey:
                         f"Expected {self.type.__name__} for "
                         f"'BRIDGE_{self.basekey.upper()}_{self.key.upper()}',"
                         f" but got {type(value).__name__}"
-                        )
+                    )
                 raise TypeError(
                     f"Expected {self.type.__name__} for '{self.key}' in section '{self.basekey}' "
                     f"but got {type(value).__name__}"
@@ -147,7 +167,27 @@ class ConfigObject(metaclass=_ConfigObject, base_key=""):
 
     @classmethod
     def refresh(cls) -> None:
-        data = config.get(cls.BASE_KEY, {})
+        data = config.get(cls.BASE_KEY, None)
+        if data is None and use_env_config:
+            config[cls.BASE_KEY] = CaseInsensitiveDict()
+            data = config[cls.BASE_KEY]
+            # load config from environment variables
+            for k, v in cls.keys.items():
+                env_var = f"BRIDGE_{cls.BASE_KEY.upper()}_{k.upper()}"
+                env_value = os.getenv(env_var)
+                if env_value is not None:
+                    if v.type is bool:
+                        env_value = env_value.lower() in ("1", "true", "yes")
+                    elif v.type is int:
+                        env_value = int(env_value)
+                    elif v.type is list and v.list_type:
+                        env_value = [v.list_type(item.strip()) for item in env_value.split(",")]
+                    data[k] = env_value
+                else:
+                    data[k] = v.default if v.default not in (..., None) else ""
+        elif data is None:
+            config[cls.BASE_KEY] = CaseInsensitiveDict()
+            data = config[cls.BASE_KEY]
         for key, value in cls.keys.items():
             if key not in data:
                 if value.required:
@@ -273,32 +313,11 @@ def generate_config():
         json.dump(_config, f, indent=4)
 
 
-if use_env_config:
-    _config = {}
-    # load config from environment variables
-    for sect in _config_objects:
-        _config[sect.BASE_KEY] = {}
-        for k, v in sect.keys.items():
-            env_var = f"BRIDGE_{sect.BASE_KEY.upper()}_{k.upper()}"
-            env_value = os.getenv(env_var)
-            if env_value is not None:
-                if v.type is bool:
-                    env_value = env_value.lower() in ("1", "true", "yes")
-                elif v.type is int:
-                    env_value = int(env_value)
-                elif v.type is list and v.list_type:
-                    env_value = [v.list_type(item.strip()) for item in env_value.split(",")]
-                _config[sect.BASE_KEY][k] = env_value
-            else:
-                _config[sect.BASE_KEY][k] = v.default if v.default not in (..., None) else ""
-    config.clear()
-    config.update(**_config)
-else:
-    if _fnf:
-        generate_config()
-        raise InvalidConfig(
-            "No config file was found, so we generated one for you. Please set it up before continuing."
-        )
+if _fnf and not use_env_config:
+    generate_config()
+    raise InvalidConfig(
+        "No config file was found, so we generated one for you. Please set it up before continuing."
+    )
 validate_config(config)
 _completed_init = True
 
