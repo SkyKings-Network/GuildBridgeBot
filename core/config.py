@@ -20,7 +20,7 @@ _fnf = False
 use_env_config = os.getenv("BRIDGE_USE_ENV_CONFIG", "false").lower() in ("1", "true", "yes")
 
 
-class CaseInsensitiveDict(dict[str, Any]):
+class CaseInsensitiveDict(dict):
     def __setitem__(self, key: str, value: Any) -> None:
         # infect nested dicts
         if isinstance(value, dict):
