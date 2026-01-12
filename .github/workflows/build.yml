@@ -17,6 +17,9 @@ jobs:
             runner: ubuntu-latest
           - platform: linux/arm64
             runner: ubuntu-24.04-arm
+    permissions:
+      contents: read
+      packages: write
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Prepare
@@ -70,6 +73,9 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - build
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Download digests
         uses: actions/download-artifact@v4
