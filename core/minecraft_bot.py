@@ -18,6 +18,7 @@ class MinecraftBotManager:
         self.client = client
         self.bot = bot
         self.wait_response = False
+        self.buffer_start = 0
         self.message_buffer = []
         self.auto_restart = True
         self._online = False
@@ -138,7 +139,7 @@ class MinecraftBotManager:
                     return
 
                 # large block messages
-                if message.startswith("-----") and message.endswith("-----") and self.wait_response:
+                if self.wait_response and ((message.startswith("-----") and message.endswith("-----")) or time.time() - self.buffer_start > 2):
                     if SettingsConfig.printChat:
                         print(f"{Color.GREEN}Minecraft{Color.RESET} > End of chat buffer")
                     self.wait_response = False
@@ -156,6 +157,7 @@ class MinecraftBotManager:
                     return
                 if message.startswith("-----") and message.endswith("-----") and not self.wait_response:
                     self.wait_response = True
+                    self.buffer_start = time.time()
                     if SettingsConfig.printChat:
                         print(f"{Color.GREEN}Minecraft{Color.RESET} > Buffering chat...")
                 if self.wait_response:

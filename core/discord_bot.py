@@ -471,13 +471,16 @@ class DiscordBridgeBot(commands.Bot):
                 channel = self.get_channel(DiscordConfig.officerChannel)
                 if channel is None:
                     return
+
                 username, message = regex_officer.match(message).groups()
                 if self.mineflayer_bot.bot.username in username:
                     return
-                message = message.replace("Officer > ", "")
-                if "[" in username:
-                    username = username.split("]")[1]
+                if username.startswith("["):
+                    username = username.split(" ")[1]
+                else:
+                    username = username.split(" ")[0]
                 username = username.strip()
+
                 self.dispatch("hypixel_guild_officer_message", username, message)
                 await self.send_user_message(username, message, officer=True)
 
