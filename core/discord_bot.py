@@ -1,19 +1,19 @@
 import asyncio
 import os
 import re
-import threading
 import traceback
-from datetime import datetime, timedelta, timezone
-from typing import Any, Callable, Coroutine, Union
+import zoneinfo
+import datetime
+from typing import Any, Union
 
 import aiohttp
 import discord
+import pygal
 from discord import Embed
 from discord.ext import commands
 
 from core.colors import Color
 from core.config import DiscordConfig, RedisConfig, DataConfig, SettingsConfig
-from core.message_parsers import GuildMessageParser
 from core.minecraft_bot import MinecraftBotManager
 from core.redis_handler import RedisManager
 
@@ -72,6 +72,12 @@ class DiscordBridgeBot(commands.Bot):
             f"{traceback.format_exc()}\n"
             f"```"
         )
+        lines = [
+            f"An error occurred in {event_method} with args {args} and kwargs {kwargs}:",
+            *traceback.format_exc().splitlines()
+        ]
+        for line in lines:
+            print(f"{Color.CYAN}Discord{Color.RESET} > {Color.RED}[ERROR]{Color.RESET}", line)
 
     async def send_invite(self, username):
         fut = asyncio.Future()
@@ -103,7 +109,9 @@ class DiscordBridgeBot(commands.Bot):
         print(f"{Color.CYAN}Discord{Color.RESET} > Bot Running as {self.user}")
         channel = self.get_channel(DiscordConfig.channel)
         if channel is None:
-            print(f"{Color.CYAN}Discord{Color.RESET} > Channel {DiscordConfig.channel} not found! Please set the correct channel ID!")
+            print(
+                f"{Color.CYAN}Discord{Color.RESET} > Channel {DiscordConfig.channel} not found! Please set the correct channel ID!"
+                )
             return await self.close()
         self.init_webhooks()
         if self.mineflayer_bot is None:
@@ -121,7 +129,8 @@ class DiscordBridgeBot(commands.Bot):
             print(f"{Color.CYAN}Discord{Color.RESET} > Starting the invite processor...")
             self._proc_inv_task = asyncio.create_task(self._process_invites())
         # warning message
-        if (DiscordConfig.allowCrosschat or DiscordConfig.allowOfficerCrosschat) and not DiscordConfig.ignoreCrosschatWarning:
+        if (
+                DiscordConfig.allowCrosschat or DiscordConfig.allowOfficerCrosschat) and not DiscordConfig.ignoreCrosschatWarning:
             prefix = f"{Color.CYAN}Discord{Color.RESET} > {Color.YELLOW}[WARNING]{Color.RESET}"
             print(prefix, "Crosschat is enabled!")
             print(prefix, "This allows messages from other guild bridge bots to be sent through this bridge bot,")
@@ -133,7 +142,8 @@ class DiscordBridgeBot(commands.Bot):
         if message.author == self.user:
             return
         if not message.author.bot:
-            if str(message.content).startswith(DiscordConfig.prefix) and message.channel.id in (DiscordConfig.channel, DiscordConfig.officerChannel):
+            if str(message.content).startswith(DiscordConfig.prefix) and message.channel.id in (DiscordConfig.channel,
+                                                                                                DiscordConfig.officerChannel):
                 await self.process_commands(message)
             elif not self.mineflayer_bot.is_online():
                 return
@@ -214,7 +224,9 @@ class DiscordBridgeBot(commands.Bot):
     async def _send_message(self, *args, **kwargs) -> Union[discord.Message, discord.WebhookMessage, None]:
         kwargs["allowed_mentions"] = discord.AllowedMentions.none()
         if not args and 'content' not in kwargs and 'embed' not in kwargs:
-            print(f"{Color.CYAN}Discord{Color.RESET} > {Color.YELLOW}[WARNING]{Color.RESET} Attempted to send an empty message")
+            print(
+                f"{Color.CYAN}Discord{Color.RESET} > {Color.YELLOW}[WARNING]{Color.RESET} Attempted to send an empty message"
+                )
             return None
 
         is_officer = kwargs.pop("officer", False)
@@ -233,7 +245,9 @@ class DiscordBridgeBot(commands.Bot):
                 else:
                     return await webhook.send(*args, **kwargs)
             except Exception as e:
-                print(f"{Color.CYAN}Discord{Color.RESET} > Failed to send message to {'officer ' if is_officer else ''}webhook: {e}")
+                print(
+                    f"{Color.CYAN}Discord{Color.RESET} > Failed to send message to {'officer ' if is_officer else ''}webhook: {e}"
+                    )
                 await self.send_debug_message(traceback.format_exc())
         else:
             if officer_maybe:
@@ -243,7 +257,9 @@ class DiscordBridgeBot(commands.Bot):
             channel = self.get_channel(channel_id)
             if channel is None:
                 if channel_id:
-                    print(f"{Color.CYAN}Discord{Color.RESET} > Channel {channel_id} not found! Please set the correct channel ID!")
+                    print(
+                        f"{Color.CYAN}Discord{Color.RESET} > Channel {channel_id} not found! Please set the correct channel ID!"
+                        )
                 return None
             is_officer_channel = channel.id == DiscordConfig.officerChannel
             try:
@@ -251,7 +267,7 @@ class DiscordBridgeBot(commands.Bot):
             except Exception as e:
                 print(
                     f"{Color.CYAN}Discord{Color.RESET} > Failed to send message to {'officer ' if is_officer_channel else ''}channel {channel}: {e}"
-                    )
+                )
                 await self.send_debug_message(traceback.format_exc())
 
     async def send_message(self, *args, **kwargs) -> Union[discord.Message, discord.WebhookMessage, None]:
@@ -305,7 +321,7 @@ class DiscordBridgeBot(commands.Bot):
                 count = len(message.attachments)
                 await self.mineflayer_bot.chat(
                     f"/gc {username}: attached {'a' if count == 1 else count} file{'s' if count > 1 else ''}"
-                    )
+                )
             else:
                 try:
                     await message.add_reaction("❌")
@@ -354,6 +370,7 @@ class DiscordBridgeBot(commands.Bot):
                 content = content.replace(f"<#{mention}>", f"#{channel.name}")
             else:
                 content = content.replace(f"<#{mention}>", f"#unknown-channel")
+
         # filter links
         def _filter(match):
             thing = match.group(0)
@@ -363,9 +380,11 @@ class DiscordBridgeBot(commands.Bot):
                 if char != ".":
                     is_dots = False
                     break
+            if is_dots:
+                return thing
             # Numbers (1.2k etc)
-            extra = num[-1]
-            num = num[:-1]
+            extra = thing[-1]
+            num = thing[:-1]
             try:
                 return str(float(num)) + extra
             except ValueError:
@@ -518,8 +537,8 @@ class DiscordBridgeBot(commands.Bot):
                     tz = entry[4][:-1]
                     tz_offset = tz_offsets.get(tz, 0)
                     message = discord.utils.escape_markdown(" ".join(entry[5:]))
-                    dt = datetime(year, month, day, hour, minute, 0)
-                    dt = dt.replace(tzinfo=timezone(timedelta(hours=tz_offset)))
+                    dt = datetime.datetime(year, month, day, hour, minute, 0)
+                    dt = dt.replace(tzinfo=datetime.timezone(datetime.timedelta(hours=tz_offset)))
                     desc += f"<t:{int(dt.timestamp())}:f> {message}\n"
                 embed = discord.Embed(color=0x1ABC9C, title="Guild Log", description=desc)
                 embed.set_footer(text=f"Page {page}/{max_pages}")
@@ -861,22 +880,128 @@ class DiscordBridgeBot(commands.Bot):
                 await self.send_debug_message("Sending invite recieved message")
                 await self.send_message(embed=embed)
 
+            elif "We blocked your comment" in message:
+                content = message.split("\"")[1]
+                user, message = content.split(": ")
+                embed = Embed(color=discord.Color.red())
+                embed.set_author(
+                    name=f"{user}'s message \"{message}\" was blocked by Hypixel.",
+                )
+                await self.send_debug_message("Sending message blocked message")
+                await self.send_message(embed=embed)
+
             elif message.strip() == "":
                 return
 
+            # /g info
+            elif "Created:" in message and "Members:" in message:
+                lines = message.splitlines()
+                guild_name = lines[1].strip()
+                date, time, _ = lines[3].split(": ")[1].split(" ")  # 2025-11-11 10:12 EST
+                year, month, day = date.split("-")
+                hour, minute = time.split(":")
+                created = datetime.datetime(
+                    int(year),
+                    int(month),
+                    int(day),
+                    int(hour),
+                    int(minute),
+                    tzinfo=zoneinfo.ZoneInfo("America/New_York"),
+                )
+                members = lines[4].split(": ")[1]
+                description = lines[5].split(": ")[1]
+                guild_exp = lines[8].split(": ")[1].split(" ")[0]
+                guild_rank = lines[8].split("(")[1].rstrip(")")
+                guild_level = lines[9].split(": ")[1]
+                exp_history = lines[11:-1]
+                embed = Embed(
+                    colour=0x1ABC9C,
+                    description=f"# {guild_name}\n"
+                                f"Description: {description}\n"
+                                f"Created: <t:{int(created.timestamp())}:F>\n"
+                                f"Members: {members}\n"
+                                f"Guild Experience: {guild_exp} (Rank {guild_rank})\n"
+                                f"Guild Level: {guild_level}\n"
+                )
+                labels = []
+                values = []
+                for entry in exp_history:
+                    label, value = entry.split(":")
+                    labels.insert(0, label.strip())
+                    values.insert(0, int(value.strip().rstrip(" Guild Experience")))
+                line_chart = pygal.Line(interpolate='cubic')
+                line_chart.show_legend = False
+                line_chart.value_formatter = lambda x: f"{int(x):,}"
+                line_chart.width = 2200 / 4
+                line_chart.height = 1400 / 4
+                line_chart.x_labels = labels
+                line_chart.truncate_label = -1
+                line_chart.title = "Guild Experience"
+                line_chart.add("Guild Experience", values)
+                # pygal doesn't support writing to file-like objects, so we have to resort to this convoluted behavior
+                filename = f"{datetime.datetime.now().timestamp()}.png"
+                line_chart.render_to_png(filename)
+                desc = "A chart showing guild XP over the past week. "
+                for label, value in zip(labels, values):
+                    desc += f"{label}: {value:,}, "
+                desc.rstrip(", ")
+                file = discord.File(
+                    filename,
+                    filename="gexp_chart.png",
+                    description=desc,
+                )
+                embed.set_image(url="attachment://gexp_chart.png")
+                await self.send_message(embed=embed, file=file)
+                # remove the file when we're done with it
+                os.remove(filename)
+
+            # /g online | list
+            elif "Offline Members:" in message or "Online Members:" in message:
+                lines = message.splitlines()
+                guild_name = lines[1].split(": ")[1]
+                to_send = f"# {guild_name}"
+                for line in lines[3:]:
+                    if line.strip().startswith("--"):
+                        to_send += f"\n## {line.strip().strip('-').strip()}"
+                    elif "●" in line:
+                        line = line.replace("[", "**[").replace("]", "]**").replace("_", "\\_")
+                        names = line.split("●")
+                        to_send += f"\n{', '.join(filter(lambda n: n != "", map(lambda n: n.strip(), names)))}"
+                    else:
+                        if line.strip() == "":
+                            continue
+                        if line.strip().startswith("Total Members"):
+                            to_send += "\n"
+                        to_send += f"\n{line}"
+                embed = Embed(
+                    colour=0x1ABC9C,
+                    description=to_send,
+                )
+                await self.send_message(embed=embed)
+
+            # /g top
+            elif "Top Guild Experience" in message:
+                lines = message.splitlines()
+                title = lines[1]
+                month, day, year = title.split()[3].split("/")
+                date = datetime.date(month=int(month), day=int(day), year=int(year))
+                to_send = f"# Top Guild Experience: {date.strftime('%B %-d, %Y')}"
+                for line in lines[2:]:
+                    split = line.split()
+                    if len(split) == 6:
+                        place, rank, name, amount, _, _ = split
+                        to_send += f"\n{place} **{rank} {name}** {amount} Guild XP"
+                    else:
+                        place, name, amount, _, _ = split
+                        to_send += f"\n{place} **{name}** {amount} Guild XP"
+                embed = Embed(
+                    colour=0x1ABC9C,
+                    description=to_send,
+                )
+                await self.send_message(embed=embed)
             else:
-                parser = GuildMessageParser(message)
-                embeds = parser.parse()
-                if isinstance(embeds, list):
-                    await self.send_debug_message("Sending guild command response")
-                    for embed in embeds:
-                        await self.send_message(embed=embed)
-                elif isinstance(embeds, dict):
-                    await self.send_debug_message("Sending guild command response")
-                    await self.send_message(embed=embeds["embed"], file=embeds["file"])
-                else:
-                    await self.send_debug_message(f"Normal message: `{message}`")
-                    embed = discord.Embed(colour=0x1ABC9C, description=message)
-                    await self.send_message(embed=embed)
+                await self.send_debug_message(f"Normal message: `{message}`")
+                embed = discord.Embed(colour=0x1ABC9C, description=discord.utils.escape_markdown(message))
+                await self.send_message(embed=embed)
         except Exception as e:
             await self.on_error("minecraft_message", message, e)

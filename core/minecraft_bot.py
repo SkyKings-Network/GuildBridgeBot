@@ -135,24 +135,28 @@ class MinecraftBotManager:
                     self.send_to_discord(message)
                     return
 
-                # Online Command / GEXP Command
-                if (
-                        message.startswith("Guild Name: ") or
-                        "Top Guild Experience" in message or
-                        message.startswith("Created: ")
-                ):
+                # large block messages
+                if message == "-----------------------------------------------------" and self.wait_response:
+                    if SettingsConfig.printChat:
+                        print(f"{Color.GREEN}Minecraft{Color.RESET} > End of chat buffer")
+                    self.wait_response = False
+                    text = "\n".join(message_buffer)
+                    if (
+                            "Guild Name: " in text or
+                            "Top Guild Experience" in text or
+                            "Created: " in text
+                    ):
+                        self.send_to_discord(text)
+                    else:
+                        if SettingsConfig.printChat:
+                            print(f"{Color.GREEN}Minecraft{Color.RESET} > No useful text found, discarding")
                     message_buffer.clear()
+                    return
+                if message == "-----------------------------------------------------" and not self.wait_response:
                     self.wait_response = True
                     if SettingsConfig.printChat:
                         print(f"{Color.GREEN}Minecraft{Color.RESET} > Buffering chat...")
-                if message == "-----------------------------------------------------" and self.wait_response:
-                    self.wait_response = False
-                    self.send_to_discord("\n".join(message_buffer))
-                    message_buffer.clear()
-                    if SettingsConfig.printChat:
-                        print(f"{Color.GREEN}Minecraft{Color.RESET} > End of chat buffer")
-                    return
-                if self.wait_response is True:
+                if self.wait_response:
                     message_buffer.append(message)
                     return
 
@@ -183,7 +187,8 @@ class MinecraftBotManager:
                         ("You've already invited" in message and "to your guild! Wait for them to accept!" in message) or \
                         " has requested to join the guild!" in message.lower() or \
                         "Your mute will expire in " in message or \
-                        "Mute ID: " in message:
+                        "Mute ID: " in message or \
+                        "We blocked your comment" in message:
                     # Guild log is sent as one fat message
                     self.send_to_discord(message)
 
