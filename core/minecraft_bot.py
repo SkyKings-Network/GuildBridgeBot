@@ -87,7 +87,7 @@ class MinecraftBotManager:
             self._online = True
             self.client.dispatch("minecraft_ready")
             time.sleep(3)
-            self.chat("/limbo")
+            self.bot.chat("/limbo")
 
         @javascript.On(self.bot, "end")
         def end(this, reason):
