@@ -86,6 +86,8 @@ class MinecraftBotManager:
                 print(f"{Color.GREEN}Minecraft{Color.RESET} > Bot is logged in as", self.bot.username)
             self._online = True
             self.client.dispatch("minecraft_ready")
+            time.sleep(3)
+            self.chat("/limbo")
 
         @javascript.On(self.bot, "end")
         def end(this, reason):
