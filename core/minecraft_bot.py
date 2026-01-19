@@ -136,7 +136,7 @@ class MinecraftBotManager:
                     return
 
                 # large block messages
-                if message == "-----------------------------------------------------" and self.wait_response:
+                if message.startswith("-----") and message.endswith("-----") and self.wait_response:
                     if SettingsConfig.printChat:
                         print(f"{Color.GREEN}Minecraft{Color.RESET} > End of chat buffer")
                     self.wait_response = False
@@ -152,7 +152,7 @@ class MinecraftBotManager:
                             print(f"{Color.GREEN}Minecraft{Color.RESET} > No useful text found, discarding")
                     message_buffer.clear()
                     return
-                if message == "-----------------------------------------------------" and not self.wait_response:
+                if message.startswith("-----") and message.endswith("-----") and not self.wait_response:
                     self.wait_response = True
                     if SettingsConfig.printChat:
                         print(f"{Color.GREEN}Minecraft{Color.RESET} > Buffering chat...")
