@@ -1,9 +1,0 @@
-services:
-  bridge-bot:
-    image: "ghcr.io/skykings-network/bridge-bot:latest"
-    build:
-      context: .
-      dockerfile: Dockerfile
-      platforms:
-        - linux/amd64
-        - linux/arm64

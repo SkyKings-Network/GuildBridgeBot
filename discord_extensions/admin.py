@@ -15,8 +15,6 @@ class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.check_bot_status.start()
-        if os.getenv("IS_DOCKER") != "1":
-            self.check_bot_version.start()
 
     @commands.command()
     @has_override_role
@@ -61,11 +59,19 @@ class Admin(commands.Cog):
         embedVar = discord.Embed(color=0x1ABC9C, description=f"`/{command}` has been sent!")
         await ctx.send(embed=embedVar)
 
-    @commands.command()
+    @commands.command(hidden=os.getenv("IS_DOCKER") == 1)
     @has_override_role
     async def update(self, ctx):
         if os.getenv("IS_DOCKER") == "1":
-            embedVar = discord.Embed(color=0xE74C3C, description=":x: Updating is not supported in Docker deployments!")
+            embedVar = discord.Embed(
+                color=discord.Color.red(),
+                description=":x: Automatic updating is not supported in Docker deployments!\n"
+                            "Instead, you will need to run these commands in your bridge bot server's terminal:\n"
+                            "```sh\n"
+                            "docker compose -f compose.yml pull\n"
+                            "docker compose -f compose.yml up -d\n"
+                            "```"
+            )
             await ctx.send(embed=embedVar)
             return
         embedVar = discord.Embed(color=0x1ABC9C).set_author(name="Updating the bot...")
@@ -121,48 +127,6 @@ class Admin(commands.Cog):
                     print("Discord > Bot is offline!")
                     await self.bot.close()
                     await asyncio.sleep(10)
-        except Exception as e:
-            print(e)
-
-    @tasks.loop(seconds=600)
-    async def check_bot_version(self):
-        try:
-            await self.bot.wait_until_ready()
-
-            config_current_commit_date = DataConfig.current_version
-
-            url = "https://api.github.com/repos/SkyKings-Network/GuildBridgeBot/commits/main"
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url) as response:
-                    if response.status == 200:
-                        data = await response.json()
-
-                        latest_commit_date = data["commit"]["committer"]["date"]
-                        latest_commit_date = datetime.strptime(latest_commit_date, "%Y-%m-%dT%H:%M:%SZ")
-
-                        if config_current_commit_date == "":
-                            print(f"Set version in config.json to the current commit date. {latest_commit_date}")
-                            DataConfig.current_version = latest_commit_date.strftime("%Y-%m-%dT%H:%M:%SZ")
-                            return
-
-                        config_current_commit_date = datetime.strptime(config_current_commit_date, "%Y-%m-%dT%H:%M:%SZ")
-
-                        # Check if the latest commit date is greater than the current commit date
-                        if latest_commit_date > config_current_commit_date:
-                            with open("config.json", "r") as f:
-                                config = json.load(f)
-
-                            config["data"]["latest_version"] = latest_commit_date.strftime("%Y-%m-%dT%H:%M:%SZ")
-
-                            with open("config.json", "w") as f:
-                                json.dump(config, f, indent=4)
-
-                            DataConfig.latest_version = latest_commit_date.strftime("%Y-%m-%dT%H:%M:%SZ")
-
-                    else:
-                        print(f"Failed to check for updates. HTTP Status: {response.status}")
-
-
         except Exception as e:
             print(e)
 

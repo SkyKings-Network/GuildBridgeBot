@@ -300,16 +300,6 @@ class DiscordBridgeBot(commands.Bot):
             )
         else:
             embed = Embed(description=message, colour=0x1ABC9C, timestamp=discord.utils.utcnow())
-
-            # Check if latest version vs current version is different
-            current_version = DataConfig.current_version
-            latest_version = DataConfig.latest_version
-
-            if current_version != latest_version:
-                embed.set_footer(
-                    text="📩 Bridge Update available! (!update)"
-                )
-
             embed.set_author(name=("🤖 " + username) if command else username, icon_url=head)
             return await self.send_message(embed=embed, officer=officer)
 
