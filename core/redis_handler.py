@@ -183,6 +183,7 @@ class RedisManager:
             print(f"{Color.MAGENTA}Redis{Color.RESET} > Task Cancelled")
         except redis.ConnectionError:
             print(f"{Color.MAGENTA}Redis{Color.RESET} > Redis connection closed")
+            traceback.print_exc()
         except Exception as e:  # pylint: disable=broad-exception-caught
             print(f"{Color.MAGENTA}Redis{Color.RESET} > Critical error occurred\n" + str(e))
             traceback.print_exc()
