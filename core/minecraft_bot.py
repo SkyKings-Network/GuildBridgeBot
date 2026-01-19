@@ -139,7 +139,8 @@ class MinecraftBotManager:
                     return
 
                 # large block messages
-                if self.wait_response and ((message.startswith("-----") and message.endswith("-----")) or time.time() - self.buffer_start > 2):
+                buffer_expired = time.time() - self.buffer_start > 2
+                if self.wait_response and ((message.startswith("-----") and message.endswith("-----")) or buffer_expired):
                     if SettingsConfig.printChat:
                         print(f"{Color.GREEN}Minecraft{Color.RESET} > End of chat buffer")
                     self.wait_response = False
@@ -154,8 +155,9 @@ class MinecraftBotManager:
                         if SettingsConfig.printChat:
                             print(f"{Color.GREEN}Minecraft{Color.RESET} > No useful text found, discarding")
                     message_buffer.clear()
-                    return
-                if message.startswith("-----") and message.endswith("-----") and not self.wait_response:
+                    if not buffer_expired:
+                        return
+                elif message.startswith("-----") and message.endswith("-----") and not self.wait_response:
                     self.wait_response = True
                     self.buffer_start = time.time()
                     if SettingsConfig.printChat:
