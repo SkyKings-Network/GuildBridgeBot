@@ -978,7 +978,7 @@ class DiscordBridgeBot(commands.Bot):
                 title = lines[1]
                 month, day, year = title.split()[3].split("/")
                 date = datetime.date(month=int(month), day=int(day), year=int(year))
-                to_send = f"# Top Guild Experience: {date.strftime('%B %-d, %Y')}"
+                to_send = f"# Top Guild Experience: {date.strftime('%B %d, %Y')}"
                 for line in lines[2:]:
                     split = line.split()
                     if len(split) == 6:

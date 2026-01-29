@@ -138,34 +138,6 @@ class MinecraftBotManager:
                     self.send_to_discord(message)
                     return
 
-                # large block messages
-                buffer_expired = time.time() - self.buffer_start > 2
-                if self.wait_response and ((message.startswith("-----") and message.endswith("-----")) or buffer_expired):
-                    if SettingsConfig.printChat:
-                        print(f"{Color.GREEN}Minecraft{Color.RESET} > End of chat buffer")
-                    self.wait_response = False
-                    text = "\n".join(message_buffer)
-                    if (
-                            "Guild Name: " in text or
-                            "Top Guild Experience" in text or
-                            "Created: " in text
-                    ):
-                        self.send_to_discord(text)
-                    else:
-                        if SettingsConfig.printChat:
-                            print(f"{Color.GREEN}Minecraft{Color.RESET} > No useful text found, discarding")
-                    message_buffer.clear()
-                    if not buffer_expired:
-                        return
-                elif message.startswith("-----") and message.endswith("-----") and not self.wait_response:
-                    self.wait_response = True
-                    self.buffer_start = time.time()
-                    if SettingsConfig.printChat:
-                        print(f"{Color.GREEN}Minecraft{Color.RESET} > Buffering chat...")
-                if self.wait_response:
-                    message_buffer.append(message)
-                    return
-
                 if "Unknown command" in message:
                     self.send_to_discord(message)
                 elif "Click here to accept or type /guild accept " in message:
@@ -197,6 +169,31 @@ class MinecraftBotManager:
                         "We blocked your comment" in message:
                     # Guild log is sent as one fat message
                     self.send_to_discord(message)
+                else:
+                    # large block messages, these should never conflict with above I think
+                    if self.wait_response and (message.startswith("----------") or message.endswith("----------")):
+                        if SettingsConfig.printChat:
+                            print(f"{Color.GREEN}Minecraft{Color.RESET} > End of chat buffer")
+                        self.wait_response = False
+                        text = "\n".join(message_buffer)
+                        if (
+                                "Guild Name: " in text or
+                                "Top Guild Experience" in text or
+                                "Created: " in text
+                        ):
+                            self.send_to_discord(text)
+                        else:
+                            if SettingsConfig.printChat:
+                                print(f"{Color.GREEN}Minecraft{Color.RESET} > No useful text found, discarding")
+                        message_buffer.clear()
+                    elif message.startswith("-----") and message.endswith("-----") and not self.wait_response:
+                        self.wait_response = True
+                        self.buffer_start = time.time()
+                        if SettingsConfig.printChat:
+                            print(f"{Color.GREEN}Minecraft{Color.RESET} > Buffering chat...")
+                    if self.wait_response:
+                        message_buffer.append(message)
+                        return
 
     def send_minecraft_message(self, discord, message, type):
         if type == "General":
