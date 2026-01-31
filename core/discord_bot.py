@@ -438,12 +438,12 @@ class DiscordBridgeBot(commands.Bot):
                         if "]:" in message:
                             memberusername = message.split()[1]
                         else:
-                            memberusername = message.split()[1][:-1]
+                            memberusername = message.split()[1]
                     else:
                         if "]:" in message:
                             memberusername = message.split()[0]
                         else:
-                            memberusername = message.split()[0][:-1]
+                            memberusername = message.split()[0]
                     if self.mineflayer_bot.bot.username in memberusername:
                         return
                     if " joined." in message:
