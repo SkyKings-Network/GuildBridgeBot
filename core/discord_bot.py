@@ -25,7 +25,7 @@ mention_regex = re.compile(r"<@!?(\d+)>")
 role_mention_regex = re.compile(r"<@&(\d+)>")
 channel_mention_regex = re.compile(r"<#(\d+)>")
 slash_mention_regex = re.compile(r"</([\w\- ]+):\d+>")
-link_regex = re.compile(r"\S+\.\S+")
+link_regex = re.compile(r"(\S+)(\.+)(\S+)")
 
 
 def emoji_repl(match):
@@ -364,21 +364,19 @@ class DiscordBridgeBot(commands.Bot):
         # filter links
         def _filter(match):
             thing = match.group(0)
-            # Ellipses
-            is_dots = True
-            for char in thing:
-                if char != ".":
-                    is_dots = False
-                    break
-            if is_dots:
+            if match.group(3).strip(".") == "" or match.group(1).strip(".") == "":
                 return thing
-            # Numbers (1.2k etc)
-            extra = thing[-1]
-            num = thing[:-1]
+        
+            # TLDs cannot be completely numerical, or a single character, so we check that
+            # In my testing, hypixel only ever flags when the tld is >2 characters
+            tld_test = match.group(3)[:-1]
+            if not tld_test:
+                return thing
             try:
-                return str(float(num)) + extra
+                int(tld_test)
             except ValueError:
                 return "<link>"
+            return thing
 
         content = link_regex.sub(_filter, content)
         if message.reference:
