@@ -25,6 +25,8 @@ HELP_EMBED.add_field(
           f"``{DiscordConfig.prefix}info``Shows guild information\n"
           f"``{DiscordConfig.prefix}override <command>`` Forces the bot to use a given command\n"
           f"``{DiscordConfig.prefix}toggleaccept`` Toggles auto accepting members joining the guild\n"
+          f"``{DiscordConfig.prefix}toggleinvites`` Toggles hiding guild invite messages (Owner only)\n"
+          f"``{DiscordConfig.prefix}config`` Shows current bot configuration (Owner only)\n"
           f"``{DiscordConfig.prefix}mute <username> <time>`` Mutes the user for a specific time\n"
           f"``{DiscordConfig.prefix}unmute <username>`` Unmutes the user\n"
           f"``{DiscordConfig.prefix}log [params]`` Shows guild audit logs",
