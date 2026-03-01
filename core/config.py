@@ -171,7 +171,7 @@ class ConfigObject(metaclass=_ConfigObject, base_key=""):
         if data is None and use_env_config:
             config[cls.BASE_KEY] = CaseInsensitiveDict()
             data = config[cls.BASE_KEY]
-            # load config from environment variables
+            # load config from environment variables, but also check config.json for overrides
             for k, v in cls.keys.items():
                 env_var = f"BRIDGE_{cls.BASE_KEY.upper()}_{k.upper()}"
                 env_value = os.getenv(env_var)
@@ -188,6 +188,20 @@ class ConfigObject(metaclass=_ConfigObject, base_key=""):
         elif data is None:
             config[cls.BASE_KEY] = CaseInsensitiveDict()
             data = config[cls.BASE_KEY]
+        
+        # Load overrides from config.json even when using env vars
+        if use_env_config and os.path.exists("config.json"):
+            try:
+                with open("config.json", "r") as f:
+                    file_config = json.load(f)
+                    if cls.BASE_KEY in file_config:
+                        # Override env vars with config.json values for settings that were changed via commands
+                        for k in cls.keys.keys():
+                            if k in file_config[cls.BASE_KEY]:
+                                data[k] = file_config[cls.BASE_KEY][k]
+            except (FileNotFoundError, json.JSONDecodeError):
+                pass
+        
         for key, value in cls.keys.items():
             if key not in data:
                 if value.required:

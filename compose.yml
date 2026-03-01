@@ -1,15 +1,29 @@
 services:
+  redis:
+    image: redis:latest
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
   bridge-bot:
     image: "ghcr.io/skykings-network/bridge-bot:latest"
     restart: unless-stopped
     container_name: bridge-bot  # optional: set a custom container name
+    depends_on:
+      redis:
+        condition: service_healthy
     volumes:
       - .minecraft:/root/.minecraft
+      - ./config.json:/Bot/config.json  # Mount config for persistence
     environment:
       - BRIDGE_USE_ENV_CONFIG=true
       - BRIDGE_ACCOUNT_EMAIL=
       - BRIDGE_DISCORD_TOKEN=
       - BRIDGE_DISCORD_CHANNEL=
+      - BRIDGE_REDIS_HOST=redis
+      - BRIDGE_REDIS_PORT=6379
 #  you can add additional bridge bots by duplicating the above, like so:
 #  bridge-bot-2:
 #    image: "ghcr.io/skykings-network/bridge-bot:latest"

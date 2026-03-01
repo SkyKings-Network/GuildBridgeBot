@@ -32,13 +32,32 @@ class Admin(commands.Cog):
         else:
             embedVar = discord.Embed(description=":white_check_mark: Auto accepting guild join requests is now ``on``!")
             SettingsConfig.autoaccept = True
-        if os.getenv("IS_DOCKER") == "1":
-            embedVar.description += ("\n\n:information_source: **Changes will not persist after a restart in Docker "
-                                     "deployments.** Add the following to your docker compose file:\n"
-                                     "```yaml"
-                                     "- BRIDGE_SETTINGS_AUTOACCEPT=true\n"
-                                     "```")
         await ctx.send(embed=embedVar)
+
+    @commands.command()
+    async def toggleinvites(self, ctx):
+        """Toggle hiding of guild invite messages (Owner only)"""
+        if not await ctx.bot.is_owner(ctx.author):
+            embedVar = discord.Embed(
+                color=discord.Color.red(),
+                description=":x: This command can only be used by the bot owner!"
+            )
+            await ctx.send(embed=embedVar)
+            return
+
+        if SettingsConfig.hideInviteMessages:
+            embedVar = discord.Embed(
+                description=":white_check_mark: Guild invite messages will now be ``shown``!"
+            )
+            SettingsConfig.hideInviteMessages = False
+        else:
+            embedVar = discord.Embed(
+                description=":white_check_mark: Guild invite messages will now be ``hidden``!"
+            )
+            SettingsConfig.hideInviteMessages = True
+        
+        await ctx.send(embed=embedVar)
+        
 
     @commands.command(aliases=['r'])
     @has_command_role
