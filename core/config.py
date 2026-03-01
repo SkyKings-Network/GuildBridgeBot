@@ -291,6 +291,7 @@ class SettingsConfig(ConfigObject, base_key="settings"):
     dateLimit: int = ConfigKey(int, 30)
     extensions: List[str] = ConfigKey(list, [], list_type=str)
     printChat: bool = ConfigKey(bool, False)
+    hideInviteMessages: bool = ConfigKey(bool, False)
 
 
 _config_objects = [ServerConfig, AccountConfig, DiscordConfig, RedisConfig, SettingsConfig, DataConfig]

@@ -663,15 +663,16 @@ class DiscordBridgeBot(commands.Bot):
                         playername = message[3]
                     else:
                         playername = message[2]
-                embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-                embed.set_author(
-                    name=f"{playername} has been invited to the guild!",
-                    icon_url="https://www.mc-heads.net/avatar/" + playername
-                )
                 self._current_invite_future.set_result((True, None))
                 self.dispatch("hypixel_guild_member_invite", playername)
-                await self.send_debug_message("Sending invite sent message")
-                await self.send_message(embed=embed)
+                if not SettingsConfig.hideInviteMessages:
+                    embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+                    embed.set_author(
+                        name=f"{playername} has been invited to the guild!",
+                        icon_url="https://www.mc-heads.net/avatar/" + playername
+                    )
+                    await self.send_debug_message("Sending invite sent message")
+                    await self.send_message(embed=embed)
 
             # Person bot invited is in another guild
             elif " is already in another guild!" in message:
@@ -680,15 +681,16 @@ class DiscordBridgeBot(commands.Bot):
                     playername = message[1]
                 else:
                     playername = message[0]
-                embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-                embed.set_author(
-                    name=f"{playername} is already in another guild!",
-                    icon_url="https://www.mc-heads.net/avatar/" + playername
-                )
                 self._current_invite_future.set_result((False, 'inGuild'))
                 self.dispatch("hypixel_guild_member_invite_failed", playername)
-                await self.send_debug_message("Sending invited player in guild message")
-                await self.send_message(embed=embed)
+                if not SettingsConfig.hideInviteMessages:
+                    embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+                    embed.set_author(
+                        name=f"{playername} is already in another guild!",
+                        icon_url="https://www.mc-heads.net/avatar/" + playername
+                    )
+                    await self.send_debug_message("Sending invited player in guild message")
+                    await self.send_message(embed=embed)
 
             # Person bot invited is in already in the guild
             elif " is already in your guild!" in message:
@@ -697,26 +699,28 @@ class DiscordBridgeBot(commands.Bot):
                     playername = message[1]
                 else:
                     playername = message[0]
-                embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-                embed.set_author(
-                    name=f"{playername} is already in your guild!",
-                    icon_url="https://www.mc-heads.net/avatar/" + playername
-                )
                 self._current_invite_future.set_result((False, 'inThisGuild'))
                 self.dispatch("hypixel_guild_member_invite_failed", playername)
-                await self.send_debug_message("Sending invited player in our guild message")
-                await self.send_message(embed=embed)
+                if not SettingsConfig.hideInviteMessages:
+                    embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+                    embed.set_author(
+                        name=f"{playername} is already in your guild!",
+                        icon_url="https://www.mc-heads.net/avatar/" + playername
+                    )
+                    await self.send_debug_message("Sending invited player in our guild message")
+                    await self.send_message(embed=embed)
 
             # Person bot invited has guild invites disabled (can't figure out who)
             elif "You cannot invite this player to your guild!" in message:
-                embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-                embed.set_author(
-                    name=f"You cannot invite this player to your guild!",
-                )
                 self._current_invite_future.set_result((False, 'invitesOff'))
                 self.dispatch("hypixel_guild_member_invite_failed", None)
-                await self.send_debug_message("Sending invites disabled message")
-                await self.send_message(embed=embed)
+                if not SettingsConfig.hideInviteMessages:
+                    embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+                    embed.set_author(
+                        name=f"You cannot invite this player to your guild!",
+                    )
+                    await self.send_debug_message("Sending invites disabled message")
+                    await self.send_message(embed=embed)
 
             # Person bot invited has already been invited
             elif "You've already invited" in message and "to your guild! Wait for them to accept!" in message:
@@ -725,14 +729,15 @@ class DiscordBridgeBot(commands.Bot):
                     playername = message[4]
                 else:
                     playername = message[3]
-                embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-                embed.set_author(
-                    name=f"{playername} has already been invited! Wait for them to accept!",
-                )
                 self._current_invite_future.set_result((False, 'alreadyInvited'))
                 self.dispatch("hypixel_guild_member_invite_failed", None)
-                await self.send_debug_message("Sending invites disabled message")
-                await self.send_message(embed=embed)
+                if not SettingsConfig.hideInviteMessages:
+                    embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+                    embed.set_author(
+                        name=f"{playername} has already been invited! Wait for them to accept!",
+                    )
+                    await self.send_debug_message("Sending invites disabled message")
+                    await self.send_message(embed=embed)
 
             # Someone requested to join
             elif " has requested to join the guild!" in message.lower():  # case might be weird?

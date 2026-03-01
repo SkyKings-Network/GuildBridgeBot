@@ -34,7 +34,8 @@
         "autoaccept": false,
         "dateLimit": 30,
         "extensions": [],
-        "printChat": false
+        "printChat": false,
+        "hideInviteMessages": false
     },
     "data": {
         "current_version": "",
