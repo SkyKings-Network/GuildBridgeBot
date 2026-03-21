@@ -179,6 +179,7 @@ class MinecraftBotManager:
                         if (
                                 "Guild Name: " in text or
                                 "Top Guild Experience" in text or
+                            "No one earned guild experience on" in text or
                                 "Created: " in text
                         ):
                             self.send_to_discord(text)

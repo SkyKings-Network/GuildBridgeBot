@@ -989,6 +989,21 @@ class DiscordBridgeBot(commands.Bot):
                     description=to_send,
                 )
                 await self.send_message(embed=embed)
+
+            elif "No one earned guild experience on" in message:
+                line = next(
+                    (
+                        l.strip()
+                        for l in message.splitlines()
+                        if "No one earned guild experience on" in l
+                    ),
+                    message.strip(),
+                )
+                embed = Embed(
+                    colour=0x1ABC9C,
+                    description=line,
+                )
+                await self.send_message(embed=embed)
             else:
                 await self.send_debug_message(f"Normal message: `{message}`")
                 embed = discord.Embed(colour=0x1ABC9C, description=discord.utils.escape_markdown(message))
