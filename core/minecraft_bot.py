@@ -166,6 +166,7 @@ class MinecraftBotManager:
                         " has requested to join the guild!" in message.lower() or \
                         "Your mute will expire in " in message or \
                         "Mute ID: " in message or \
+                        "No one earned guild experience on" in message or \
                         "We blocked your comment" in message:
                     # Guild log is sent as one fat message
                     self.send_to_discord(message)
