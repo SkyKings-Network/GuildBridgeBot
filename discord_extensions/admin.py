@@ -16,6 +16,19 @@ class Admin(commands.Cog):
         self.bot = bot
         self.check_bot_status.start()
 
+    @staticmethod
+    def _persist_setting(key: str, value):
+        """Persist a setting change to config.json so it survives restarts."""
+        with open("config.json", "r") as f:
+            config = json.load(f)
+
+        if "settings" not in config:
+            config["settings"] = {}
+        config["settings"][key] = value
+
+        with open("config.json", "w") as f:
+            json.dump(config, f, indent=4)
+
     @commands.command()
     @has_override_role
     async def notifications(self, ctx):
@@ -29,9 +42,11 @@ class Admin(commands.Cog):
                 description=":white_check_mark: Auto accepting guild join requests is now ``off``!"
                 )
             SettingsConfig.autoaccept = False
+            self._persist_setting("autoaccept", False)
         else:
             embedVar = discord.Embed(description=":white_check_mark: Auto accepting guild join requests is now ``on``!")
             SettingsConfig.autoaccept = True
+            self._persist_setting("autoaccept", True)
         await ctx.send(embed=embedVar)
 
     @commands.command()
@@ -50,12 +65,33 @@ class Admin(commands.Cog):
                 description=":white_check_mark: Guild invite messages will now be ``shown``!"
             )
             SettingsConfig.hideInviteMessages = False
+            self._persist_setting("hideInviteMessages", False)
         else:
             embedVar = discord.Embed(
                 description=":white_check_mark: Guild invite messages will now be ``hidden``!"
             )
             SettingsConfig.hideInviteMessages = True
+            self._persist_setting("hideInviteMessages", True)
         
+        await ctx.send(embed=embedVar)
+
+    @commands.command()
+    @has_override_role
+    async def toggleprintchat(self, ctx):
+        """Toggle forwarding of in-game chat to console output."""
+        if SettingsConfig.printChat:
+            embedVar = discord.Embed(
+                description=":white_check_mark: Chat printing is now ``off``!"
+            )
+            SettingsConfig.printChat = False
+            self._persist_setting("printChat", False)
+        else:
+            embedVar = discord.Embed(
+                description=":white_check_mark: Chat printing is now ``on``!"
+            )
+            SettingsConfig.printChat = True
+            self._persist_setting("printChat", True)
+
         await ctx.send(embed=embedVar)
         
 
