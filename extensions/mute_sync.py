@@ -6,6 +6,8 @@ Uses the SkyKings and Hypixel APIs.
 import asyncio
 import datetime
 
+from core.colors import Color
+
 import aiohttp
 from discord.ext import commands
 from discord.ext import tasks
@@ -99,6 +101,7 @@ class MuteSync(commands.Cog):
         return mute_data
 
     async def sync_mutes(self):
+        print(f"{Color.MAGENTA}Mute Sync{Color.RESET} > Syncing mutes...")
         mutes = await self.get_guild_mutes()
         guild = self.bot.get_channel(DiscordConfig.channel).guild
         role = guild.get_role(MuteSyncConfig.mute_role)
@@ -113,6 +116,7 @@ class MuteSync(commands.Cog):
         for user in muted:
             member = guild.get_member(user)
             await member.add_roles(role, reason="Guild mute sync")
+        print(f"{Color.MAGENTA}Mute Sync{Color.RESET} > Mutes have been synced!")
 
     async def process_new_mute(self, player: str, duration: datetime.timedelta):
         uuid = await self.get_uuid(player)
@@ -127,6 +131,7 @@ class MuteSync(commands.Cog):
         await member.add_roles(role, reason="User has been guild muted")
         self.mutes[(discord_id, uuid)] = datetime.datetime.now() + duration
         await self.update_mute_task()
+        print(f"{Color.MAGENTA}Mute Sync{Color.RESET} > Added mute role to {discord_id}")
 
     async def process_new_unmute(self, player: str):
         uuid = await self.get_uuid(player)
@@ -145,6 +150,7 @@ class MuteSync(commands.Cog):
         role = guild.get_role(MuteSyncConfig.mute_role)
         await member.remove_roles(role, reason="User has been guild unmuted")
         await self.update_mute_task()
+        print(f"{Color.MAGENTA}Mute Sync{Color.RESET} > Removed mute role from {discord_id}")
 
     async def _mute_task(self, identifier, expiry):
         try:
@@ -157,6 +163,7 @@ class MuteSync(commands.Cog):
             role = guild.get_role(MuteSyncConfig.mute_role)
             await member.remove_roles(role, reason="User's guild mute has expired")
             self.mutes.pop(identifier)
+            print(f"{Color.MAGENTA}Mute Sync{Color.RESET} > Removed mute role from {discord_id}")
         except asyncio.CancelledError:
             pass
         except Exception as e:
@@ -205,9 +212,7 @@ class MuteSync(commands.Cog):
             await asyncio.sleep(.5)
         if not self._syncing:
             self._syncing = True
-            print("MuteSync > Syncing mutes...")
             await self.sync_mutes()
-            print("MuteSync > Mutes synced!")
             self._syncing = False
 
     @commands.Cog.listener()
@@ -246,5 +251,6 @@ class MuteSync(commands.Cog):
 
 
 async def setup(bot):
+    print(f"{Color.MAGENTA}Mute Sync{Color.RESET} > Extension is loaded!")
     bot.get_intents().members = True
     await bot.add_cog(MuteSync(bot))
