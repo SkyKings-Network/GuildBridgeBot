@@ -167,7 +167,7 @@ class DiscordBridgeBot(commands.Bot):
                     return
                 username = embed.author.name
                 # failsafe, if we get the bot's username something went wrong
-                if username == self.user.display_name or username == self.mineflayer_bot.bot.username:
+                if self.mineflayer_bot is None or username == self.user.display_name or username == self.mineflayer_bot.bot.username:
                     return
                 message = embed.description
                 # empty message
@@ -436,7 +436,7 @@ class DiscordBridgeBot(commands.Bot):
                         memberusername = message.split()[1]
                     else:
                         memberusername = message.split()[0]
-                    if self.mineflayer_bot.bot.username in memberusername:
+                    if self.mineflayer_bot and self.mineflayer_bot.bot.username in memberusername:
                         return
                     if " joined." in message:
                         embed = Embed(timestamp=discord.utils.utcnow(), colour=0x56F98A)
@@ -448,7 +448,7 @@ class DiscordBridgeBot(commands.Bot):
                     await self.send_message(embed=embed)
                 else:
                     username, message = regex.match(message).groups()
-                    if self.mineflayer_bot.bot.username in username:
+                    if self.mineflayer_bot and self.mineflayer_bot.bot.username in username:
                         return
                     if username.startswith("["):
                         username = username.split(" ")[1]
@@ -465,7 +465,7 @@ class DiscordBridgeBot(commands.Bot):
                     return
 
                 username, message = regex_officer.match(message).groups()
-                if self.mineflayer_bot.bot.username in username:
+                if self.mineflayer_bot and self.mineflayer_bot.bot.username in username:
                     return
                 if username.startswith("["):
                     username = username.split(" ")[1]
