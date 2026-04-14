@@ -60,6 +60,8 @@ class MinecraftBotManager:
         #     pass
         self._starting = restart
         self._online = False
+        # Clear reference so Redis knows bot is offline during restart
+        self.client.mineflayer_bot = None
         javascript.terminate()
         if restart:
             time.sleep(3)
