@@ -299,7 +299,7 @@ class DiscordBridgeBot(commands.Bot):
                 officer=officer,
             )
         else:
-            embed = Embed(description=message, colour=0x1ABC9C, timestamp=discord.utils.utcnow())
+            embed = Embed(description=discord.utils.escape_markdown(message), colour=0x1ABC9C, timestamp=discord.utils.utcnow())
             embed.set_author(name=("🤖 " + username) if command else username, icon_url=head)
             return await self.send_message(embed=embed, officer=officer)
 
