@@ -56,7 +56,7 @@ def get_latest_commit_sha() -> str:
         return "unknown"
     
 def is_outdated() -> bool:
-    current_sha = get_current_git_sha()
+    current_sha = os.getenv("GIT_SHA", "unknown")
     latest_sha = get_latest_commit_sha()
     if current_sha == "unknown" or latest_sha == "unknown":
         return False
