@@ -36,34 +36,22 @@ def slash_mention_repl(match):
     return f"/{match.group(1)}"
 
 def get_latest_commit_sha() -> str:
-    """Fetch the latest commit SHA from GitHub on the current branch"""
+    """Fetch the latest commit SHA from GitHub using the API"""
     try:
-        import subprocess
-        repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+        import urllib.request
+        import json
         
-        # Get current branch name
-        branch_result = subprocess.run(
-            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-            capture_output=True,
-            text=True,
-            cwd=repo_dir
-        )
-        current_branch = branch_result.stdout.strip() if branch_result.returncode == 0 else "main"
+        # Get branch from environment variable (set during Docker build)
+        current_branch = os.getenv("GIT_BRANCH", "main")
         
-        # Fetch latest from remote without pulling
-        subprocess.run(["git", "fetch", "origin", current_branch], capture_output=True, cwd=repo_dir)
+        # Use GitHub API to get latest commit
+        url = f"https://api.github.com/repos/SkyKings-Network/GuildBridgeBot/commits/{current_branch}"
         
-        result = subprocess.run(
-            ["git", "rev-parse", f"origin/{current_branch}"], 
-            capture_output=True, 
-            text=True, 
-            cwd=repo_dir
-        )
-        if result.returncode == 0:
-            return result.stdout.strip()
-        else:
-            print(f"{Color.CYAN}Discord{Color.RESET} > Failed to get latest git SHA: {result.stderr}")
-            return "unknown"
+        req = urllib.request.Request(url, headers={'Accept': 'application/vnd.github.v3+json'})
+        with urllib.request.urlopen(req, timeout=5) as response:
+            data = json.loads(response.read().decode())
+            return data['sha']
+            
     except Exception as e:
         print(f"{Color.CYAN}Discord{Color.RESET} > Failed to get latest git SHA: {e}")
         return "unknown"
