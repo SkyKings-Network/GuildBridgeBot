@@ -57,7 +57,6 @@ def get_latest_commit_sha() -> str:
     
 def is_outdated() -> bool:
     print(f"{Color.CYAN}Discord{Color.RESET} > Checking for updates...")
-    # Print the current and latest SHAs for debugging
     current_sha = os.getenv("GIT_SHA", "unknown")
     latest_sha = get_latest_commit_sha()
     print(f"{Color.CYAN}Discord{Color.RESET} > Current SHA: {current_sha}")
