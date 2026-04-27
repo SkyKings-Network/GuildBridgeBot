@@ -37,10 +37,12 @@ def slash_mention_repl(match):
 
 def get_current_git_sha() -> str:
     try:
-        with open(".git/HEAD", "r") as f:
+        repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+        git_head_path = os.path.join(repo_dir, ".git", "HEAD")
+        with open(git_head_path, "r") as f:
             ref = f.read().strip()
             if ref.startswith("ref:"):
-                ref_path = os.path.join(".git", ref[5:])
+                ref_path = os.path.join(repo_dir, ".git", ref[5:])
                 with open(ref_path, "r") as rf:
                     return rf.read().strip()
             else:
@@ -52,7 +54,8 @@ def get_current_git_sha() -> str:
 def get_latest_commit_sha() -> str:
     try:
         import subprocess
-        result = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True)
+        repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+        result = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, cwd=repo_dir)
         if result.returncode == 0:
             return result.stdout.strip()
         else:
