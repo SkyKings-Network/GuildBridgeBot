@@ -36,16 +36,29 @@ def slash_mention_repl(match):
     return f"/{match.group(1)}"
 
 def get_latest_commit_sha() -> str:
-    # Check for GIT_SHA environment variable
-    git_sha = os.getenv("GIT_SHA")
-    if git_sha:
-        return git_sha
-    
-    # Fallback to git command for local development
+    """Fetch the latest commit SHA from GitHub on the current branch"""
     try:
         import subprocess
         repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        result = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, cwd=repo_dir)
+        
+        # Get current branch name
+        branch_result = subprocess.run(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            capture_output=True,
+            text=True,
+            cwd=repo_dir
+        )
+        current_branch = branch_result.stdout.strip() if branch_result.returncode == 0 else "main"
+        
+        # Fetch latest from remote without pulling
+        subprocess.run(["git", "fetch", "origin", current_branch], capture_output=True, cwd=repo_dir)
+        
+        result = subprocess.run(
+            ["git", "rev-parse", f"origin/{current_branch}"], 
+            capture_output=True, 
+            text=True, 
+            cwd=repo_dir
+        )
         if result.returncode == 0:
             return result.stdout.strip()
         else:
