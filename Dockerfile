@@ -1,5 +1,9 @@
 FROM nikolaik/python-nodejs:python3.13-nodejs25
 
+# Store git commit hash
+ARG GIT_SHA
+ENV GIT_SHA=$GIT_SHA
+
 # Set the working directory in the container
 WORKDIR /Bot
 
