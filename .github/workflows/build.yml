@@ -51,6 +51,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           platforms: ${{ matrix.platform }}
+          build-args: |
+            GIT_SHA=${{ github.sha }}
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ env.REGISTRY_IMAGE }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true

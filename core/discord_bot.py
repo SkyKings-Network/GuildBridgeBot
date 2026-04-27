@@ -35,6 +35,40 @@ def emoji_repl(match):
 def slash_mention_repl(match):
     return f"/{match.group(1)}"
 
+def get_current_git_sha() -> str:
+    try:
+        with open(".git/HEAD", "r") as f:
+            ref = f.read().strip()
+            if ref.startswith("ref:"):
+                ref_path = os.path.join(".git", ref[5:])
+                with open(ref_path, "r") as rf:
+                    return rf.read().strip()
+            else:
+                return ref
+    except Exception as e:
+        print(f"{Color.CYAN}Discord{Color.RESET} > Failed to get git SHA: {e}")
+        return "unknown"
+    
+def get_latest_commit_sha() -> str:
+    try:
+        import subprocess
+        result = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True)
+        if result.returncode == 0:
+            return result.stdout.strip()
+        else:
+            print(f"{Color.CYAN}Discord{Color.RESET} > Failed to get latest git SHA: {result.stderr}")
+            return "unknown"
+    except Exception as e:
+        print(f"{Color.CYAN}Discord{Color.RESET} > Failed to get latest git SHA: {e}")
+        return "unknown"
+    
+def is_outdated() -> bool:
+    current_sha = get_current_git_sha()
+    latest_sha = get_latest_commit_sha()
+    if current_sha == "unknown" or latest_sha == "unknown":
+        return False
+    return current_sha != latest_sha
+
 
 class DiscordBridgeBot(commands.Bot):
     def __init__(self):
@@ -229,6 +263,21 @@ class DiscordBridgeBot(commands.Bot):
                 )
             return None
 
+        is_bot_outdated = is_outdated()
+        # Add a footer to the embed if the bot is outdated
+        if is_bot_outdated:
+            footer_text = "📩 Bridge Update available!"
+            if 'embed' in kwargs:
+                embed = kwargs['embed']
+                if isinstance(embed, discord.Embed):
+                    if embed.footer.text:
+                        embed.set_footer(text=embed.footer.text + " | " + footer_text)
+                    else:
+                        embed.set_footer(text=footer_text)
+            else:
+                kwargs['embed'] = discord.Embed(description=" ", colour=0xFF6347)
+                kwargs['embed'].set_footer(text=footer_text)
+                
         is_officer = kwargs.pop("officer", False)
         officer_maybe = kwargs.pop("officer_maybe", False)
         if officer_maybe:
@@ -299,7 +348,7 @@ class DiscordBridgeBot(commands.Bot):
                 officer=officer,
             )
         else:
-            embed = Embed(description=message, colour=0x1ABC9C, timestamp=discord.utils.utcnow())
+            embed = Embed(description=discord.utils.escape_markdown(message), colour=0x1ABC9C, timestamp=discord.utils.utcnow())
             embed.set_author(name=("🤖 " + username) if command else username, icon_url=head)
             return await self.send_message(embed=embed, officer=officer)
 
