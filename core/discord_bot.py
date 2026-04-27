@@ -41,7 +41,6 @@ def get_latest_commit_sha() -> str:
         import urllib.request
         import json
         
-        # Get branch from environment variable (set during Docker build)
         current_branch = os.getenv("GIT_BRANCH", "main")
         
         # Use GitHub API to get latest commit
