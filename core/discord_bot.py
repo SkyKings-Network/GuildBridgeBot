@@ -35,6 +35,30 @@ def emoji_repl(match):
 def slash_mention_repl(match):
     return f"/{match.group(1)}"
 
+async def get_latest_commit_sha() -> str:
+    """Fetch the latest commit SHA from GitHub using the API"""
+    try:
+        current_branch = os.getenv("GIT_BRANCH", "main")
+        async with aiohttp.ClientSession() as sesh:
+            # Use GitHub API to get latest commit
+            url = f"https://api.github.com/repos/SkyKings-Network/GuildBridgeBot/commits/{current_branch}"
+            async with sesh.get(url, headers={'Accept': 'application/vnd.github.v3+json'}) as resp:
+                data = await resp.json()
+                return data['sha']
+    except Exception as e:
+        print(f"{Color.CYAN}Discord{Color.RESET} > Failed to get latest git SHA: {e}")
+        return "unknown"
+    
+async def is_outdated() -> bool:
+    print(f"{Color.CYAN}Discord{Color.RESET} > Checking for updates...")
+    current_sha = os.getenv("GIT_SHA", "unknown")
+    latest_sha = await get_latest_commit_sha()
+    print(f"{Color.CYAN}Discord{Color.RESET} > Current SHA: {current_sha}")
+    print(f"{Color.CYAN}Discord{Color.RESET} > Latest SHA: {latest_sha}")
+    if current_sha == "unknown" or latest_sha == "unknown":
+        return False
+    return current_sha != latest_sha
+
 
 class DiscordBridgeBot(commands.Bot):
     def __init__(self):
@@ -229,6 +253,21 @@ class DiscordBridgeBot(commands.Bot):
                 )
             return None
 
+        is_bot_outdated = await is_outdated()
+        # Add a footer to the embed if the bot is outdated
+        if is_bot_outdated:
+            footer_text = "📩 Bridge Update available!"
+            if 'embed' in kwargs:
+                embed = kwargs['embed']
+                if isinstance(embed, discord.Embed):
+                    if embed.footer.text:
+                        embed.set_footer(text=embed.footer.text + " | " + footer_text)
+                    else:
+                        embed.set_footer(text=footer_text)
+            else:
+                kwargs['embed'] = discord.Embed(description=" ", colour=0xFF6347)
+                kwargs['embed'].set_footer(text=footer_text)
+                
         is_officer = kwargs.pop("officer", False)
         officer_maybe = kwargs.pop("officer_maybe", False)
         if officer_maybe:
