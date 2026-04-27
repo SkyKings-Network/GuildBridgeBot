@@ -36,7 +36,7 @@ def slash_mention_repl(match):
     return f"/{match.group(1)}"
 
 def get_latest_commit_sha() -> str:
-    # Check for GIT_SHA environment variable (set during Docker build)
+    # Check for GIT_SHA environment variable
     git_sha = os.getenv("GIT_SHA")
     if git_sha:
         return git_sha
