@@ -7,7 +7,6 @@ ARG GIT_BRANCH=main
 ENV GIT_SHA=$GIT_SHA
 ENV GIT_BRANCH=$GIT_BRANCH
 
-
 # Set the working directory in the container
 WORKDIR /Bot
 
