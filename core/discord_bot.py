@@ -35,23 +35,13 @@ def emoji_repl(match):
 def slash_mention_repl(match):
     return f"/{match.group(1)}"
 
-def get_current_git_sha() -> str:
-    try:
-        repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        git_head_path = os.path.join(repo_dir, ".git", "HEAD")
-        with open(git_head_path, "r") as f:
-            ref = f.read().strip()
-            if ref.startswith("ref:"):
-                ref_path = os.path.join(repo_dir, ".git", ref[5:])
-                with open(ref_path, "r") as rf:
-                    return rf.read().strip()
-            else:
-                return ref
-    except Exception as e:
-        print(f"{Color.CYAN}Discord{Color.RESET} > Failed to get git SHA: {e}")
-        return "unknown"
-    
 def get_latest_commit_sha() -> str:
+    # Check for GIT_SHA environment variable (set during Docker build)
+    git_sha = os.getenv("GIT_SHA")
+    if git_sha:
+        return git_sha
+    
+    # Fallback to git command for local development
     try:
         import subprocess
         repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
