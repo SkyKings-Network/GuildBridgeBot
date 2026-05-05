@@ -80,12 +80,7 @@ Each bot will need its own service definition.
 
 ### Configuration
 
-The bot can be configured using environment variables or a `config.json` file.
-To use a file, mount it into the Docker container at `/Bot/config.json`. For example:
-```yaml
-volumes:
-    - ./config.json:/Bot/config.json
-```
+The bot can be configured using environment variables. For all options, see [`config.md`](./config.md).
 
 ### Updating the Bot
 To update the bot to the latest version, run the following commands:
