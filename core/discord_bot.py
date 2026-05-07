@@ -35,30 +35,24 @@ def emoji_repl(match):
 def slash_mention_repl(match):
     return f"/{match.group(1)}"
 
-def get_latest_commit_sha() -> str:
+async def get_latest_commit_sha() -> str:
     """Fetch the latest commit SHA from GitHub using the API"""
     try:
-        import urllib.request
-        import json
-        
         current_branch = os.getenv("GIT_BRANCH", "main")
-        
-        # Use GitHub API to get latest commit
-        url = f"https://api.github.com/repos/SkyKings-Network/GuildBridgeBot/commits/{current_branch}"
-        
-        req = urllib.request.Request(url, headers={'Accept': 'application/vnd.github.v3+json'})
-        with urllib.request.urlopen(req, timeout=5) as response:
-            data = json.loads(response.read().decode())
-            return data['sha']
-            
+        async with aiohttp.ClientSession() as sesh:
+            # Use GitHub API to get latest commit
+            url = f"https://api.github.com/repos/SkyKings-Network/GuildBridgeBot/commits/{current_branch}"
+            async with sesh.get(url, headers={'Accept': 'application/vnd.github.v3+json'}) as resp:
+                data = await resp.json()
+                return data['sha']
     except Exception as e:
         print(f"{Color.CYAN}Discord{Color.RESET} > Failed to get latest git SHA: {e}")
         return "unknown"
     
-def is_outdated() -> bool:
+async def is_outdated() -> bool:
     print(f"{Color.CYAN}Discord{Color.RESET} > Checking for updates...")
     current_sha = os.getenv("GIT_SHA", "unknown")
-    latest_sha = get_latest_commit_sha()
+    latest_sha = await get_latest_commit_sha()
     print(f"{Color.CYAN}Discord{Color.RESET} > Current SHA: {current_sha}")
     print(f"{Color.CYAN}Discord{Color.RESET} > Latest SHA: {latest_sha}")
     if current_sha == "unknown" or latest_sha == "unknown":
@@ -259,7 +253,7 @@ class DiscordBridgeBot(commands.Bot):
                 )
             return None
 
-        is_bot_outdated = is_outdated()
+        is_bot_outdated = await is_outdated()
         # Add a footer to the embed if the bot is outdated
         if is_bot_outdated:
             footer_text = "📩 Bridge Update available!"
