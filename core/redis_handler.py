@@ -19,8 +19,8 @@ class RedisManager:
         self._response_waiters: dict[str, asyncio.Future] = {}
         self.redis: redis.Redis = None
         self._restart: bool = True
-        self._reconnect_delay: int = 5
-        self._max_reconnect_delay: int = 60
+        self._reconnect_delay: int = 30
+        self._max_reconnect_delay: int = 600
 
     @property
     def running(self):
