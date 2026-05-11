@@ -198,6 +198,8 @@ class GameCommands(commands.Cog):
         if not data["success"]:
             return await chat_msg(f"Failed to get {player}'s profile.")
         profiles = data["profiles"]
+        if not profiles:
+            return await chat_msg(f"{player} has no profiles.")
         if profile is None:
             profile = [p for p in profiles if p.get("selected")]
             if not profile:
@@ -236,6 +238,8 @@ class GameCommands(commands.Cog):
         if not data["success"]:
             return await chat_msg(f"Failed to get {player}'s profile.")
         profiles = data["profiles"]
+        if not profiles:
+            return await chat_msg(f"{player} has no profiles.")
         if profile is None:
             profile = [p for p in profiles if p.get("selected")]
             if not profile:
