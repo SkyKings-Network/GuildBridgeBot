@@ -131,8 +131,14 @@ class MinecraftBotManager:
             else:
                 if SettingsConfig.printChat:
                     print(f"{Color.GREEN}Minecraft{Color.RESET} > Chat: {message}")
-                if message.startswith("Guild > " + self.bot.username) or message.startswith(
-                        "Officer > " + self.bot.username
+                username = self.bot.username
+                if not isinstance(username, str):
+                    try:
+                        username = "".join(username)
+                    except Exception:
+                        username = str(username)
+                if message.startswith("Guild > " + username) or message.startswith(
+                        "Officer > " + username
                 ):
                     return
                 if message.startswith("Guild >") or message.startswith("Officer >"):
@@ -173,6 +179,13 @@ class MinecraftBotManager:
                     self.send_to_discord(message)
                 else:
                     # large block messages, these should never conflict with above I think
+                    # Drop a stale buffer that was never properly closed, otherwise the
+                    # opening dashes of the next block get consumed as its "close".
+                    if self.wait_response and (time.time() - self.buffer_start) > 10:
+                        if SettingsConfig.printChat:
+                            print(f"{Color.GREEN}Minecraft{Color.RESET} > Stale chat buffer timed out, discarding")
+                        self.wait_response = False
+                        message_buffer.clear()
                     if self.wait_response and (message.startswith("----------") or message.endswith("----------")):
                         if SettingsConfig.printChat:
                             print(f"{Color.GREEN}Minecraft{Color.RESET} > End of chat buffer")
