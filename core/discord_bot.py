@@ -50,7 +50,6 @@ async def get_latest_commit_sha() -> str:
         return "unknown"
     
 async def is_outdated() -> bool:
-    print(f"{Color.CYAN}Discord{Color.RESET} > Checking for updates...")
     current_sha = os.getenv("GIT_SHA", "unknown")
     latest_sha = await get_latest_commit_sha()
     if current_sha == "unknown" or latest_sha == "unknown":
