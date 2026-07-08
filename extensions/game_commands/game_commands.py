@@ -44,7 +44,7 @@ COMMAND_INFO = {
         "usage": f"{PREFIX}slayers (player) [profile] [boss]",
     },
     "ca50": {
-        "description": "Get the total runs of a player.",
+        "description": "Get the missing M7 runs for a player to reach Class Average 50.",
         "usage": f"{PREFIX}ca50 (player) [profile] [global%] [mayor%]",
     }
 }
