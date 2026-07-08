@@ -17,6 +17,8 @@ from discord_extensions.generic import HELP_EMBED
 
 from .slayer_calculators import calculate_slayer_level, get_next_slayer_level, get_kills_needed
 
+from .classavg_calculator import calculate_classavg
+
 from hashlib import sha256
 
 
@@ -40,6 +42,10 @@ COMMAND_INFO = {
     "slayers": {
         "description": "Get the slayer levels of a player.",
         "usage": f"{PREFIX}slayers (player) [profile] [boss]",
+    },
+    "ca50": {
+        "description": "Get the total runs of a player.",
+        "usage": f"{PREFIX}ca50 (player) [profile] [global%] [mayor%]",
     }
 }
 
@@ -49,6 +55,7 @@ class GameCommands(commands.Cog):
         valid_commands = {
             "level": self.level,
             "slayers": self.slayers,
+            "ca50": self.ca50,
         }
         cmd_list = list(GameCommandConfig.enabled_commands)
         if not GameCommandConfig.enabled_commands:
@@ -290,3 +297,58 @@ class GameCommands(commands.Cog):
                     kn.append(f"{kills:,} T{tier+1}")
                 message += " / ".join(kn) + ")"
             return await chat_msg(message)
+        
+    async def ca50(self, name, args, *, officer: bool = False, head: str = None):
+            chat_msg = lambda msg: self.send_chat_message(name, msg, officer=officer, head=head)
+
+            if len(args) == 0 and name.startswith("@"):
+                return await chat_msg(f"Must provide player name for Discord commands.")
+
+            player = args.pop(0) if args else name
+            profile = args.pop(0) if args else None
+            
+            global_boost = 0.0
+            mayor_boost = 0.0
+            
+            try:
+                if args:
+                    g_arg = args.pop(0).replace("%", "")
+                    global_boost = float(g_arg) / 100.0 if float(g_arg) > 1.0 else float(g_arg)
+                if args:
+                    m_arg = args.pop(0).replace("%", "")
+                    mayor_boost = float(m_arg) / 100.0 if float(m_arg) > 1.0 else float(m_arg)
+            except ValueError:
+                return await chat_msg("Invalid boost percentages. Use numbers like 10 or 0.1.")
+
+            result = await calculate_classavg(
+                player, 
+                profile=profile, 
+                global_boost=global_boost, 
+                mayor_boost=mayor_boost,
+                config=GameCommandConfig
+            )
+
+            if "error" in result:
+                err = result["error"]
+                if err == "player_not_found":
+                    return await chat_msg(f"{player} does not exist.")
+                elif err == "no_profiles":
+                    return await chat_msg(f"{player} has no SkyBlock profiles.")
+                elif err == "profile_not_found":
+                    return await chat_msg(f"Profile '{profile}' not found for {player}.")
+                return await chat_msg(f"An error occurred: {err}")
+
+            runs_dict = result.get("runs", {})
+            
+            class_details = [
+                f"{runs} {cls.capitalize()}" 
+                for cls, runs in runs_dict.items() 
+                if runs > 0
+            ]
+            
+            details_str = ", ".join(class_details)
+
+            await chat_msg(
+                f"It will take {result['total_runs']:,} M7 runs for {result['player']} "
+                f"to reach Class Average 50 ({details_str})"
+            )
