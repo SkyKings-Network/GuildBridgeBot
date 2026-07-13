@@ -249,7 +249,7 @@ class GameCommands(commands.Cog):
         if not api_key:
             return await chat_msg("A SkyKings API Key is needed for this command.")
 
-        params = {"username": player, "include_bank": "true", "api_key": api_key}
+        params = {"username": player, "include_bank": "true", "api_key": api_key, "include_museum": "true"}
         if profile:
             params["profile"] = profile
 
