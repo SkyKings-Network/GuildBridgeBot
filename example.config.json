@@ -37,6 +37,10 @@
         "printChat": false,
         "hideInviteMessages": false
     },
+    "skykings": {
+        "api_key": "",
+        "api_url": "https://api.skykings.net"
+    },
     "data": {
         "current_version": "",
         "latest_version": ""

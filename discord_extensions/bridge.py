@@ -2,9 +2,10 @@ import asyncio
 import sys
 import traceback
 
+import aiohttp
 import discord
 from discord.ext import commands
-from core.config import DiscordConfig, SettingsConfig
+from core.config import DiscordConfig, SettingsConfig, SkyKingsConfig
 from core.checks import has_command_role
 
 
@@ -313,6 +314,38 @@ class Bridge(commands.Cog):
             return
         await self.bot.mineflayer_bot.chat("/g log " + params)
 
+    @commands.command(aliases=['nw'])
+    @has_command_role
+    async def networth(self, ctx, username: str, profile: str = None):
+        api_key = SkyKingsConfig.api_key
+        if not api_key:
+            await ctx.reply("SkyKings API key is not configured.")
+            return
+
+        params = {"username": username, "include_bank": "true", "api_key": api_key}
+        if profile:
+            params["profile"] = profile
+
+        url = f"{SkyKingsConfig.api_url.rstrip('/')}/networth"
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=30)) as resp:
+                    data = await resp.json()
+        except Exception as e:
+            await ctx.reply(f"Failed to contact the SkyKings API: {e}")
+            return
+
+        if not data.get("success"):
+            error_msg = data.get("message") or data.get("error") or "Unknown error"
+            await ctx.reply(f"API error: {error_msg}")
+            return
+
+        d = data["data"]
+        player_name = d["player"]["name"]
+        profile_name = d["profile"]["name"]
+        nw = _fmt_coins(d["totals"].get("networth", 0))
+        await ctx.reply(f"{player_name}'s networth on {profile_name} is **{nw}** coins.")
+
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         error = getattr(error, "original", error)
@@ -355,7 +388,18 @@ class Bridge(commands.Cog):
                 f"{''.join(traceback.format_exception(type(error), error, error.__traceback__))}\n"
                 f"```"
             )
-            
+
+
+def _fmt_coins(value: float) -> str:
+    """Format a coin value as a human-readable string (e.g. 9.37B, 135.40M)."""
+    if value >= 1_000_000_000:
+        return f"{value / 1_000_000_000:,.2f}B"
+    if value >= 1_000_000:
+        return f"{value / 1_000_000:,.2f}M"
+    if value >= 1_000:
+        return f"{value / 1_000:,.2f}K"
+    return f"{value:,.0f}"
+
 
 async def setup(bot):
     await bot.add_cog(Bridge(bot))
