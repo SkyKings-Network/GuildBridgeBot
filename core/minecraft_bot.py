@@ -237,7 +237,7 @@ class MinecraftBotManager:
                 "version": "1.8.9",
                 "username": AccountConfig.email,
                 "auth": "microsoft",
-                "profilesFolder": "/root/.minecraft",
+                "profilesFolder": "/root/.minecraft/nmp-cache",
                 "viewDistance": "tiny",
             }
         )
