@@ -17,6 +17,8 @@ from discord_extensions.generic import HELP_EMBED
 
 from .slayer_calculators import calculate_slayer_level, get_next_slayer_level, get_kills_needed
 
+from .classavg_calculator import calculate_classavg
+
 from hashlib import sha256
 
 
@@ -40,6 +42,10 @@ COMMAND_INFO = {
     "slayers": {
         "description": "Get the slayer levels of a player.",
         "usage": f"{PREFIX}slayers (player) [profile] [boss]",
+    },
+    "ca50": {
+        "description": "Get the missing M7 runs for a player to reach Class Average 50.",
+        "usage": f"{PREFIX}ca50 [player] [profile] [m<mayor%>] [g<global%>]",
     }
 }
 
@@ -49,6 +55,7 @@ class GameCommands(commands.Cog):
         valid_commands = {
             "level": self.level,
             "slayers": self.slayers,
+            "ca50": self.ca50,
         }
         cmd_list = list(GameCommandConfig.enabled_commands)
         if not GameCommandConfig.enabled_commands:
@@ -290,3 +297,113 @@ class GameCommands(commands.Cog):
                     kn.append(f"{kills:,} T{tier+1}")
                 message += " / ".join(kn) + ")"
             return await chat_msg(message)
+        
+    async def ca50(self, name, args, *, officer: bool = False, head: str = None):
+        chat_msg = lambda msg: self.send_chat_message(name, msg, officer=officer, head=head)
+
+        if len(args) == 0 and name.startswith("@"):
+            return await chat_msg(f"Must provide player name for Discord commands.")
+
+        player = args.pop(0) if args else name
+        
+        profile = None
+        global_boost = 0.0
+        mayor_boost = 0.0
+
+        if args:
+            first_arg = args[0].lower().replace("%", "")
+            is_num = first_arg.replace(".", "", 1).isdigit()
+            is_prefix = first_arg.startswith("m") or first_arg.startswith("g")
+            is_keyword = first_arg in ["mayor", "global"]
+            
+            if not is_num and not is_prefix and not is_keyword:
+                profile = args.pop(0)
+
+        while args:
+            current = args.pop(0).lower()
+            
+            if current.startswith("m") and current[1:].replace("%", "").replace(".", "", 1).isdigit():
+                args.insert(0, current[1:]) 
+                current = "m"                
+            elif current.startswith("g") and current[1:].replace("%", "").replace(".", "", 1).isdigit():
+                args.insert(0, current[1:])  
+                current = "g"                
+
+            # Auswertung der Flags
+            if current in ["paul", "mayor", "m"]:
+                if args:
+                    val = args.pop(0).replace("%", "")
+                    try:
+                        mayor_boost = float(val) / 100.0 if float(val) > 1.0 else float(val)
+                    except ValueError:
+                        return await chat_msg(f"Invalid mayor boost value after '{current}'.")
+            
+            elif current in ["global", "g"]:
+                if args:
+                    val = args.pop(0).replace("%", "")
+                    try:
+                        global_boost = float(val) / 100.0 if float(val) > 1.0 else float(val)
+                    except ValueError:
+                        return await chat_msg(f"Invalid global boost value after '{current}'.")
+            
+            else:
+                val = current.replace("%", "")
+                try:
+                    num = float(val) / 100.0 if float(val) > 1.0 else float(val)
+                    if global_boost == 0.0:
+                        global_boost = num
+                    else:
+                        mayor_boost = num
+                except ValueError:
+                    return await chat_msg(f"Unknown argument: '{current}'. Use numbers, 'm', 'g' or profile names.")
+
+        # --- API FETCHING ---
+        try:
+            uuid, player = await self.get_info(player)
+        except aiohttp.ClientResponseError as e:
+            if e.status == 404:
+                return await chat_msg(f"{player} does not exist.")
+            raise
+
+        data = await self.hypixel_request(f"https://api.hypixel.net/v2/skyblock/profiles?key={GameCommandConfig.hypixel_api_key}&uuid={uuid}")
+        if not data["success"]:
+            return await chat_msg(f"Failed to get {player}'s profile.")
+
+        profiles = data["profiles"]
+        if not profiles:
+            return await chat_msg(f"{player} has no profiles.")
+
+        if profile is None:
+            profile_list = [p for p in profiles if p.get("selected")]
+            if not profile_list:
+                profile_list = profiles
+            profile_obj = profile_list[0]
+        else:
+            profile_list = [p for p in profiles if p.get("cute_name", "").lower() == profile.lower()]
+            if not profile_list:
+                valid_profiles = ", ".join([p.get('cute_name', 'Unknown') for p in profiles])
+                return await chat_msg(f"Invalid profile: {valid_profiles}.")
+            profile_obj = profile_list[0]
+
+        member = profile_obj["members"].get(uuid)
+        if member is None:
+            return await chat_msg(f"{player} is not in the profile.")
+
+        result = await calculate_classavg(
+            member, 
+            global_boost=global_boost, 
+            mayor_boost=mayor_boost
+        )
+
+        runs_dict = result.get("runs", {})
+        class_details = [
+            f"{runs} {cls.capitalize()}" 
+            for cls, runs in runs_dict.items() 
+            if runs > 0
+        ]
+        details_str = ", ".join(class_details)
+
+        await chat_msg(
+            f"It will take {result['total_runs']:,} M7 runs for {player} "
+            f"({profile_obj.get('cute_name', 'Unknown')}) to reach Class Average 50 ({details_str})"
+        )
