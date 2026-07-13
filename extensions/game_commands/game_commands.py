@@ -59,7 +59,11 @@ COMMAND_INFO = {
     "networth": {
         "description": "Get the networth of a player.",
         "usage": f"{PREFIX}networth (player) [profile]",
-    }
+    },
+    "nw": {
+        "description": "Alias for networth.",
+        "usage": f"{PREFIX}nw (player) [profile]",
+    },
 }
 
 class GameCommands(commands.Cog):
@@ -70,6 +74,7 @@ class GameCommands(commands.Cog):
             "slayers": self.slayers,
             "ca50": self.ca50,
             "networth": self.networth,
+            "nw": self.networth,
         }
         cmd_list = list(GameCommandConfig.enabled_commands)
         if not GameCommandConfig.enabled_commands:
