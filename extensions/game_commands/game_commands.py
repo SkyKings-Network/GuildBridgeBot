@@ -12,7 +12,7 @@ import time
 from core.colors import Color
 
 from discord.ext import commands
-from core.config import ExtensionConfig, ConfigKey, DiscordConfig
+from core.config import ExtensionConfig, ConfigKey, DiscordConfig, SkyKingsConfig
 from discord_extensions.generic import HELP_EMBED
 
 from .slayer_calculators import calculate_slayer_level, get_next_slayer_level, get_kills_needed
@@ -30,6 +30,15 @@ class GameCommandConfig(ExtensionConfig, base_key="game_commands"):
 
 PREFIX = DiscordConfig.prefix 
 
+def _fmt_coins(value: float) -> str:
+    if value >= 1_000_000_000:
+        return f"{value / 1_000_000_000:,.2f}B"
+    if value >= 1_000_000:
+        return f"{value / 1_000_000:,.2f}M"
+    if value >= 1_000:
+        return f"{value / 1_000:,.2f}K"
+    return f"{value:,.0f}"
+
 COMMAND_INFO = {
     "help": {
         "description": "Get help on commands.",
@@ -46,6 +55,10 @@ COMMAND_INFO = {
     "ca50": {
         "description": "Get the missing M7 runs for a player to reach Class Average 50.",
         "usage": f"{PREFIX}ca50 [player] [profile] [m<mayor%>] [g<global%>]",
+    },
+    "networth": {
+        "description": "Get the networth of a player.",
+        "usage": f"{PREFIX}networth (player) [profile]",
     }
 }
 
@@ -56,6 +69,7 @@ class GameCommands(commands.Cog):
             "level": self.level,
             "slayers": self.slayers,
             "ca50": self.ca50,
+            "networth": self.networth,
         }
         cmd_list = list(GameCommandConfig.enabled_commands)
         if not GameCommandConfig.enabled_commands:
@@ -223,7 +237,44 @@ class GameCommands(commands.Cog):
         xp = member.get("leveling", {}).get("experience", 0)
         level, extra = divmod(xp, 100)
         await chat_msg(f"{player} ({profile['cute_name']}): Level {level:,}, {extra}/100 xp to next level.")
-    
+
+    async def networth(self, name, args, *, officer: bool = False, head: str = None):
+        chat_msg = lambda msg: self.send_chat_message(name, msg, officer=officer, head=head)
+        if len(args) == 0 and name.startswith("@"):
+            return await chat_msg("Must provide player name for Discord commands.")
+        player = args.pop(0) if args else name
+        profile = args.pop(0) if args else None
+
+        api_key = SkyKingsConfig.api_key
+        if not api_key:
+            return await chat_msg("A SkyKings API Key is needed for this command.")
+
+        params = {"username": player, "include_bank": "true", "api_key": api_key}
+        if profile:
+            params["profile"] = profile
+
+        if self.session is None:
+            self.session = aiohttp.ClientSession()
+        try:
+            async with self.session.get(
+                f"{SkyKingsConfig.api_url.rstrip('/')}/networth",
+                params=params,
+                timeout=aiohttp.ClientTimeout(total=30)
+            ) as resp:
+                data = await resp.json()
+        except Exception as e:
+            return await chat_msg(f"Failed to contact the SkyKings API: {e}")
+
+        if not data.get("success"):
+            error_msg = data.get("message") or data.get("error") or "Unknown error"
+            return await chat_msg(f"Error: {error_msg}")
+
+        d = data["data"]
+        player_name = d["player"]["name"]
+        profile_name = d["profile"]["name"]
+        nw = _fmt_coins(d["totals"].get("networth", 0))
+        await chat_msg(f"{player_name} ({profile_name}): Networth {nw} coins.")
+
     async def slayers(self, name, args, *, officer: bool = False, head: str = None):
         chat_msg = lambda msg: self.send_chat_message(name, msg, officer=officer, head=head)
         if len(args) == 0 and name.startswith("@"):

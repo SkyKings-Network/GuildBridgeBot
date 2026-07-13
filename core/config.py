@@ -10,6 +10,7 @@ __all__ = (
     "DiscordConfig",
     "RedisConfig",
     "SettingsConfig",
+    "SkyKingsConfig",
     "ConfigKey",
     "ExtensionConfig",
     "DataConfig",
@@ -308,7 +309,12 @@ class SettingsConfig(ConfigObject, base_key="settings"):
     hideInviteMessages: bool = ConfigKey(bool, False)
 
 
-_config_objects = [ServerConfig, AccountConfig, DiscordConfig, RedisConfig, SettingsConfig, DataConfig]
+class SkyKingsConfig(ConfigObject, base_key="skykings"):
+    api_key: str = ConfigKey(str, "")
+    api_url: str = ConfigKey(str, "https://api.skykings.net")
+
+
+_config_objects = [ServerConfig, AccountConfig, DiscordConfig, RedisConfig, SettingsConfig, SkyKingsConfig, DataConfig]
 
 
 def validate_config(_config: Dict):
