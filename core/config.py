@@ -310,7 +310,7 @@ class SettingsConfig(ConfigObject, base_key="settings"):
 
 
 class SkyKingsConfig(ConfigObject, base_key="skykings"):
-    api_key: str = ConfigKey(str)
+    api_key: str = ConfigKey(str, "")
     api_url: str = ConfigKey(str, "https://api.skykings.net")
 
 
