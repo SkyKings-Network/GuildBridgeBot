@@ -254,16 +254,34 @@ class GameCommands(commands.Cog):
         if not api_key:
             return await chat_msg("A SkyKings API Key is needed for this command.")
 
-        params = {"username": player, "include_bank": "true", "api_key": api_key, "include_museum": "true"}
-        if profile:
-            params["profile"] = profile
+        try:
+            uuid, player = await self.get_info(player)
+        except aiohttp.ClientResponseError as e:
+            if e.status == 404:
+                return await chat_msg(f"{player} does not exist.")
+            raise
+
+        # Fetch Hypixel profiles so the API doesn't need to use its own key
+        profiles_data = await self.hypixel_request(
+            f"https://api.hypixel.net/v2/skyblock/profiles?key={GameCommandConfig.hypixel_api_key}&uuid={uuid}"
+        )
+        if not profiles_data.get("success"):
+            return await chat_msg(f"Failed to get {player}'s SkyBlock profiles.")
 
         if self.session is None:
             self.session = aiohttp.ClientSession()
         try:
-            async with self.session.get(
+            async with self.session.post(
                 f"{SkyKingsConfig.api_url.rstrip('/')}/networth",
-                params=params,
+                params={"api_key": api_key},
+                json={
+                    "profile_data": profiles_data,
+                    "uuid": uuid,
+                    "name": player,
+                    "profile_name": profile,
+                    "include_bank": True,
+                    "include_museum": False,
+                },
                 timeout=aiohttp.ClientTimeout(total=30)
             ) as resp:
                 data = await resp.json()
