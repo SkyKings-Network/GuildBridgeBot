@@ -30,6 +30,8 @@ class GameCommandConfig(ExtensionConfig, base_key="game_commands"):
 
 PREFIX = DiscordConfig.prefix 
 
+RULE_BREAKER_LABELS = {"macroer": "Macroer", "irl_trader": "IRL Trader", "scammer": "Scammer"}
+
 def _fmt_coins(value: float) -> str:
     if value >= 1_000_000_000:
         return f"{value / 1_000_000_000:,.2f}B"
@@ -64,6 +66,10 @@ COMMAND_INFO = {
         "description": "Alias for networth.",
         "usage": f"{PREFIX}nw (player) [profile]",
     },
+    "lookup": {
+        "description": "Check if a player is on the SkyKings rule breaker list.",
+        "usage": f"{PREFIX}lookup (player)",
+    },
 }
 
 class GameCommands(commands.Cog):
@@ -75,6 +81,7 @@ class GameCommands(commands.Cog):
             "ca50": self.ca50,
             "networth": self.networth,
             "nw": self.networth,
+            "lookup": self.lookup,
         }
         cmd_list = list(GameCommandConfig.enabled_commands)
         if not GameCommandConfig.enabled_commands:
@@ -297,6 +304,50 @@ class GameCommands(commands.Cog):
         profile_name = d["profile"]["name"]
         nw = _fmt_coins(d["totals"].get("networth", 0))
         await chat_msg(f"{player_name} ({profile_name}): Networth {nw} coins.")
+
+    async def lookup(self, name, args, *, officer: bool = False, head: str = None):
+        chat_msg = lambda msg: self.send_chat_message(name, msg, officer=officer, head=head)
+        if len(args) == 0 and name.startswith("@"):
+            return await chat_msg("Must provide a player name for Discord commands.")
+        player = args.pop(0) if args else name
+
+        api_key = SkyKingsConfig.api_key
+        if not api_key:
+            return await chat_msg("A SkyKings API Key is needed for this command.")
+
+        try:
+            uuid, player = await self.get_info(player)
+        except aiohttp.ClientResponseError as e:
+            if e.status == 404:
+                return await chat_msg(f"{player} does not exist.")
+            raise
+
+        if self.session is None:
+            self.session = aiohttp.ClientSession()
+        try:
+            async with self.session.get(
+                f"{SkyKingsConfig.api_url.rstrip('/')}/user/lookup",
+                params={"uuid": uuid, "api_key": api_key},
+                timeout=aiohttp.ClientTimeout(total=15)
+            ) as resp:
+                data = await resp.json()
+        except Exception as e:
+            return await chat_msg(f"Failed to contact the SkyKings API: {e}")
+
+        if not data.get("success"):
+            error_msg = data.get("message") or data.get("error") or "Unknown error"
+            return await chat_msg(f"Error: {error_msg}")
+
+        result = data.get("result") or {}
+        if not result.get("flagged"):
+            return await chat_msg(f"{player} is not on the rule breaker list.")
+
+        category = RULE_BREAKER_LABELS.get(result.get("category"), result.get("category") or "Rule Breaker")
+        reason = result.get("reason")
+        msg = f"{player} is on the rule breaker list as a {category}."
+        if reason:
+            msg += f" Reason: {reason}"
+        await chat_msg(msg)
 
     async def slayers(self, name, args, *, officer: bool = False, head: str = None):
         chat_msg = lambda msg: self.send_chat_message(name, msg, officer=officer, head=head)
