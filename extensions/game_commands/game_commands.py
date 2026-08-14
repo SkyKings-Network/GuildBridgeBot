@@ -183,7 +183,7 @@ class GameCommands(commands.Cog):
             data = await resp.json()
             if resp.status not in (200, 404):
                 print(f"{Color.MAGENTA}Game Commands{Color.RESET} > {Color.RED}[ERROR]{Color.RESET} Non-OK response from Hypixel: {data}")
-            return 
+            return data
         
     async def cog_unload(self) -> None:
         if self.session is not None:
