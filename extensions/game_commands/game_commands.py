@@ -180,7 +180,10 @@ class GameCommands(commands.Cog):
         if self.session is None:
             self.session = aiohttp.ClientSession()
         async with self.session.get(*args, **kwargs) as resp:
-            return await resp.json()
+            data = await resp.json()
+            if resp.status not in (200, 404):
+                print(f"{Color.MAGENTA}Game Commands{Color.RESET} > {Color.RED}[ERROR]{Color.RESET} Non-OK response from Hypixel: {data}")
+            return 
         
     async def cog_unload(self) -> None:
         if self.session is not None:
