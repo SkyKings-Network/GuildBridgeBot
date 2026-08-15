@@ -432,38 +432,30 @@ class GameCommands(commands.Cog):
 
         args = list(args)
 
-        profile = None
-        global_boost = 0.0
-        mayor_boost = 0.0
-
-        if name.startswith("@"):
-            if not args:
-                return await chat_msg(
-                    f"Must provide a player name for Discord commands."
-                )
-            player = args.pop(0)
-        else:
-            player = name
-            if args:
-                first = args[0].lower()
-
-                is_short_flag = re.fullmatch(r"[mg]\d+(?:\.\d+)?%?", first) is not None
-                is_keyword = first in ("m", "g", "mayor", "global")
-
-                if not is_short_flag and not is_keyword:
-                    profile = args.pop(0)
-
-        if name.startswith("@") and args:
+        player_name = None
+        if args:
             first = args[0].lower()
+            is_first_short_flag = re.fullmatch(r"[mg]\d+(?:\.\d+)?%?", first) is not None
+            is_first_keyword = first in ("m", "g", "mayor", "global")
+            if not is_first_short_flag and not is_first_keyword:
+                player_name = args.pop(0)
 
-            is_short_flag = re.fullmatch(r"[mg]\d+(?:\.\d+)?%?", first) is not None
-            is_keyword = first in ("m", "g", "mayor", "global")
+        profile_name = None
+        if args:
+            second = args[0].lower()
+            is_second_short_flag = re.fullmatch(r"[mg]\d+(?:\.\d+)?%?", second) is not None
+            is_second_keyword = second in ("m", "g", "mayor", "global")
+            if not is_second_short_flag and not is_second_keyword:
+                profile_name = args.pop(0)
 
-            if not is_short_flag and not is_keyword:
-                profile = args.pop(0)
+        if player_name is None and name.startswith("@"):
+            return await chat_msg("Must provide player name for Discord commands.")
+        elif player_name is None:
+            player_name = name
 
         # Boost Parser
-
+        global_boost = 0.0
+        mayor_boost = 0.0
         while args:
             current = args.pop(0).lower()
 
@@ -493,66 +485,55 @@ class GameCommands(commands.Cog):
             return await chat_msg(f"Unknown argument: '{current}'.")
         
         # API FETCHING
-
         try:
-            uuid, player = await self.get_info(player)
+            uuid, player_name = await self.get_info(player_name)
         except aiohttp.ClientResponseError as e:
             if e.status == 404:
-                return await chat_msg(f"{player} does not exist.")
+                return await chat_msg(f"{player_name} does not exist.")
             raise
-
         data = await self.hypixel_request(
             f"https://api.hypixel.net/v2/skyblock/profiles?key={GameCommandConfig.hypixel_api_key}&uuid={uuid}"
         )
-
         if not data.get("success", False):
-            return await chat_msg(f"Failed to get {player}'s profile.")
-
+            return await chat_msg(f"Failed to get {player_name}'s profile.")
         profiles = data.get("profiles", [])
         if not profiles:
-            return await chat_msg(f"{player} has no profiles.")
+            return await chat_msg(f"{player_name} has no profiles.")
 
-        if profile is None:
+        if profile_name is None:
             selected = [p for p in profiles if p.get("selected")]
             profile_obj = selected[0] if selected else profiles[0]
         else:
             matches = [
                 p for p in profiles
-                if p.get("cute_name", "").casefold() == profile.casefold()
+                if p.get("cute_name", "").lower() == profile_name.lower()
             ]
-
             if not matches:
                 valid = ", ".join(p.get("cute_name", "Unknown") for p in profiles)
                 return await chat_msg(f"Invalid profile: {valid}.")
-
             profile_obj = matches[0]
 
         member = profile_obj.get("members", {}).get(uuid)
         if member is None:
-            return await chat_msg(f"{player} is not in the profile.")
+            return await chat_msg(f"{player_name} is not in the profile.")
 
         # Calculation
-
         result = await calculate_classavg(
             member,
             global_boost=global_boost,
             mayor_boost=mayor_boost,
         )
-
         order = ["archer", "berserk", "healer", "mage", "tank"]
-
         details = ", ".join(
             f"{result['runs'][cls]} {cls.capitalize()}"
             for cls in order
             if result["runs"].get(cls, 0) > 0
         )
-
         if result["total_runs"] == 0:
             return await chat_msg(
-                f"{player} ({profile_obj['cute_name']}) already has Class Average 50! GG!"
+                f"{player_name} ({profile_obj['cute_name']}) already has Class Average 50! GG!"
             )
-
         await chat_msg(
-            f"It will take {result['total_runs']:,} M7 runs for {player} "
+            f"It will take {result['total_runs']:,} M7 runs for {player_name} "
             f"({profile_obj['cute_name']}) to reach Class Average 50 ({details})"
         )
