@@ -265,13 +265,10 @@ class MuteSync(commands.Cog):
 
     @tasks.loop(hours=12)
     async def sync_task(self):
-        print("waiting for ready")
         await self.bot.wait_until_ready()
-        print("bot ready")
         guild = self.bot.get_channel(DiscordConfig.channel).guild
         if self.bot.mineflayer_bot is None or not self.bot.mineflayer_bot.is_ready():
             await asyncio.sleep(.5)
-        print("mc ready")
         if not self._syncing:
             self._syncing = True
             await self.sync_mutes()
