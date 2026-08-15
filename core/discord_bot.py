@@ -77,6 +77,7 @@ class DiscordBridgeBot(commands.Bot):
         self.officer_webhook: discord.Webhook | None = None
         self.debug_webhook: discord.Webhook | None = None
         self.name = None
+        self.startup_messages = []
         self.add_check(self.ready_check)
 
     async def ready_check(self, ctx):

@@ -309,12 +309,16 @@ class SettingsConfig(ConfigObject, base_key="settings"):
     hideInviteMessages: bool = ConfigKey(bool, False)
 
 
+class HypixelAPIConfig(ConfigObject, base_key="hypixel_api"):
+    key: str = ConfigKey(str, "")
+    url: str = ConfigKey(str, "https://api.hypixel.net/v2")
+
 class SkyKingsConfig(ConfigObject, base_key="skykings"):
     api_key: str = ConfigKey(str, "")
     api_url: str = ConfigKey(str, "https://api.skykings.net")
 
 
-_config_objects = [ServerConfig, AccountConfig, DiscordConfig, RedisConfig, SettingsConfig, SkyKingsConfig, DataConfig]
+_config_objects = [ServerConfig, AccountConfig, DiscordConfig, RedisConfig, SettingsConfig, SkyKingsConfig, HypixelAPIConfig, DataConfig]
 
 
 def validate_config(_config: Dict):

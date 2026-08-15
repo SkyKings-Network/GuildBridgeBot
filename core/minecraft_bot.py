@@ -84,7 +84,7 @@ class MinecraftBotManager:
         @javascript.On(self.bot, "spawn")
         def login():
             if not self._online:
-                self.send_to_discord("Bot Online")
+                self.send_to_discord("Bot Online\n" + "\n".join(self.client.startup_messages))
                 print(f"{Color.GREEN}Minecraft{Color.RESET} > Bot is logged in as", self.bot.username)
             self._online = True
             self.client.dispatch("minecraft_ready")
