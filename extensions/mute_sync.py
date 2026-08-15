@@ -27,6 +27,7 @@ class MuteSync(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.mutes = {}  # (discord id, uuid): datetime
+        self.guild_members: set[str] = set()
         self._sess: aiohttp.ClientSession | None = None
         self.mute_task: tuple[asyncio.Task, datetime] | None = None
         self._syncing = False
@@ -98,6 +99,20 @@ class MuteSync(commands.Cog):
             return int(data["data"]["userid"])
         return None
 
+    async def get_minecraft_uuid(self, userid):
+        session = await self.get_session()
+        async with session.get(
+                f"{self.skykings_api_url}/user/info?userid={userid}",
+                headers={"Authorization": self.skykings_api_key},
+        ) as resp:
+            if resp.status == 404:
+                return None
+            if resp.status != 200:
+                resp.raise_for_status()
+            data = await resp.json()
+            return int(data["data"]["uuid"])
+        return None
+
     async def get_guild_mutes(self):
         # wait for this to be populated
         while self.bot.mineflayer_bot.bot.username is None:
@@ -115,6 +130,7 @@ class MuteSync(commands.Cog):
             guild = data["guild"]
             if guild is None:
                 return []
+            self.guild_members = set(member["uuid"] for member in guild["members"])
             for member in guild["members"]:
                 uuid = member["uuid"]
                 discord_id = await self.get_discord_user(uuid)
@@ -236,6 +252,17 @@ class MuteSync(commands.Cog):
         # hypixel does not allow specific durations (e.g. 1d 1h, only 1h or 1d)
         await self.process_new_unmute(player)
 
+    @commands.Cog.listener()
+    async def on_hypixel_guild_member_join(self, player):
+        uuid = await self.get_uuid(player)
+        self.guild_members.add(uuid)
+
+    @commands.Cog.listener()
+    async def on_hypixel_guild_member_leave(self, player):
+        uuid = await self.get_uuid(player)
+        if uuid in self.guild_members:
+            self.guild_members.remove(uuid)
+
     @tasks.loop(hours=12)
     async def sync_task(self):
         print("waiting for ready")
@@ -258,6 +285,9 @@ class MuteSync(commands.Cog):
     async def on_member_join(self, member):
         if member.id is None:
             return
+        # is the user in our guild?
+        if member.guild.id != MuteSyncConfig.guild_id:
+            return
         # find the mute
         for (discord_id, uuid), expiry in dict(self.mutes).items():
             if discord_id == member.id:
@@ -272,6 +302,7 @@ class MuteSync(commands.Cog):
             return
         # check if mute is still valid
         valid = False
+        # if they have a current mute, they are obviously in our guild
         for (discord_id, uuid), expiry in dict(self.mutes).items():
             if discord_id == after.id:
                 if expiry > datetime.datetime.now():
@@ -280,9 +311,18 @@ class MuteSync(commands.Cog):
                         role = after.guild.get_role(MuteSyncConfig.mute_role)
                         await after.add_roles(role, reason="UPDATE: User has an active guild mute")
                         break
+        # if they do not, they might be in a different guild. check if they are in our guild
         if not valid:
             if MuteSyncConfig.mute_role in [role.id for role in after.roles]:
                 role = after.guild.get_role(MuteSyncConfig.mute_role)
+                uuid = await self.get_minecraft_uuid(after.id)
+                if uuid is None:
+                    # not even verified, shouldn't have role
+                    await after.remove_roles(role, reason="UPDATE: User has no active guild mute")
+                    return
+                if uuid not in self.guild_members:
+                    # not in our guild
+                    return
                 await after.remove_roles(role, reason="UPDATE: User has no active guild mute")
 
 
