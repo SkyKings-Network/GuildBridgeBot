@@ -58,8 +58,8 @@ class MuteSync(commands.Cog):
     async def get_discord_user(self, uuid):
         session = await self.get_session()
         async with session.get(
-                f"https://api.skykings.net/user/lookup?uuid={uuid}",
-                headers={"X-API-Key": MuteSyncConfig.skykings_api_key},
+                f"https://api.skykings.net/user/info?uuid={uuid}",
+                headers={"Authorization": MuteSyncConfig.skykings_api_key},
         ) as resp:
             if resp.status == 404:
                 return None
@@ -163,10 +163,11 @@ class MuteSync(commands.Cog):
             role = guild.get_role(MuteSyncConfig.mute_role)
             await member.remove_roles(role, reason="User's guild mute has expired")
             self.mutes.pop(identifier)
-            print(f"{Color.MAGENTA}Mute Sync{Color.RESET} > Removed mute role from {discord_id}")
+            print(f"{Color.MAGENTA}Mute Sync{Color.RESET} > Removed mute role from {identifier[0]}")
         except asyncio.CancelledError:
             pass
         except Exception as e:
+            print(f"{Color.MAGENTA}Mute Sync{Color.RESET} > Error in mute task: {e}")
             await self.bot.on_error("mute_task")
 
     async def update_mute_task(self):
@@ -187,6 +188,7 @@ class MuteSync(commands.Cog):
 
     @commands.Cog.listener()
     async def on_hypixel_guild_member_muted(self, _, player, duration):
+        print(f"{Color.MAGENTA}Mute Sync{Color.RESET} > Received mute for {player} for {duration}")
         # hypixel does not allow specific durations (e.g. 1d 1h, only 1h or 1d)
         if duration[-1] == "d":
             delta = datetime.timedelta(days=int(duration[:-1]))
@@ -200,6 +202,7 @@ class MuteSync(commands.Cog):
 
     @commands.Cog.listener()
     async def on_hypixel_guild_member_unmuted(self, _, player):
+        print(f"{Color.MAGENTA}Mute Sync{Color.RESET} > Received unmute for {player}")
         # hypixel does not allow specific durations (e.g. 1d 1h, only 1h or 1d)
         await self.process_new_unmute(player)
 
