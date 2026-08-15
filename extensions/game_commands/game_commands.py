@@ -13,7 +13,7 @@ import re
 from core.colors import Color
 
 from discord.ext import commands
-from core.config import ExtensionConfig, ConfigKey, DiscordConfig, SkyKingsConfig
+from core.config import ExtensionConfig, ConfigKey, DiscordConfig, HypixelAPIConfig, SkyKingsConfig
 from discord_extensions.generic import HELP_EMBED
 
 from .slayer_calculators import calculate_slayer_level, get_next_slayer_level, get_kills_needed
@@ -24,7 +24,7 @@ from hashlib import sha256
 
 
 class GameCommandConfig(ExtensionConfig, base_key="game_commands"):
-    hypixel_api_key: str = ConfigKey(str)
+    hypixel_api_key: str | None = ConfigKey(str, default=None)
     enabled_commands: list = ConfigKey(list, default=[], list_type=str)
     use_antispam: bool = ConfigKey(bool, default=False)
     command_cooldown: float = ConfigKey(float, default=5.0)  # seconds
@@ -57,7 +57,7 @@ COMMAND_INFO = {
     },
     "ca50": {
         "description": "Get the missing M7 runs for a player to reach Class Average 50.",
-        "usage": f"{PREFIX}ca50 [player] [profile] [m<mayor%>] [g<global%>]",
+        "usage": f"{PREFIX}ca50 (player) [profile] [m<mayor%>] [g<global%>]",
     },
     "networth": {
         "description": "Get the networth of a player.",
@@ -106,6 +106,28 @@ class GameCommands(commands.Cog):
             value="\n".join([f"``{v['usage']}`` {v['description']}" for k, v in COMMAND_INFO.items() if k in cmd_list]),
             inline=False
         )
+        if GameCommandConfig.hypixel_api_key and not HypixelAPIConfig.key:
+            self.bot.startup_messages.append("[WARNING] Game Commands: The GAME_COMMANDS_HYPIXEL_API_KEY setting is deprecated and may be removed soon. Use HYPIXEL_API_KEY instead.")
+            print(f"{Color.MAGENTA}Game Commands{Color.RESET} > {Color.YELLOW}[WARNING]{Color.RESET} The GAME_COMMANDS_HYPIXEL_API_KEY setting is deprecated and may be removed soon. Use HYPIXEL_API_KEY instead.")
+
+
+    @property
+    def hypixel_api_key(self):
+        if HypixelAPIConfig.key:
+            return HypixelAPIConfig.key
+        return GameCommandConfig.hypixel_api_key
+
+    @property
+    def hypixel_api_url(self):
+        return HypixelAPIConfig.url
+
+    @property
+    def skykings_api_key(self):
+        return SkyKingsConfig.api_key
+
+    @property
+    def skykings_api_url(self):
+        return SkyKingsConfig.api_url
 
     @property
     def antispam(self):
@@ -177,7 +199,9 @@ class GameCommands(commands.Cog):
             
     async def hypixel_request(self, *args, **kwargs):
         if "headers" not in kwargs:  
-            kwargs["headers"] = {"API-Key": GameCommandConfig.hypixel_api_key}
+            kwargs["headers"] = {"API-Key": self.hypixel_api_key}
+        else:
+            kwargs["headers"]["API-Key"] = self.hypixel_api_key
         if self.session is None:
             self.session = aiohttp.ClientSession()
         async with self.session.get(*args, **kwargs) as resp:
@@ -231,7 +255,7 @@ class GameCommands(commands.Cog):
             if e.status == 404:
                 return await chat_msg(f"{player} does not exist.")
             raise
-        data = await self.hypixel_request(f"https://api.hypixel.net/v2/skyblock/profiles?key={GameCommandConfig.hypixel_api_key}&uuid={uuid}")
+        data = await self.hypixel_request(f"{self.hypixel_api_url}/skyblock/profiles?uuid={uuid}")
         if not data["success"]:
             return await chat_msg(f"Failed to get {player}'s profile.")
         profiles = data["profiles"]
@@ -274,7 +298,7 @@ class GameCommands(commands.Cog):
 
         # Fetch Hypixel profiles so the API doesn't need to use its own key
         profiles_data = await self.hypixel_request(
-            f"https://api.hypixel.net/v2/skyblock/profiles?key={GameCommandConfig.hypixel_api_key}&uuid={uuid}"
+            f"{self.hypixel_api_url}/skyblock/profiles?uuid={uuid}"
         )
         if not profiles_data.get("success"):
             return await chat_msg(f"Failed to get {player}'s SkyBlock profiles.")
@@ -283,7 +307,7 @@ class GameCommands(commands.Cog):
             self.session = aiohttp.ClientSession()
         try:
             async with self.session.post(
-                f"{SkyKingsConfig.api_url.rstrip('/')}/networth",
+                f"{self.skykings_api_url.rstrip('/')}/networth",
                 params={"api_key": api_key},
                 json={
                     "profile_data": profiles_data,
@@ -330,7 +354,7 @@ class GameCommands(commands.Cog):
             self.session = aiohttp.ClientSession()
         try:
             async with self.session.get(
-                f"{SkyKingsConfig.api_url.rstrip('/')}/user/lookup",
+                f"{self.skykings_api_url.rstrip('/')}/user/lookup",
                 params={"uuid": uuid, "api_key": api_key},
                 timeout=aiohttp.ClientTimeout(total=15)
             ) as resp:
@@ -370,7 +394,7 @@ class GameCommands(commands.Cog):
             if e.status == 404:
                 return await chat_msg(f"{player} does not exist.")
             raise
-        data = await self.hypixel_request(f"https://api.hypixel.net/v2/skyblock/profiles?key={GameCommandConfig.hypixel_api_key}&uuid={uuid}")
+        data = await self.hypixel_request(f"{self.hypixel_api_url}/skyblock/profiles?uuid={uuid}")
         if not data["success"]:
             return await chat_msg(f"Failed to get {player}'s profile.")
         profiles = data["profiles"]
@@ -492,7 +516,7 @@ class GameCommands(commands.Cog):
                 return await chat_msg(f"{player_name} does not exist.")
             raise
         data = await self.hypixel_request(
-            f"https://api.hypixel.net/v2/skyblock/profiles?key={GameCommandConfig.hypixel_api_key}&uuid={uuid}"
+            f"{self.hypixel_api_url}/skyblock/profiles?uuid={uuid}"
         )
         if not data.get("success", False):
             return await chat_msg(f"Failed to get {player_name}'s profile.")
