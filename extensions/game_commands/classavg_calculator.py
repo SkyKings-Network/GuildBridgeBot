@@ -7,8 +7,8 @@ async def calculate_classavg(member_data, global_boost=0.0, mayor_boost=0.0):
     attributes = member_data.get("attributes", {})
 
     SHARD_TABLE = {
-        0: 0, 1: 1, 2: 2, 3: 3, 4: 5,
-        5: 7, 6: 9, 7: 12, 8: 15, 9: 19, 10: 24
+        0: 0, 1: 1, 2: 2, 3: 4, 4: 6,
+        5: 9, 6: 12, 7: 16, 8: 20, 9: 25, 10: 32
     }
 
     catagrad_level = min(max(attributes.get("catacombs_graduate", 0), 0), 10)
