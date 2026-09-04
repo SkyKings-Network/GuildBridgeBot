@@ -349,6 +349,13 @@ class DiscordBridgeBot(commands.Bot):
                 await self.mineflayer_bot.chat(
                     f"/gc {username}: attached {'a' if count == 1 else count} file{'s' if count > 1 else ''}"
                 )
+            elif message.stickers:
+                count = len(message.stickers)
+                await self.mineflayer_bot.chat(
+                    f"/gc {username}: sent {'a' if count == 1 else count} sticker{'s' if count > 1 else ''}"
+                )
+            elif message.reference and message.reference.type is discord.MessageReferenceType.forward:
+                await self.mineflayer_bot.chat(f"/gc {username}: forwarded a message")
             else:
                 try:
                     await message.add_reaction("❌")
