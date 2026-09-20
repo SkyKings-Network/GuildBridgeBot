@@ -39,14 +39,13 @@ class MinecraftBotManager:
         try:
             await asyncio.wait_for(
                 self.client.loop.run_in_executor(None, self.bot.chat, message),
-                timeout=8,
+                timeout=15,
             )
         except asyncio.TimeoutError:
-            print(f"{Color.GREEN}Minecraft{Color.RESET} > chat() timed out - terminating JS runtime")
-            self.stop()
+            print(f"{Color.GREEN}Minecraft{Color.RESET} > chat() timed out - message may not have been sent")
         except Exception as e:
             if "Timed out accessing 'chat'" in str(e) or ("Timed out" in str(e) and "chat" in str(e)):
-                self.stop()
+                print(f"{Color.GREEN}Minecraft{Color.RESET} > chat() timed out - message may not have been sent")
             else:
                 raise
 
@@ -60,6 +59,8 @@ class MinecraftBotManager:
         #     pass
         self._starting = restart
         self._online = False
+        # Clear reference so Redis knows bot is offline during restart
+        self.client.mineflayer_bot = None
         javascript.terminate()
         if restart:
             time.sleep(3)
@@ -83,7 +84,7 @@ class MinecraftBotManager:
         @javascript.On(self.bot, "spawn")
         def login():
             if not self._online:
-                self.send_to_discord("Bot Online")
+                self.send_to_discord("Bot Online\n" + "\n".join(self.client.startup_messages))
                 print(f"{Color.GREEN}Minecraft{Color.RESET} > Bot is logged in as", self.bot.username)
             self._online = True
             self.client.dispatch("minecraft_ready")
@@ -130,8 +131,14 @@ class MinecraftBotManager:
             else:
                 if SettingsConfig.printChat:
                     print(f"{Color.GREEN}Minecraft{Color.RESET} > Chat: {message}")
-                if message.startswith("Guild > " + self.bot.username) or message.startswith(
-                        "Officer > " + self.bot.username
+                username = self.bot.username
+                if not isinstance(username, str):
+                    try:
+                        username = "".join(username)
+                    except Exception:
+                        username = str(username)
+                if message.startswith("Guild > " + username) or message.startswith(
+                        "Officer > " + username
                 ):
                     return
                 if message.startswith("Guild >") or message.startswith("Officer >"):
@@ -166,11 +173,19 @@ class MinecraftBotManager:
                         " has requested to join the guild!" in message.lower() or \
                         "Your mute will expire in " in message or \
                         "Mute ID: " in message or \
+                        "No one earned guild experience on" in message or \
                         "We blocked your comment" in message:
                     # Guild log is sent as one fat message
                     self.send_to_discord(message)
                 else:
                     # large block messages, these should never conflict with above I think
+                    # Drop a stale buffer that was never properly closed, otherwise the
+                    # opening dashes of the next block get consumed as its "close".
+                    if self.wait_response and (time.time() - self.buffer_start) > 10:
+                        if SettingsConfig.printChat:
+                            print(f"{Color.GREEN}Minecraft{Color.RESET} > Stale chat buffer timed out, discarding")
+                        self.wait_response = False
+                        message_buffer.clear()
                     if self.wait_response and (message.startswith("----------") or message.endswith("----------")):
                         if SettingsConfig.printChat:
                             print(f"{Color.GREEN}Minecraft{Color.RESET} > End of chat buffer")
@@ -179,6 +194,7 @@ class MinecraftBotManager:
                         if (
                                 "Guild Name: " in text or
                                 "Top Guild Experience" in text or
+                            "No one earned guild experience on" in text or
                                 "Created: " in text
                         ):
                             self.send_to_discord(text)
@@ -221,6 +237,7 @@ class MinecraftBotManager:
                 "version": "1.8.9",
                 "username": AccountConfig.email,
                 "auth": "microsoft",
+                "profilesFolder": "/root/.minecraft/nmp-cache",
                 "viewDistance": "tiny",
             }
         )

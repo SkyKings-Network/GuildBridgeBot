@@ -3,7 +3,7 @@ import os
 
 import discord
 from discord.ext import commands, tasks
-from core.config import DiscordConfig, SettingsConfig, DataConfig
+from core.config import DiscordConfig, SettingsConfig, DataConfig, ServerConfig, AccountConfig, RedisConfig
 from core.checks import has_override_role, has_command_role
 
 import json
@@ -15,6 +15,19 @@ class Admin(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.check_bot_status.start()
+
+    @staticmethod
+    def _persist_setting(key: str, value):
+        """Persist a setting change to config.json so it survives restarts."""
+        with open("config.json", "r") as f:
+            config = json.load(f)
+
+        if "settings" not in config:
+            config["settings"] = {}
+        config["settings"][key] = value
+
+        with open("config.json", "w") as f:
+            json.dump(config, f, indent=4)
 
     @commands.command()
     @has_override_role
@@ -29,16 +42,58 @@ class Admin(commands.Cog):
                 description=":white_check_mark: Auto accepting guild join requests is now ``off``!"
                 )
             SettingsConfig.autoaccept = False
+            self._persist_setting("autoaccept", False)
         else:
             embedVar = discord.Embed(description=":white_check_mark: Auto accepting guild join requests is now ``on``!")
             SettingsConfig.autoaccept = True
-        if os.getenv("IS_DOCKER") == "1":
-            embedVar.description += ("\n\n:information_source: **Changes will not persist after a restart in Docker "
-                                     "deployments.** Add the following to your docker compose file:\n"
-                                     "```yaml"
-                                     "- BRIDGE_SETTINGS_AUTOACCEPT=true\n"
-                                     "```")
+            self._persist_setting("autoaccept", True)
         await ctx.send(embed=embedVar)
+
+    @commands.command()
+    async def toggleinvites(self, ctx):
+        """Toggle hiding of guild invite messages (Owner only)"""
+        if not await ctx.bot.is_owner(ctx.author):
+            embedVar = discord.Embed(
+                color=discord.Color.red(),
+                description=":x: This command can only be used by the bot owner!"
+            )
+            await ctx.send(embed=embedVar)
+            return
+
+        if SettingsConfig.hideInviteMessages:
+            embedVar = discord.Embed(
+                description=":white_check_mark: Guild invite messages will now be ``shown``!"
+            )
+            SettingsConfig.hideInviteMessages = False
+            self._persist_setting("hideInviteMessages", False)
+        else:
+            embedVar = discord.Embed(
+                description=":white_check_mark: Guild invite messages will now be ``hidden``!"
+            )
+            SettingsConfig.hideInviteMessages = True
+            self._persist_setting("hideInviteMessages", True)
+        
+        await ctx.send(embed=embedVar)
+
+    @commands.command()
+    @has_override_role
+    async def toggleprintchat(self, ctx):
+        """Toggle forwarding of in-game chat to console output."""
+        if SettingsConfig.printChat:
+            embedVar = discord.Embed(
+                description=":white_check_mark: Chat printing is now ``off``!"
+            )
+            SettingsConfig.printChat = False
+            self._persist_setting("printChat", False)
+        else:
+            embedVar = discord.Embed(
+                description=":white_check_mark: Chat printing is now ``on``!"
+            )
+            SettingsConfig.printChat = True
+            self._persist_setting("printChat", True)
+
+        await ctx.send(embed=embedVar)
+        
 
     @commands.command(aliases=['r'])
     @has_command_role
@@ -116,6 +171,87 @@ class Admin(commands.Cog):
             await self.bot.reload_extension(ext)
         embed = discord.Embed(color=0x1ABC9C).set_author(name="Extensions reloaded!")
         await msg.edit(embed=embed)
+
+    @commands.command()
+    async def config(self, ctx):
+        """Shows current configuration settings (Owner only)"""
+        if not await ctx.bot.is_owner(ctx.author):
+            embedVar = discord.Embed(
+                color=discord.Color.red(),
+                description=":x: This command can only be used by the bot owner!"
+            )
+            await ctx.send(embed=embedVar)
+            return
+
+        embedVar = discord.Embed(
+            title="⚙️ Bot Configuration",
+            color=0x1ABC9C,
+            timestamp=discord.utils.utcnow()
+        )
+
+        # Server Config
+        embedVar.add_field(
+            name="🖥️ Server",
+            value=f"**Host:** `{ServerConfig.host}`\n**Port:** `{ServerConfig.port}`",
+            inline=False
+        )
+
+        # Discord Config (hide sensitive data)
+        discord_info = (
+            f"**Channel:** <#{DiscordConfig.channel}>\n"
+            f"**Officer Channel:** {f'<#{DiscordConfig.officerChannel}>' if DiscordConfig.officerChannel else '`Not set`'}\n"
+            f"**Command Role:** <@&{DiscordConfig.commandRole}>\n"
+            f"**Override Role:** <@&{DiscordConfig.overrideRole}>\n"
+            f"**Prefix:** `{DiscordConfig.prefix}`\n"
+            f"**Webhook:** `{'✅ Configured' if DiscordConfig.webhookURL else '❌ Not set'}`\n"
+            f"**Officer Webhook:** `{'✅ Configured' if DiscordConfig.officerWebhookURL else '❌ Not set'}`\n"
+            f"**Debug Webhook:** `{'✅ Configured' if DiscordConfig.debugWebhookURL else '❌ Not set'}`"
+        )
+        embedVar.add_field(
+            name="💬 Discord",
+            value=discord_info,
+            inline=False
+        )
+
+        # Redis Config
+        redis_status = "✅ Enabled" if RedisConfig.host else "❌ Disabled"
+        redis_info = f"**Status:** `{redis_status}`"
+        if RedisConfig.host:
+            redis_info += (
+                f"\n**Host:** `{RedisConfig.host}`\n"
+                f"**Port:** `{RedisConfig.port}`\n"
+                f"**Client Name:** `{RedisConfig.clientName or 'Not set'}`"
+            )
+        embedVar.add_field(
+            name="🔴 Redis",
+            value=redis_info,
+            inline=False
+        )
+
+        # Settings Config
+        settings_info = (
+            f"**Auto Accept:** `{'✅ On' if SettingsConfig.autoaccept else '❌ Off'}`\n"
+            f"**Date Limit:** `{SettingsConfig.dateLimit} days`\n"
+            f"**Print Chat:** `{'✅ On' if SettingsConfig.printChat else '❌ Off'}`\n"
+            f"**Hide Invite Messages:** `{'✅ On' if SettingsConfig.hideInviteMessages else '❌ Off'}`\n"
+            f"**Extensions:** `{len(SettingsConfig.extensions)} loaded`"
+        )
+        embedVar.add_field(
+            name="⚙️ Settings",
+            value=settings_info,
+            inline=False
+        )
+
+        # Data Config
+        if DataConfig.current_version:
+            embedVar.add_field(
+                name="📊 Version Info",
+                value=f"**Current:** `{DataConfig.current_version}`",
+                inline=False
+            )
+
+        embedVar.set_footer(text=f"Requested by {ctx.author}")
+        await ctx.send(embed=embedVar)
 
     @tasks.loop(seconds=60)
     async def check_bot_status(self):

@@ -9,16 +9,22 @@ from core.config import RedisConfig
 
 
 class RedisManager:
-    def __init__(self, bot, mineflayer_bot):
+    def __init__(self, bot, mineflayer_bot=None):
         self.read_task: asyncio.Task = None  # type: ignore
         self.bot = bot
-        self.mineflayer_bot = mineflayer_bot
+        # NOTE: do not cache the MinecraftBotManager here. The Minecraft bot
+        # can be torn down and recreated (kick/disconnect/restart) which swaps
+        # out `bot.mineflayer_bot` with a fresh instance. A cached reference
+        # would point at a dead JS proxy and every chat() call would time out
+        # in the pythonia bridge while Discord-side commands kept working.
         self.client_name = RedisConfig.clientName
         self.recieve_channel = RedisConfig.recieveChannel
         self.send_channel = RedisConfig.sendChannel
         self._response_waiters: dict[str, asyncio.Future] = {}
         self.redis: redis.Redis = None
         self._restart: bool = True
+        self._reconnect_delay: int = 30
+        self._max_reconnect_delay: int = 600
 
     @property
     def running(self):
@@ -31,18 +37,26 @@ class RedisManager:
             raise RuntimeError("Already running")
         self.read_task = asyncio.create_task(self.reader())
 
+    @property
+    def mineflayer_bot(self):
+        # Always resolve the current Minecraft bot from the Discord client so
+        # we don't keep talking to a terminated mineflayer proxy after a
+        # restart.
+        return getattr(self.bot, "mineflayer_bot", None)
+
     async def process_request(self, message_data):
-        if self.mineflayer_bot is None:
+        mineflayer_bot = self.mineflayer_bot
+        if mineflayer_bot is None:
             return {"success": False, "error": "bot not connected"}
         if message_data["endpoint"] == "alive":
-            await self.mineflayer_bot.chat("/ping")
+            await mineflayer_bot.chat("/ping")
             try:
                 await self.bot.wait_for("minecraft_pong", timeout=10)
             except asyncio.TimeoutError:
                 return {"success": False, "error": "timeout"}
             return {"success": True}
         elif message_data["endpoint"] == "kick":
-            await self.mineflayer_bot.chat("/g kick " + message_data["data"]["username"] + " " + message_data["data"]["reason"])
+            await mineflayer_bot.chat("/g kick " + message_data["data"]["username"] + " " + message_data["data"]["reason"])
             try:
                 await self.bot.wait_for(
                     "hypixel_guild_member_kick", timeout=10,
@@ -52,15 +66,15 @@ class RedisManager:
                 return {"success": False, "error": "timeout"}
             return {"success": True}
         elif message_data["endpoint"] == "mute":
-            await self.mineflayer_bot.chat("/g mute " + message_data["data"]["username"])
+            await mineflayer_bot.chat("/g mute " + message_data["data"]["username"])
             # TODO: write a success check for this
             return {"success": True}
         elif message_data["endpoint"] == "unmute":
-            await self.mineflayer_bot.chat("/g unmute " + message_data["data"]["username"])
+            await mineflayer_bot.chat("/g unmute " + message_data["data"]["username"])
             # TODO: write a success check for this
             return {"success": True}
         elif message_data["endpoint"] == "setrank":
-            await self.mineflayer_bot.chat(
+            await mineflayer_bot.chat(
                 "/g setrank " + message_data["data"]["username"] + " " + message_data["data"]["rank"]
                 )
             # wait for either hypixel_guild_member_promote or hypixel_guild_member_demote
@@ -86,7 +100,7 @@ class RedisManager:
                 return {"success": False, "error": "timeout"}
             return {"success": True}
         elif message_data["endpoint"] == "promote":
-            await self.mineflayer_bot.chat("/g promote " + message_data["data"]["username"])
+            await mineflayer_bot.chat("/g promote " + message_data["data"]["username"])
             try:
                 await self.bot.wait_for(
                     "hypixel_guild_member_promote", timeout=10,
@@ -96,7 +110,7 @@ class RedisManager:
                 return {"success": False, "error": "timeout"}
             return {"success": True}
         elif message_data["endpoint"] == "demote":
-            await self.mineflayer_bot.chat("/g demote " + message_data["data"]["username"])
+            await mineflayer_bot.chat("/g demote " + message_data["data"]["username"])
             try:
                 await self.bot.wait_for(
                     "hypixel_guild_member_demote", timeout=10,
@@ -106,7 +120,7 @@ class RedisManager:
                 return {"success": False, "error": "timeout"}
             return {"success": True}
         elif message_data["endpoint"] == "override":
-            await self.mineflayer_bot.chat(message_data["data"]["command"])
+            await mineflayer_bot.chat(message_data["data"]["command"])
             # can't really write a check for this
             return {"success": True}
         elif message_data["endpoint"] == "invite":
@@ -132,6 +146,7 @@ class RedisManager:
                 channel = self.recieve_channel + ":" + self.client_name
                 await pubsub.subscribe(channel)
                 print(f"{Color.MAGENTA}Redis{Color.RESET} > Subscribed to {channel}")
+                self._reconnect_delay = 5
                 while (not self.bot.is_closed()) and self.running:
                     try:
                         message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=10)
@@ -181,9 +196,10 @@ class RedisManager:
                     )
         except asyncio.CancelledError:
             print(f"{Color.MAGENTA}Redis{Color.RESET} > Task Cancelled")
-        except redis.ConnectionError:
-            print(f"{Color.MAGENTA}Redis{Color.RESET} > Redis connection closed")
-            traceback.print_exc()
+            self._restart = False
+            raise
+        except redis.ConnectionError as e:
+            print(f"{Color.MAGENTA}Redis{Color.RESET} > Redis connection error: {e}")
         except Exception as e:  # pylint: disable=broad-exception-caught
             print(f"{Color.MAGENTA}Redis{Color.RESET} > Critical error occurred\n" + str(e))
             traceback.print_exc()
@@ -201,12 +217,29 @@ class RedisManager:
                 await self.bot.send_debug_message(content)
         finally:
             if self.redis is not None:
-                await self.close(restart=self._restart)
+                try:
+                    await self.redis.close()
+                except Exception:
+                    pass
+                self.redis = None
         print(f"{Color.MAGENTA}Redis{Color.RESET} > Connection closed")
         if self._restart:
-            await asyncio.sleep(5)
-            print(f"{Color.MAGENTA}Redis{Color.RESET} > Restarting...")
+            delay = self._reconnect_delay
+            print(f"{Color.MAGENTA}Redis{Color.RESET} > Reconnecting in {delay}s...")
+            loop = asyncio.get_event_loop()
+            loop.call_later(delay, lambda: asyncio.create_task(self._restart_reader()))
+            self._reconnect_delay = min(self._reconnect_delay * 2, self._max_reconnect_delay)
+
+    async def _restart_reader(self):
+        if not self._restart:
+            return
+        if self.running:
+            return
+        try:
             await self.start()
+        except Exception as e: 
+            print(f"{Color.MAGENTA}Redis{Color.RESET} > Failed to restart reader: {e}")
+            traceback.print_exc()
 
     async def send_message(self, **data) -> str:
         if self.redis is None:
@@ -241,8 +274,15 @@ class RedisManager:
 
     async def close(self, *, restart: bool = False):
         self._restart = restart
-        await self.redis.close()
-        self.read_task.cancel()
+        if self.redis is not None:
+            try:
+                await self.redis.close()
+            except Exception:
+                pass
+        if self.read_task is not None and not self.read_task.done():
+            current = asyncio.current_task()
+            if current is not self.read_task:
+                self.read_task.cancel()
 
     @classmethod
     async def create(cls, discord_bot, mineflayer_bot):

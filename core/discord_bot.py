@@ -25,7 +25,7 @@ mention_regex = re.compile(r"<@!?(\d+)>")
 role_mention_regex = re.compile(r"<@&(\d+)>")
 channel_mention_regex = re.compile(r"<#(\d+)>")
 slash_mention_regex = re.compile(r"</([\w\- ]+):\d+>")
-link_regex = re.compile(r"\S+\.\S+")
+link_regex = re.compile(r"(\S+)(\.+)(\S+)")
 
 
 def emoji_repl(match):
@@ -34,6 +34,27 @@ def emoji_repl(match):
 
 def slash_mention_repl(match):
     return f"/{match.group(1)}"
+
+async def get_latest_commit_sha() -> str:
+    """Fetch the latest commit SHA from GitHub using the API"""
+    try:
+        current_branch = os.getenv("GIT_BRANCH", "main")
+        async with aiohttp.ClientSession() as sesh:
+            # Use GitHub API to get latest commit
+            url = f"https://api.github.com/repos/SkyKings-Network/GuildBridgeBot/commits/{current_branch}"
+            async with sesh.get(url, headers={'Accept': 'application/vnd.github.v3+json'}) as resp:
+                data = await resp.json()
+                return data['sha']
+    except Exception as e:
+        print(f"{Color.CYAN}Discord{Color.RESET} > Failed to get latest git SHA: {e}")
+        return "unknown"
+    
+async def is_outdated() -> bool:
+    current_sha = os.getenv("GIT_SHA", "unknown")
+    latest_sha = await get_latest_commit_sha()
+    if current_sha == "unknown" or latest_sha == "unknown":
+        return False
+    return current_sha != latest_sha
 
 
 class DiscordBridgeBot(commands.Bot):
@@ -56,6 +77,7 @@ class DiscordBridgeBot(commands.Bot):
         self.officer_webhook: discord.Webhook | None = None
         self.debug_webhook: discord.Webhook | None = None
         self.name = None
+        self.startup_messages = []
         self.add_check(self.ready_check)
         self.chat_cooldown = DiscordConfig.chatCooldown
         self.last_chat = 0
@@ -169,7 +191,7 @@ class DiscordBridgeBot(commands.Bot):
                     return
                 username = embed.author.name
                 # failsafe, if we get the bot's username something went wrong
-                if username == self.user.display_name or username == self.mineflayer_bot.bot.username:
+                if self.mineflayer_bot is None or username == self.user.display_name or username == self.mineflayer_bot.bot.username:
                     return
                 message = embed.description
                 # empty message
@@ -231,6 +253,21 @@ class DiscordBridgeBot(commands.Bot):
                 )
             return None
 
+        is_bot_outdated = await is_outdated()
+        # Add a footer to the embed if the bot is outdated
+        if is_bot_outdated:
+            footer_text = "📩 Bridge Update available!"
+            if 'embed' in kwargs:
+                embed = kwargs['embed']
+                if isinstance(embed, discord.Embed):
+                    if embed.footer.text:
+                        embed.set_footer(text=embed.footer.text + " | " + footer_text)
+                    else:
+                        embed.set_footer(text=footer_text)
+            else:
+                kwargs['embed'] = discord.Embed(description=" ", colour=0xFF6347)
+                kwargs['embed'].set_footer(text=footer_text)
+                
         is_officer = kwargs.pop("officer", False)
         officer_maybe = kwargs.pop("officer_maybe", False)
         if officer_maybe:
@@ -301,7 +338,7 @@ class DiscordBridgeBot(commands.Bot):
                 officer=officer,
             )
         else:
-            embed = Embed(description=message, colour=0x1ABC9C, timestamp=discord.utils.utcnow())
+            embed = Embed(description=discord.utils.escape_markdown(message), colour=0x1ABC9C, timestamp=discord.utils.utcnow())
             embed.set_author(name=("🤖 " + username) if command else username, icon_url=head)
             return await self.send_message(embed=embed, officer=officer)
 
@@ -320,6 +357,13 @@ class DiscordBridgeBot(commands.Bot):
                 await self.mineflayer_bot.chat(
                     f"/gc {username}: attached {'a' if count == 1 else count} file{'s' if count > 1 else ''}"
                 )
+            elif message.stickers:
+                count = len(message.stickers)
+                await self.mineflayer_bot.chat(
+                    f"/gc {username}: sent {'a' if count == 1 else count} sticker{'s' if count > 1 else ''}"
+                )
+            elif message.reference and message.reference.type is discord.MessageReferenceType.forward:
+                await self.mineflayer_bot.chat(f"/gc {username}: forwarded a message")
             else:
                 try:
                     await message.add_reaction("❌")
@@ -372,21 +416,19 @@ class DiscordBridgeBot(commands.Bot):
         # filter links
         def _filter(match):
             thing = match.group(0)
-            # Ellipses
-            is_dots = True
-            for char in thing:
-                if char != ".":
-                    is_dots = False
-                    break
-            if is_dots:
+            if match.group(3).strip(".") == "" or match.group(1).strip(".") == "":
                 return thing
-            # Numbers (1.2k etc)
-            extra = thing[-1]
-            num = thing[:-1]
+        
+            # TLDs cannot be completely numerical, or a single character, so we check that
+            # In my testing, hypixel only ever flags when the tld is >2 characters
+            tld_test = match.group(3)[:-1]
+            if not tld_test:
+                return thing
             try:
-                return str(float(num)) + extra
+                int(tld_test)
             except ValueError:
                 return "<link>"
+            return thing
 
         content = link_regex.sub(_filter, content)
         if message.reference:
@@ -443,16 +485,10 @@ class DiscordBridgeBot(commands.Bot):
                     message = message.replace("Guild >", "")
                     # Member join/leave game notification
                     if "[VIP]" in message or "[VIP+]" in message or "[MVP]" in message or "[MVP+]" in message or "[MVP++]" in message:
-                        if "]:" in message:
-                            memberusername = message.split()[1]
-                        else:
-                            memberusername = message.split()[1][:-1]
+                        memberusername = message.split()[1]
                     else:
-                        if "]:" in message:
-                            memberusername = message.split()[0]
-                        else:
-                            memberusername = message.split()[0][:-1]
-                    if self.mineflayer_bot.bot.username in memberusername:
+                        memberusername = message.split()[0]
+                    if self.mineflayer_bot and self.mineflayer_bot.bot.username in memberusername:
                         return
                     if " joined." in message:
                         embed = Embed(timestamp=discord.utils.utcnow(), colour=0x56F98A)
@@ -464,7 +500,7 @@ class DiscordBridgeBot(commands.Bot):
                     await self.send_message(embed=embed)
                 else:
                     username, message = regex.match(message).groups()
-                    if self.mineflayer_bot.bot.username in username:
+                    if self.mineflayer_bot and self.mineflayer_bot.bot.username in username:
                         return
                     if username.startswith("["):
                         username = username.split(" ")[1]
@@ -481,7 +517,7 @@ class DiscordBridgeBot(commands.Bot):
                     return
 
                 username, message = regex_officer.match(message).groups()
-                if self.mineflayer_bot.bot.username in username:
+                if self.mineflayer_bot and self.mineflayer_bot.bot.username in username:
                     return
                 if username.startswith("["):
                     username = username.split(" ")[1]
@@ -679,15 +715,16 @@ class DiscordBridgeBot(commands.Bot):
                         playername = message[3]
                     else:
                         playername = message[2]
-                embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-                embed.set_author(
-                    name=f"{playername} has been invited to the guild!",
-                    icon_url="https://www.mc-heads.net/avatar/" + playername
-                )
                 self._current_invite_future.set_result((True, None))
                 self.dispatch("hypixel_guild_member_invite", playername)
-                await self.send_debug_message("Sending invite sent message")
-                await self.send_message(embed=embed)
+                if not SettingsConfig.hideInviteMessages:
+                    embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+                    embed.set_author(
+                        name=f"{playername} has been invited to the guild!",
+                        icon_url="https://www.mc-heads.net/avatar/" + playername
+                    )
+                    await self.send_debug_message("Sending invite sent message")
+                    await self.send_message(embed=embed)
 
             # Person bot invited is in another guild
             elif " is already in another guild!" in message:
@@ -696,15 +733,16 @@ class DiscordBridgeBot(commands.Bot):
                     playername = message[1]
                 else:
                     playername = message[0]
-                embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-                embed.set_author(
-                    name=f"{playername} is already in another guild!",
-                    icon_url="https://www.mc-heads.net/avatar/" + playername
-                )
                 self._current_invite_future.set_result((False, 'inGuild'))
                 self.dispatch("hypixel_guild_member_invite_failed", playername)
-                await self.send_debug_message("Sending invited player in guild message")
-                await self.send_message(embed=embed)
+                if not SettingsConfig.hideInviteMessages:
+                    embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+                    embed.set_author(
+                        name=f"{playername} is already in another guild!",
+                        icon_url="https://www.mc-heads.net/avatar/" + playername
+                    )
+                    await self.send_debug_message("Sending invited player in guild message")
+                    await self.send_message(embed=embed)
 
             # Person bot invited is in already in the guild
             elif " is already in your guild!" in message:
@@ -713,26 +751,28 @@ class DiscordBridgeBot(commands.Bot):
                     playername = message[1]
                 else:
                     playername = message[0]
-                embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-                embed.set_author(
-                    name=f"{playername} is already in your guild!",
-                    icon_url="https://www.mc-heads.net/avatar/" + playername
-                )
                 self._current_invite_future.set_result((False, 'inThisGuild'))
                 self.dispatch("hypixel_guild_member_invite_failed", playername)
-                await self.send_debug_message("Sending invited player in our guild message")
-                await self.send_message(embed=embed)
+                if not SettingsConfig.hideInviteMessages:
+                    embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+                    embed.set_author(
+                        name=f"{playername} is already in your guild!",
+                        icon_url="https://www.mc-heads.net/avatar/" + playername
+                    )
+                    await self.send_debug_message("Sending invited player in our guild message")
+                    await self.send_message(embed=embed)
 
             # Person bot invited has guild invites disabled (can't figure out who)
             elif "You cannot invite this player to your guild!" in message:
-                embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-                embed.set_author(
-                    name=f"You cannot invite this player to your guild!",
-                )
                 self._current_invite_future.set_result((False, 'invitesOff'))
                 self.dispatch("hypixel_guild_member_invite_failed", None)
-                await self.send_debug_message("Sending invites disabled message")
-                await self.send_message(embed=embed)
+                if not SettingsConfig.hideInviteMessages:
+                    embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+                    embed.set_author(
+                        name=f"You cannot invite this player to your guild!",
+                    )
+                    await self.send_debug_message("Sending invites disabled message")
+                    await self.send_message(embed=embed)
 
             # Person bot invited has already been invited
             elif "You've already invited" in message and "to your guild! Wait for them to accept!" in message:
@@ -741,14 +781,15 @@ class DiscordBridgeBot(commands.Bot):
                     playername = message[4]
                 else:
                     playername = message[3]
-                embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
-                embed.set_author(
-                    name=f"{playername} has already been invited! Wait for them to accept!",
-                )
                 self._current_invite_future.set_result((False, 'alreadyInvited'))
                 self.dispatch("hypixel_guild_member_invite_failed", None)
-                await self.send_debug_message("Sending invites disabled message")
-                await self.send_message(embed=embed)
+                if not SettingsConfig.hideInviteMessages:
+                    embed = Embed(timestamp=discord.utils.utcnow(), colour=0x1ABC9C)
+                    embed.set_author(
+                        name=f"{playername} has already been invited! Wait for them to accept!",
+                    )
+                    await self.send_debug_message("Sending invites disabled message")
+                    await self.send_message(embed=embed)
 
             # Someone requested to join
             elif " has requested to join the guild!" in message.lower():  # case might be weird?
@@ -998,6 +1039,21 @@ class DiscordBridgeBot(commands.Bot):
                 embed = Embed(
                     colour=0x1ABC9C,
                     description=to_send,
+                )
+                await self.send_message(embed=embed)
+
+            elif "No one earned guild experience on" in message:
+                line = next(
+                    (
+                        l.strip()
+                        for l in message.splitlines()
+                        if "No one earned guild experience on" in l
+                    ),
+                    message.strip(),
+                )
+                embed = Embed(
+                    colour=0x1ABC9C,
+                    description=line,
                 )
                 await self.send_message(embed=embed)
             else:

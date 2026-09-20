@@ -8,25 +8,39 @@ import aiohttp
 import asyncio
 import traceback
 import time
+import re
 
 from core.colors import Color
 
 from discord.ext import commands
-from core.config import ExtensionConfig, ConfigKey, DiscordConfig
+from core.config import ExtensionConfig, ConfigKey, DiscordConfig, HypixelAPIConfig, SkyKingsConfig
 from discord_extensions.generic import HELP_EMBED
 
 from .slayer_calculators import calculate_slayer_level, get_next_slayer_level, get_kills_needed
+
+from .classavg_calculator import calculate_classavg
 
 from hashlib import sha256
 
 
 class GameCommandConfig(ExtensionConfig, base_key="game_commands"):
-    hypixel_api_key: str = ConfigKey(str)
+    hypixel_api_key: str | None = ConfigKey(str, default=None)
     enabled_commands: list = ConfigKey(list, default=[], list_type=str)
     use_antispam: bool = ConfigKey(bool, default=False)
     command_cooldown: float = ConfigKey(float, default=5.0)  # seconds
 
 PREFIX = DiscordConfig.prefix 
+
+RULE_BREAKER_LABELS = {"macroer": "Macroer", "irl_trader": "IRL Trader", "scammer": "Scammer"}
+
+def _fmt_coins(value: float) -> str:
+    if value >= 1_000_000_000:
+        return f"{value / 1_000_000_000:,.2f}B"
+    if value >= 1_000_000:
+        return f"{value / 1_000_000:,.2f}M"
+    if value >= 1_000:
+        return f"{value / 1_000:,.2f}K"
+    return f"{value:,.0f}"
 
 COMMAND_INFO = {
     "help": {
@@ -40,7 +54,23 @@ COMMAND_INFO = {
     "slayers": {
         "description": "Get the slayer levels of a player.",
         "usage": f"{PREFIX}slayers (player) [profile] [boss]",
-    }
+    },
+    "ca50": {
+        "description": "Get the missing M7 runs for a player to reach Class Average 50.",
+        "usage": f"{PREFIX}ca50 (player) [profile] [m<mayor%>] [g<global%>]",
+    },
+    "networth": {
+        "description": "Get the networth of a player.",
+        "usage": f"{PREFIX}networth (player) [profile]",
+    },
+    "nw": {
+        "description": "Alias for networth.",
+        "usage": f"{PREFIX}nw (player) [profile]",
+    },
+    "lookup": {
+        "description": "Check if a player is on the SkyKings rule breaker list.",
+        "usage": f"{PREFIX}lookup (player)",
+    },
 }
 
 class GameCommands(commands.Cog):
@@ -49,6 +79,10 @@ class GameCommands(commands.Cog):
         valid_commands = {
             "level": self.level,
             "slayers": self.slayers,
+            "ca50": self.ca50,
+            "networth": self.networth,
+            "nw": self.networth,
+            "lookup": self.lookup,
         }
         cmd_list = list(GameCommandConfig.enabled_commands)
         if not GameCommandConfig.enabled_commands:
@@ -72,6 +106,28 @@ class GameCommands(commands.Cog):
             value="\n".join([f"``{v['usage']}`` {v['description']}" for k, v in COMMAND_INFO.items() if k in cmd_list]),
             inline=False
         )
+        if GameCommandConfig.hypixel_api_key and not HypixelAPIConfig.key:
+            self.bot.startup_messages.append("[WARNING] Game Commands: The GAME_COMMANDS_HYPIXEL_API_KEY setting is deprecated and may be removed soon. Use HYPIXEL_API_KEY instead.")
+            print(f"{Color.MAGENTA}Game Commands{Color.RESET} > {Color.YELLOW}[WARNING]{Color.RESET} The GAME_COMMANDS_HYPIXEL_API_KEY setting is deprecated and may be removed soon. Use HYPIXEL_API_KEY instead.")
+
+
+    @property
+    def hypixel_api_key(self):
+        if HypixelAPIConfig.key:
+            return HypixelAPIConfig.key
+        return GameCommandConfig.hypixel_api_key
+
+    @property
+    def hypixel_api_url(self):
+        return HypixelAPIConfig.url
+
+    @property
+    def skykings_api_key(self):
+        return SkyKingsConfig.api_key
+
+    @property
+    def skykings_api_url(self):
+        return SkyKingsConfig.api_url
 
     @property
     def antispam(self):
@@ -143,11 +199,16 @@ class GameCommands(commands.Cog):
             
     async def hypixel_request(self, *args, **kwargs):
         if "headers" not in kwargs:  
-            kwargs["headers"] = {"API-Key": GameCommandConfig.hypixel_api_key}
+            kwargs["headers"] = {"API-Key": self.hypixel_api_key}
+        else:
+            kwargs["headers"]["API-Key"] = self.hypixel_api_key
         if self.session is None:
             self.session = aiohttp.ClientSession()
         async with self.session.get(*args, **kwargs) as resp:
-            return await resp.json()
+            data = await resp.json()
+            if resp.status not in (200, 404):
+                print(f"{Color.MAGENTA}Game Commands{Color.RESET} > {Color.RED}[ERROR]{Color.RESET} Non-OK response from Hypixel: {data}")
+            return data
         
     async def cog_unload(self) -> None:
         if self.session is not None:
@@ -194,10 +255,12 @@ class GameCommands(commands.Cog):
             if e.status == 404:
                 return await chat_msg(f"{player} does not exist.")
             raise
-        data = await self.hypixel_request(f"https://api.hypixel.net/v2/skyblock/profiles?key={GameCommandConfig.hypixel_api_key}&uuid={uuid}")
+        data = await self.hypixel_request(f"{self.hypixel_api_url}/skyblock/profiles?uuid={uuid}")
         if not data["success"]:
             return await chat_msg(f"Failed to get {player}'s profile.")
         profiles = data["profiles"]
+        if not profiles:
+            return await chat_msg(f"{player} has no profiles.")
         if profile is None:
             profile = [p for p in profiles if p.get("selected")]
             if not profile:
@@ -214,7 +277,106 @@ class GameCommands(commands.Cog):
         xp = member.get("leveling", {}).get("experience", 0)
         level, extra = divmod(xp, 100)
         await chat_msg(f"{player} ({profile['cute_name']}): Level {level:,}, {extra}/100 xp to next level.")
-    
+
+    async def networth(self, name, args, *, officer: bool = False, head: str = None):
+        chat_msg = lambda msg: self.send_chat_message(name, msg, officer=officer, head=head)
+        if len(args) == 0 and name.startswith("@"):
+            return await chat_msg("Must provide player name for Discord commands.")
+        player = args.pop(0) if args else name
+        profile = args.pop(0) if args else None
+
+        api_key = SkyKingsConfig.api_key
+        if not api_key:
+            return await chat_msg("A SkyKings API Key is needed for this command.")
+
+        try:
+            uuid, player = await self.get_info(player)
+        except aiohttp.ClientResponseError as e:
+            if e.status == 404:
+                return await chat_msg(f"{player} does not exist.")
+            raise
+
+        # Fetch Hypixel profiles so the API doesn't need to use its own key
+        profiles_data = await self.hypixel_request(
+            f"{self.hypixel_api_url}/skyblock/profiles?uuid={uuid}"
+        )
+        if not profiles_data.get("success"):
+            return await chat_msg(f"Failed to get {player}'s SkyBlock profiles.")
+
+        if self.session is None:
+            self.session = aiohttp.ClientSession()
+        try:
+            async with self.session.post(
+                f"{self.skykings_api_url.rstrip('/')}/networth",
+                params={"api_key": api_key},
+                json={
+                    "profile_data": profiles_data,
+                    "uuid": uuid,
+                    "name": player,
+                    "profile_name": profile,
+                    "include_bank": True,
+                    "include_museum": False,
+                },
+                timeout=aiohttp.ClientTimeout(total=30)
+            ) as resp:
+                data = await resp.json()
+        except Exception as e:
+            return await chat_msg(f"Failed to contact the SkyKings API: {e}")
+
+        if not data.get("success"):
+            error_msg = data.get("message") or data.get("error") or "Unknown error"
+            return await chat_msg(f"Error: {error_msg}")
+
+        d = data["data"]
+        player_name = d["player"]["name"]
+        profile_name = d["profile"]["name"]
+        nw = _fmt_coins(d["totals"].get("networth", 0))
+        await chat_msg(f"{player_name} ({profile_name}): Networth {nw} coins.")
+
+    async def lookup(self, name, args, *, officer: bool = False, head: str = None):
+        chat_msg = lambda msg: self.send_chat_message(name, msg, officer=officer, head=head)
+        if len(args) == 0 and name.startswith("@"):
+            return await chat_msg("Must provide a player name for Discord commands.")
+        player = args.pop(0) if args else name
+
+        api_key = SkyKingsConfig.api_key
+        if not api_key:
+            return await chat_msg("A SkyKings API Key is needed for this command.")
+
+        try:
+            uuid, player = await self.get_info(player)
+        except aiohttp.ClientResponseError as e:
+            if e.status == 404:
+                return await chat_msg(f"{player} does not exist.")
+            raise
+
+        if self.session is None:
+            self.session = aiohttp.ClientSession()
+        try:
+            async with self.session.get(
+                f"{self.skykings_api_url.rstrip('/')}/user/lookup",
+                params={"uuid": uuid, "api_key": api_key},
+                timeout=aiohttp.ClientTimeout(total=15)
+            ) as resp:
+                data = await resp.json()
+        except Exception as e:
+            return await chat_msg(f"Failed to contact the SkyKings API: {e}")
+
+        if not data.get("success"):
+            error_msg = data.get("message") or data.get("error") or "Unknown error"
+            return await chat_msg(f"Error: {error_msg}")
+
+        result = data.get("result") or {}
+        if not result.get("flagged"):
+            return await chat_msg(f"{player} is not on the rule breaker list.")
+
+        category = RULE_BREAKER_LABELS.get(result.get("category"), result.get("category") or "Rule Breaker")
+        reason = result.get("reason")
+        msg = f"{player} is on the rule breaker list as a {category}."
+        if reason:
+            msg += f" Reason: {reason}"
+        await chat_msg(msg)
+
     async def slayers(self, name, args, *, officer: bool = False, head: str = None):
         chat_msg = lambda msg: self.send_chat_message(name, msg, officer=officer, head=head)
         if len(args) == 0 and name.startswith("@"):
@@ -232,10 +394,12 @@ class GameCommands(commands.Cog):
             if e.status == 404:
                 return await chat_msg(f"{player} does not exist.")
             raise
-        data = await self.hypixel_request(f"https://api.hypixel.net/v2/skyblock/profiles?key={GameCommandConfig.hypixel_api_key}&uuid={uuid}")
+        data = await self.hypixel_request(f"{self.hypixel_api_url}/skyblock/profiles?uuid={uuid}")
         if not data["success"]:
             return await chat_msg(f"Failed to get {player}'s profile.")
         profiles = data["profiles"]
+        if not profiles:
+            return await chat_msg(f"{player} has no profiles.")
         if profile is None:
             profile = [p for p in profiles if p.get("selected")]
             if not profile:
@@ -286,3 +450,114 @@ class GameCommands(commands.Cog):
                     kn.append(f"{kills:,} T{tier+1}")
                 message += " / ".join(kn) + ")"
             return await chat_msg(message)
+        
+    async def ca50(self, name, args, *, officer: bool = False, head: str = None):
+        chat_msg = lambda msg: self.send_chat_message(name, msg, officer=officer, head=head)
+
+        args = list(args)
+
+        player_name = None
+        if args:
+            first = args[0].lower()
+            is_first_short_flag = re.fullmatch(r"[mg]\d+(?:\.\d+)?%?", first) is not None
+            is_first_keyword = first in ("m", "g", "mayor", "global")
+            if not is_first_short_flag and not is_first_keyword:
+                player_name = args.pop(0)
+
+        profile_name = None
+        if args:
+            second = args[0].lower()
+            is_second_short_flag = re.fullmatch(r"[mg]\d+(?:\.\d+)?%?", second) is not None
+            is_second_keyword = second in ("m", "g", "mayor", "global")
+            if not is_second_short_flag and not is_second_keyword:
+                profile_name = args.pop(0)
+
+        if player_name is None and name.startswith("@"):
+            return await chat_msg("Must provide player name for Discord commands.")
+        elif player_name is None:
+            player_name = name
+
+        # Boost Parser
+        global_boost = 0.0
+        mayor_boost = 0.0
+        while args:
+            current = args.pop(0).lower()
+
+            m_match = re.fullmatch(r"m(\d+(?:\.\d+)?)%?", current)
+            g_match = re.fullmatch(r"g(\d+(?:\.\d+)?)%?", current)
+
+            if m_match:
+                mayor_boost = float(m_match.group(1)) / 100.0
+                continue
+
+            if g_match:
+                global_boost = float(g_match.group(1)) / 100.0
+                continue
+
+            if current == "mayor":
+                if not args:
+                    return await chat_msg("Missing mayor boost value.")
+                mayor_boost = float(args.pop(0).replace("%", "")) / 100.0
+                continue
+
+            if current == "global":
+                if not args:
+                    return await chat_msg("Missing global boost value.")
+                global_boost = float(args.pop(0).replace("%", "")) / 100.0
+                continue
+
+            return await chat_msg(f"Unknown argument: '{current}'.")
+        
+        # API FETCHING
+        try:
+            uuid, player_name = await self.get_info(player_name)
+        except aiohttp.ClientResponseError as e:
+            if e.status == 404:
+                return await chat_msg(f"{player_name} does not exist.")
+            raise
+        data = await self.hypixel_request(
+            f"{self.hypixel_api_url}/skyblock/profiles?uuid={uuid}"
+        )
+        if not data.get("success", False):
+            return await chat_msg(f"Failed to get {player_name}'s profile.")
+        profiles = data.get("profiles", [])
+        if not profiles:
+            return await chat_msg(f"{player_name} has no profiles.")
+
+        if profile_name is None:
+            selected = [p for p in profiles if p.get("selected")]
+            profile_obj = selected[0] if selected else profiles[0]
+        else:
+            matches = [
+                p for p in profiles
+                if p.get("cute_name", "").lower() == profile_name.lower()
+            ]
+            if not matches:
+                valid = ", ".join(p.get("cute_name", "Unknown") for p in profiles)
+                return await chat_msg(f"Invalid profile: {valid}.")
+            profile_obj = matches[0]
+
+        member = profile_obj.get("members", {}).get(uuid)
+        if member is None:
+            return await chat_msg(f"{player_name} is not in the profile.")
+
+        # Calculation
+        result = await calculate_classavg(
+            member,
+            global_boost=global_boost,
+            mayor_boost=mayor_boost,
+        )
+        order = ["archer", "berserk", "healer", "mage", "tank"]
+        details = ", ".join(
+            f"{result['runs'][cls]} {cls.capitalize()}"
+            for cls in order
+            if result["runs"].get(cls, 0) > 0
+        )
+        if result["total_runs"] == 0:
+            return await chat_msg(
+                f"{player_name} ({profile_obj['cute_name']}) already has Class Average 50! GG!"
+            )
+        await chat_msg(
+            f"It will take {result['total_runs']:,} M7 runs for {player_name} "
+            f"({profile_obj['cute_name']}) to reach Class Average 50 ({details})"
+        )

@@ -355,7 +355,7 @@ class Bridge(commands.Cog):
                 f"{''.join(traceback.format_exception(type(error), error, error.__traceback__))}\n"
                 f"```"
             )
-            
+
 
 async def setup(bot):
     await bot.add_cog(Bridge(bot))
