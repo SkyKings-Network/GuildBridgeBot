@@ -57,6 +57,8 @@ class DiscordBridgeBot(commands.Bot):
         self.debug_webhook: discord.Webhook | None = None
         self.name = None
         self.add_check(self.ready_check)
+        self.chat_cooldown = DiscordConfig.chatCooldown
+        self.last_chat = 0
 
     async def ready_check(self, ctx):
         return self.is_ready() and self.mineflayer_bot.is_ready()
@@ -304,6 +306,12 @@ class DiscordBridgeBot(commands.Bot):
             return await self.send_message(embed=embed, officer=officer)
 
     async def send_minecraft_user_message(self, username, message: discord.Message, *, officer: bool = False):
+        if self.chat_cooldown > 0:
+            if self.last_chat + self.chat_cooldown > datetime.datetime.now().timestamp():
+                cooldown_remaining = self.last_chat + self.chat_cooldown - datetime.datetime.now().timestamp()
+                await message.reply(f"Please wait {cooldown_remaining:.1f} seconds before sending another message.", delete_after=cooldown_remaining)
+                return
+            self.last_chat = datetime.datetime.now().timestamp()
         content = message.content
         if content.strip() == "":
             # Send number of attachments if no message content

@@ -275,6 +275,7 @@ class DiscordConfig(ConfigObject, base_key="discord"):
     debugWebhookURL: Union[str, None] = ConfigKey(str, None)
     serverName: Union[str, None] = ConfigKey(str, None)
     ignoreCrosschatWarning: bool = ConfigKey(bool, False)
+    chatCooldown: int = ConfigKey(int, 0)
 
 
 class RedisConfig(ConfigObject, base_key="redis"):
