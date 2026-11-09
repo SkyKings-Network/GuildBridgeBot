@@ -10,8 +10,9 @@ project runs its event loop), reporting usage and errors and picking up its
 limit. Problems are posted to the staff Discord channel by the website's
 Discord bot.
 
-Windows follow Hypixel's own (RateLimit-Reset on every response), so every
-project resets at the same moment.
+Windows follow Hypixel's own (RateLimit-Reset on every response). The
+website also sends back the freshest window any project on the same key has
+seen, so a quiet project resets at the same moment as the busy ones.
 
 The same file lives in each Python project; the hub is
 "SkyKings V2 Website/skyblock/hypixel-key.js".
@@ -81,6 +82,7 @@ class KeyGuard:
         self.key_remaining = None
         self.errors: list[dict] = []
         self.api_key: str | None = None   # assigned on the website (None: own key)
+        self._seen_at = 0.0                # when Hypixel last told us the window
         self.key_id: int | None = None
         self._mutex = threading.Lock()
         self._wake = threading.Event()
@@ -103,6 +105,18 @@ class KeyGuard:
                 self.window_end += WINDOW
             self.used = 0
             self.blocked = 0
+
+    def _move_window(self, end: float, carry: int) -> None:  # call with _mutex held
+        """Hypixel's window ends at `end`. A window can never end more than 5
+        minutes after it's first seen, so a later end than ours means a new
+        window has started: close ours (capped at now, as ours was a guess)
+        and start counting again with `carry` requests."""
+        if end > self.window_end + 3:
+            self.prev = {"window_end": int(min(self.window_end, time.time()) * 1000), "used": max(0, self.used - carry), "blocked": self.blocked}
+            self.used = carry
+            self.blocked = 0
+        if abs(end - self.window_end) > 3:
+            self.window_end = end
 
     def _take(self, share: float = 1.0) -> float:
         """Use one request if there's room; else return seconds until the next window."""
@@ -157,9 +171,10 @@ class KeyGuard:
             # count carries on).
             self._roll()
             if reset is not None and 0 <= reset <= WINDOW:
-                end = time.time() + reset
-                if abs(end - self.window_end) > 3:
-                    self.window_end = end
+                # This request was counted already; it belongs to the window
+                # Hypixel says it's in.
+                self._move_window(time.time() + reset, 1 if self.used else 0)
+                self._seen_at = time.time()
             if limit is not None:
                 self.key_limit = limit
             if remaining is not None:
@@ -211,6 +226,7 @@ class KeyGuard:
                 "errors": errors,
                 "prev": prev,
                 "key_id": self.key_id,
+                "window_seen_at": int(self._seen_at * 1000) if self._seen_at else None,
             }
         url = (os.getenv("HYPIXEL_MONITOR_URL") or "https://skykings.net").rstrip("/") + "/api/hypixel-key/report"
         req = urllib.request.Request(
@@ -237,6 +253,12 @@ class KeyGuard:
                         self.key_remaining = None
                     self.key_id = data.get("key_id")
                     self.api_key = data.get("api_key") or None
+            # The key's shared window, unless Hypixel told us ourselves just now.
+            end = data.get("window_end")
+            if isinstance(end, (int, float)) and end / 1000 > time.time() and time.time() - self._seen_at > 30:
+                with self._mutex:
+                    self._roll()
+                    self._move_window(end / 1000, 0)
             return
         except urllib.error.HTTPError as e:
             print(f"[hypixel-key] check-in refused: HTTP {e.code}" + (" (HYPIXEL_MONITOR_TOKEN doesn't match the website's)" if e.code == 401 else ""))
