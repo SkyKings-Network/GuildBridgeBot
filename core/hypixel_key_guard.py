@@ -5,7 +5,7 @@ One Hypixel key is shared by every SkyKings project, so each one has its own
 limit per 5-minute window and stops there instead of using up the others'
 share. Limits are set on the SkyKings website (owner console, API key tab).
 This module checks in with the website as soon as it's imported and then
-about once a minute (from a background thread, so it works however the
+about every 15 seconds (from a background thread, so it works however the
 project runs its event loop), reporting usage and errors and picking up its
 limit. Problems are posted to the staff Discord channel by the website's
 Discord bot.
@@ -104,26 +104,27 @@ class KeyGuard:
             self.used = 0
             self.blocked = 0
 
-    def _take(self) -> float:
+    def _take(self, share: float = 1.0) -> float:
         """Use one request if there's room; else return seconds until the next window."""
         with self._mutex:
             self._roll()
-            if self.used < self.budget:
+            if self.used < self.budget * share:
                 self.used += 1
                 return 0.0
             return max(0.0, self.window_end - time.time())
 
-    async def acquire(self, wait: float = 8.0) -> None:
+    async def acquire(self, wait: float = 8.0, share: float = 1.0) -> None:
         """Take one request from this project's limit. When it's used up,
         wait up to `wait` seconds for the next window, else raise
-        BudgetExceeded."""
+        BudgetExceeded. `share` (0-1) stops a background job at that part of
+        the limit, leaving the rest for everything else."""
         self.start()
-        delay = self._take()
+        delay = self._take(share)
         if delay == 0.0:
             return
         if delay <= wait:
             await asyncio.sleep(delay + 0.25)
-            delay = self._take()
+            delay = self._take(share)
             if delay == 0.0:
                 return
         with self._mutex:
@@ -151,14 +152,13 @@ class KeyGuard:
         limit = num("RateLimit-Limit", "ratelimit-limit")
         remaining = num("RateLimit-Remaining", "ratelimit-remaining")
         with self._mutex:
+            # A window that has ended is closed first; after that, Hypixel's
+            # reset time only corrects our guess of when this one ends (the
+            # count carries on).
+            self._roll()
             if reset is not None and 0 <= reset <= WINDOW:
                 end = time.time() + reset
-                if not self.window_end or abs(end - self.window_end) > 3:
-                    if self.window_end and end > self.window_end + 3:
-                        # Hypixel started a new window before we expected.
-                        self.prev = {"window_end": int(self.window_end * 1000), "used": self.used, "blocked": self.blocked}
-                        self.used = 1
-                        self.blocked = 0
+                if abs(end - self.window_end) > 3:
                     self.window_end = end
             if limit is not None:
                 self.key_limit = limit
@@ -184,7 +184,8 @@ class KeyGuard:
                 self.report()
             except Exception as e:  # never let reporting break the project
                 print(f"[hypixel-key] check-in failed: {e}")
-            self._wake.wait(60)
+            time.sleep(3)  # a burst of errors still only checks in every few seconds
+            self._wake.wait(12)
             self._wake.clear()
 
     def report(self) -> None:
