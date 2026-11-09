@@ -27,6 +27,12 @@ Use:
     api_key = key_guard.key(os.getenv("HYPIXEL_API_KEY"))   # the key to send
     key_guard.observe(resp.status, resp.headers)     # after it
 
+Spare capacity (what the key won't otherwise use before it resets): in the
+last SPARE_TAIL seconds of a window, key_guard.check_spare() asks the website
+how low the key may go (its "floor": what every project still needs, plus a
+margin). Requests made inside `with key_guard.spare(n):` (n requests reserved
+up front) come out of what's above that floor, not this project's limit.
+
 Settings (environment):
     HYPIXEL_PROJECT        this project's name (each copy sets a default)
     HYPIXEL_BUDGET         limit to use until the website answers
@@ -36,6 +42,7 @@ Settings (environment):
 from __future__ import annotations
 
 import asyncio
+import contextvars
 import json
 import os
 import re
@@ -44,10 +51,14 @@ import threading
 import time
 import urllib.error
 import urllib.request
+from contextlib import contextmanager
 
 WINDOW = 300.0
+SPARE_TAIL = 90.0  # spare capacity is handed out in a window's last 90 seconds
 # Hypixel endpoints that don't take the key, so don't count.
 _KEYLESS = re.compile(r"api\.hypixel\.net/(?:v2/)?(?:resources/|skyblock/(?:auctions|auctions_ended|bazaar|firesales)(?:[/?]|$))")
+# Requests reserved by `with key_guard.spare(n)` in this task (a one-item list).
+_SPARE = contextvars.ContextVar("hypixel_key_spare", default=None)
 
 
 def needs_key(url: str) -> bool:
@@ -77,9 +88,13 @@ class KeyGuard:
         self.window_end = 0.0
         self.used = 0
         self.blocked = 0
+        self.spare_used = 0
         self.prev = None
         self.key_limit = None
         self.key_remaining = None
+        self._remaining_at = 0.0            # when key_remaining was learned
+        self.spare_floor: int | None = None  # how low the key may go (this window's tail)
+        self._floor_window = 0.0
         self.errors: list[dict] = []
         self.api_key: str | None = None   # assigned on the website (None: own key)
         self._seen_at = 0.0                # when Hypixel last told us the window
@@ -95,16 +110,21 @@ class KeyGuard:
         return self.api_key or own
 
     # ── Window ────────────────────────────────────────────────────────────
+    def _close(self, end: float, carry: int) -> None:  # call with _mutex held
+        self.prev = {"window_end": int(end * 1000), "used": max(0, self.used - carry), "blocked": self.blocked, "spare": self.spare_used}
+        self.used = carry
+        self.blocked = 0
+        self.spare_used = 0
+        self.spare_floor = None
+
     def _roll(self) -> None:  # call with _mutex held
         now = time.time()
         if not self.window_end:
             self.window_end = now + WINDOW
         if now >= self.window_end:
-            self.prev = {"window_end": int(self.window_end * 1000), "used": self.used, "blocked": self.blocked}
+            self._close(self.window_end, 0)
             while now >= self.window_end:
                 self.window_end += WINDOW
-            self.used = 0
-            self.blocked = 0
 
     def _move_window(self, end: float, carry: int) -> None:  # call with _mutex held
         """Hypixel's window ends at `end`. A window can never end more than 5
@@ -112,9 +132,7 @@ class KeyGuard:
         window has started: close ours (capped at now, as ours was a guess)
         and start counting again with `carry` requests."""
         if end > self.window_end + 3:
-            self.prev = {"window_end": int(min(self.window_end, time.time()) * 1000), "used": max(0, self.used - carry), "blocked": self.blocked}
-            self.used = carry
-            self.blocked = 0
+            self._close(min(self.window_end, time.time()), carry)
         if abs(end - self.window_end) > 3:
             self.window_end = end
 
@@ -131,8 +149,15 @@ class KeyGuard:
         """Take one request from this project's limit. When it's used up,
         wait up to `wait` seconds for the next window, else raise
         BudgetExceeded. `share` (0-1) stops a background job at that part of
-        the limit, leaving the rest for everything else."""
+        the limit, leaving the rest for everything else. Inside
+        `with key_guard.spare(n)` it uses the spare requests reserved there."""
         self.start()
+        held = _SPARE.get()
+        if held is not None:
+            if held[0] > 0:
+                held[0] -= 1
+                return
+            raise BudgetExceeded(f"{self.project} (spare capacity)", 0, max(0.0, self.window_end - time.time()))
         delay = self._take(share)
         if delay == 0.0:
             return
@@ -144,6 +169,57 @@ class KeyGuard:
         with self._mutex:
             self.blocked += 1
         raise BudgetExceeded(self.project, self.budget, delay)
+
+    # ── Spare capacity ────────────────────────────────────────────────────
+    def in_spare(self) -> bool:
+        return _SPARE.get() is not None
+
+    def _room(self) -> int:  # call with _mutex held
+        self._roll()
+        left = self.window_end - time.time()
+        if self.spare_floor is None or self._floor_window != self.window_end or left > SPARE_TAIL + 5 or left < 2:
+            return 0
+        if self.key_remaining is None or time.time() - self._remaining_at > 30:
+            return 0
+        return max(0, self.key_remaining - self.spare_floor)
+
+    def spare_room(self) -> int:
+        """Requests the key can still spare before it resets (0 outside a
+        window's last SPARE_TAIL seconds, or until check_spare() has run)."""
+        with self._mutex:
+            return self._room()
+
+    @contextmanager
+    def spare(self, n: int):
+        """Reserve `n` spare requests for the code inside (all or nothing, so
+        a job that needs several requests never stops halfway). Yields False
+        if there isn't room; nothing is reserved then."""
+        with self._mutex:
+            ok = self._room() >= n
+            if ok:
+                # Counted now; Hypixel's next RateLimit-Remaining corrects it.
+                self.key_remaining -= n
+                self.spare_used += n
+        if not ok:
+            yield False
+            return
+        held = [n]
+        token = _SPARE.set(held)
+        try:
+            yield True
+        finally:
+            _SPARE.reset(token)
+            if held[0]:
+                with self._mutex:  # not all used (e.g. the data was fresh)
+                    self.spare_used -= held[0]
+                    if self.key_remaining is not None:
+                        self.key_remaining += held[0]
+
+    def check_spare(self) -> int:
+        """Ask the website for this window's floor (blocking; run it in a
+        thread). Returns the spare room."""
+        self.report(want_spare=True)
+        return self.spare_room()
 
     def observe(self, status: int | None, headers=None) -> None:
         """Learn the key's window and remaining requests from a response."""
@@ -179,10 +255,13 @@ class KeyGuard:
                 self.key_limit = limit
             if remaining is not None:
                 self.key_remaining = remaining
+                self._remaining_at = time.time()
             bad = status in (403, 429) or (status or 0) >= 500
             if bad:
                 self.errors.append({"status": status, "at": int(time.time() * 1000)})
                 del self.errors[:-20]
+                if status == 429:
+                    self.spare_floor = None  # the key is out: no more spare this window
         if bad:
             self._wake.set()  # report it now
 
@@ -203,7 +282,7 @@ class KeyGuard:
             self._wake.wait(12)
             self._wake.clear()
 
-    def report(self) -> None:
+    def report(self, want_spare: bool = False) -> None:
         token = os.getenv("HYPIXEL_MONITOR_TOKEN") or os.getenv("SKYKINGS_API_KEY") or ""
         if not token:
             if not self._warned:
@@ -221,12 +300,14 @@ class KeyGuard:
                 "window_end": int(self.window_end * 1000),
                 "used": self.used,
                 "blocked": self.blocked,
+                "spare_used": self.spare_used,
                 "key_limit": self.key_limit,
                 "key_remaining": self.key_remaining,
                 "errors": errors,
                 "prev": prev,
                 "key_id": self.key_id,
                 "window_seen_at": int(self._seen_at * 1000) if self._seen_at else None,
+                "want_spare": want_spare,
             }
         url = (os.getenv("HYPIXEL_MONITOR_URL") or "https://skykings.net").rstrip("/") + "/api/hypixel-key/report"
         req = urllib.request.Request(
@@ -259,6 +340,19 @@ class KeyGuard:
                 with self._mutex:
                     self._roll()
                     self._move_window(end / 1000, 0)
+            # Spare capacity: the floor for this window, and the key's
+            # remaining requests if the website heard more recently than we did.
+            spare = data.get("spare")
+            if want_spare and isinstance(spare, dict):
+                with self._mutex:
+                    self._roll()
+                    if isinstance(spare.get("floor"), int):
+                        self.spare_floor = spare["floor"]
+                        self._floor_window = self.window_end
+                    rem, at = spare.get("remaining"), spare.get("remaining_at")
+                    if isinstance(rem, int) and isinstance(at, (int, float)) and at / 1000 > self._remaining_at:
+                        self.key_remaining = rem
+                        self._remaining_at = at / 1000
             return
         except urllib.error.HTTPError as e:
             print(f"[hypixel-key] check-in refused: HTTP {e.code}" + (" (HYPIXEL_MONITOR_TOKEN doesn't match the website's)" if e.code == 401 else ""))
