@@ -11,6 +11,7 @@ import time
 import re
 
 from core.colors import Color
+from core.hypixel_key_guard import key_guard, BudgetExceeded
 
 from discord.ext import commands
 from core.config import ExtensionConfig, ConfigKey, DiscordConfig, HypixelAPIConfig, SkyKingsConfig
@@ -204,7 +205,13 @@ class GameCommands(commands.Cog):
             kwargs["headers"]["API-Key"] = self.hypixel_api_key
         if self.session is None:
             self.session = aiohttp.ClientSession()
+        # Counted against this bot's share of the shared Hypixel key.
+        try:
+            await key_guard.acquire()
+        except BudgetExceeded as e:
+            return {"success": False, "cause": str(e)}
         async with self.session.get(*args, **kwargs) as resp:
+            key_guard.observe(resp.status, resp.headers)
             data = await resp.json()
             if resp.status not in (200, 404):
                 print(f"{Color.MAGENTA}Game Commands{Color.RESET} > {Color.RED}[ERROR]{Color.RESET} Non-OK response from Hypixel: {data}")
