@@ -210,6 +210,8 @@ class GameCommands(commands.Cog):
             await key_guard.acquire()
         except BudgetExceeded as e:
             return {"success": False, "cause": str(e)}
+        # The key picked for this bot on the website, else the configured one.
+        kwargs.setdefault("headers", {})["API-Key"] = key_guard.key(kwargs["headers"].get("API-Key"))
         async with self.session.get(*args, **kwargs) as resp:
             key_guard.observe(resp.status, resp.headers)
             data = await resp.json()
