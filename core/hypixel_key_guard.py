@@ -43,6 +43,7 @@ from __future__ import annotations
 
 import asyncio
 import contextvars
+import hashlib
 import json
 import os
 import re
@@ -99,6 +100,8 @@ class KeyGuard:
         self.api_key: str | None = None   # assigned on the website (None: own key)
         self._seen_at = 0.0                # when Hypixel last told us the window
         self.key_id: int | None = None
+        self.key_fp: str | None = None     # fingerprint of the key actually sent
+        self._fp_of: str | None = None
         self._mutex = threading.Lock()
         self._wake = threading.Event()
         self._thread: threading.Thread | None = None
@@ -107,7 +110,13 @@ class KeyGuard:
     def key(self, own: str | None = None) -> str | None:
         """The Hypixel key to send: the one picked for this project on the
         website, else `own` (this project's .env key)."""
-        return self.api_key or own
+        k = self.api_key or own
+        if k and k != self._fp_of:
+            # A one-way fingerprint, so the website can tell which projects
+            # really share a key without ever seeing it.
+            self._fp_of = k
+            self.key_fp = hashlib.sha256(k.encode()).hexdigest()[:10]
+        return k
 
     # ── Window ────────────────────────────────────────────────────────────
     def _close(self, end: float, carry: int) -> None:  # call with _mutex held
@@ -308,6 +317,7 @@ class KeyGuard:
                 "key_id": self.key_id,
                 "window_seen_at": int(self._seen_at * 1000) if self._seen_at else None,
                 "want_spare": want_spare,
+                "key_fp": self.key_fp,
             }
         url = (os.getenv("HYPIXEL_MONITOR_URL") or "https://skykings.net").rstrip("/") + "/api/hypixel-key/report"
         req = urllib.request.Request(
